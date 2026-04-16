@@ -1,0 +1,324 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface ChannelConfig {
+  form: boolean;
+  email: boolean;
+  webhook: boolean;
+  whatsapp: boolean;
+}
+
+export default function ConfigPage() {
+  const [countryMode, setCountryMode] = useState<'PT' | 'BR'>('PT');
+  const [imobId, setImobId] = useState<string>('');
+  const [nome, setNome] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  
+  // Restoring email variables that I accidentally removed
+  const [emailTestResult, setEmailTestResult] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/imobiliaria')
+      .then(res => res.json())
+      .then(data => {
+        if (data.config_pais) {
+          setCountryMode(data.config_pais);
+          setImobId(data.id);
+          setNome(data.nome_fantasia);
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  const isPT = countryMode === 'PT';
+
+  const channels: ChannelConfig = isPT
+    ? { form: true, email: true, webhook: false, whatsapp: false }
+    : { form: true, email: false, webhook: true, whatsapp: true };
+
+  const webhookUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/ingest/grupozap?imob_id=${imobId}`
+    : `/api/ingest/grupozap?imob_id=${imobId}`;
+
+  async function updateCountry(val: 'PT' | 'BR') {
+    setLoading(true);
+    await fetch('/api/imobiliaria', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config_pais: val }),
+    });
+    setCountryMode(val);
+    setLoading(false);
+    // Usually reload page so layout contexts adapt securely
+    window.location.reload();
+  }
+
+  async function testEmailConnection() {
+    setTesting(true);
+    setEmailTestResult(null);
+    try {
+      const res = await fetch('/api/ingest/email?test=true', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setEmailTestResult(`✅ Sucesso! ${data.processed} lead(s) encontrado(s) no teste.`);
+      } else {
+        setEmailTestResult(`❌ Erro: ${data.error || 'Falha na conexão'}`);
+      }
+    } catch {
+      setEmailTestResult('❌ Erro de conexão com o servidor');
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  if (loading) return <div className="p-8 text-center text-slate-500">A carregar configurações...</div>;
+
+  return (
+    <div className="animate-fade-in">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-text-primary">Configurações</h1>
+        <p className="text-text-secondary text-sm mt-1">Configuração do sistema e canais de entrada</p>
+      </div>
+
+      {/* Tenant Context Panel */}
+      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">⚙️ Espaço de Trabalho (Tenant)</h2>
+            <p className="text-sm text-text-secondary mt-1">Conta: <strong>{nome}</strong> ({imobId})</p>
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-text-primary">Interruptor de País Base</h3>
+            <p className="text-sm text-text-secondary">Isto afeta moedas, formulários e integração webhook em toda a empresa ao vivo.</p>
+          </div>
+          
+          <div className="flex bg-white p-1 rounded-lg border border-slate-200">
+            <button
+              onClick={() => updateCountry('PT')}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${isPT ? 'bg-primary text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              🇵🇹 Portugal
+            </button>
+            <button
+              onClick={() => updateCountry('BR')}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${!isPT ? 'bg-primary text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              🇧🇷 Brasil
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Country Info View */}
+      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Dicionário Ativo Global</h2>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-3xl">
+            {isPT ? '🇵🇹' : '🇧🇷'}
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-text-primary">{isPT ? 'Portugal' : 'Brasil'}</h3>
+            <div className="flex items-center gap-3 mt-1 text-sm text-text-secondary">
+              <span>Moeda: <strong>{isPT ? 'EUR (€)' : 'BRL (R$)'}</strong></span>
+              <span>•</span>
+              <span>{isPT ? 'Tipologia: T0–T5+' : 'Quartos: 1–4+'}</span>
+            </div>
+            <p className="text-xs text-text-muted mt-1.5">
+              Reflete de forma dinâmica no Motor em todo o Hub.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Channels */}
+      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Canais de entrada</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Form */}
+          <div className={`rounded-xl border-2 p-4 ${channels.form ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📝</span>
+                <h3 className="font-medium text-text-primary">Formulário</h3>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.form ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                {channels.form ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted">Leads recebidos via formulário público do site</p>
+          </div>
+
+          {/* Email */}
+          <div className={`rounded-xl border-2 p-4 ${channels.email ? 'border-purple-200 bg-purple-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📧</span>
+                <h3 className="font-medium text-text-primary">E-mail eGO</h3>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.email ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-500'}`}>
+                {channels.email ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted">Parser de notificações de portais via IMAP (Idealista, Imovirtual, etc.)</p>
+          </div>
+
+          {/* Webhook */}
+          <div className={`rounded-xl border-2 p-4 ${channels.webhook ? 'border-orange-200 bg-orange-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌐</span>
+                <h3 className="font-medium text-text-primary">Webhook Grupo OLX</h3>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.webhook ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
+                {channels.webhook ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted">Recebe leads de ZAP Imóveis, OLX e VivaReal via Canal Pro</p>
+          </div>
+
+          {/* WhatsApp */}
+          <div className={`rounded-xl border-2 p-4 ${channels.whatsapp ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💬</span>
+                <h3 className="font-medium text-text-primary">WhatsApp</h3>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.whatsapp ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                {channels.whatsapp ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted">Recepção de leads diretos pelo WhatsApp Business</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Config (PT only) */}
+      {isPT && (
+        <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">📧 Configuração E-mail (IMAP)</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-text-muted">Host IMAP:</span>
+                <span className="ml-2 text-text-primary font-medium">{process.env.EMAIL_IMAP_HOST || '(não configurado)'}</span>
+              </div>
+              <div>
+                <span className="text-text-muted">Porta:</span>
+                <span className="ml-2 text-text-primary font-medium">{process.env.EMAIL_IMAP_PORT || '993'}</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-text-muted">Utilizador:</span>
+                <span className="ml-2 text-text-primary font-medium">{process.env.EMAIL_IMAP_USER || '(não configurado)'}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-border-light">
+              <button
+                onClick={testEmailConnection}
+                disabled={testing}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50"
+              >
+                {testing ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Testando...
+                  </>
+                ) : (
+                  <>📧 Testar conexão e-mail</>
+                )}
+              </button>
+
+              {emailTestResult && (
+                <p className={`mt-3 text-sm ${emailTestResult.startsWith('✅') ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {emailTestResult}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Webhook URL (BR only) */}
+      {!isPT && (
+        <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">🌐 Webhook Grupo OLX</h2>
+          <p className="text-sm text-text-secondary mb-3">
+            Configure esta URL no painel do Canal Pro para receber leads automaticamente:
+          </p>
+
+          <div className="flex items-center gap-2">
+            <code className="flex-1 bg-slate-900 text-emerald-400 px-4 py-3 rounded-lg text-sm font-mono">
+              POST {webhookUrl}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(webhookUrl);
+                alert('URL copiada!');
+              }}
+              className="px-3 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm transition-all"
+              title="Copiar URL"
+            >
+              📋
+            </button>
+          </div>
+
+          <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+            <p className="text-xs text-amber-700">
+              <strong>Header de autenticação:</strong> Adicione o header <code className="bg-amber-100 px-1 rounded">x-webhook-secret</code> ou <code className="bg-amber-100 px-1 rounded">Authorization: Bearer {'<secret>'}</code> com o valor definido em <code className="bg-amber-100 px-1 rounded">GRUPOZAP_WEBHOOK_SECRET</code>.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* API Endpoints Reference */}
+      <div className="bg-white rounded-xl border border-border-light p-6">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">📡 Endpoints da API</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border-light">
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Método</th>
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Endpoint</th>
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Descrição</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-light">
+              <tr>
+                <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
+                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads?imob_id={`\${id}`}</td>
+                <td className="py-2 px-3 text-text-secondary">Criar lead (formulário)</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
+                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/email</td>
+                <td className="py-2 px-3 text-text-secondary">Trigger parse e-mail (PT)</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
+                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/grupozap</td>
+                <td className="py-2 px-3 text-text-secondary">Webhook Grupo OLX (BR)</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-3"><span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">GET</span></td>
+                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads</td>
+                <td className="py-2 px-3 text-text-secondary">Listar leads</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-3"><span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">PATCH</span></td>
+                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads/[id]</td>
+                <td className="py-2 px-3 text-text-secondary">Atualizar status lead</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

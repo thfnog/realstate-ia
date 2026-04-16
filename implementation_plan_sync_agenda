@@ -1,0 +1,40 @@
+# Integração Externa: Sincronização de E-mail (Google Calendar / Outlook)
+
+A necessidade de sincronizar a **Agenda** do ImobIA diretamente para os telemóveis e e-mails dos corretores é perfeitamente viável e fundamental para o ecossistema. Existem arquiteturas diferentes para atingir este objetivo dependendo do orçamento e complexidade, contudo para garantir compatibilidade *Universal* (Apple, Google, Microsoft), a melhor opção é o uso do protocolo base `iCalendar (.ics)`.
+
+## Propostas Arquiteturais 
+
+### Opção A: Subscrição de Calendário (WebCal) - *🌟 Recomendado*
+Nesta abordagem, o ImobIA gera um "Link Secreto de Calendário" para cada Corretor.
+O corretor copia esse link uma única vez e cola no seu Google Calendar ou Outlook como "Adicionar Calendário por URL".
+- **Vantagem:** Só precisa ser configurado uma vez. Quaisquer Visitas, Reuniões ou Plantões novos adicionados no ImobIA aparecerão milagrosamente no Google Calendar do Corretor, juntamente com o nome do Lead e a morada.
+
+### Opção B: Convites por E-mail (SMTP + ICS)
+Cada vez que a chefia adiciona uma visita na Agenda ImobIA, o sistema dispara um E-mail real (via envio `Nodemailer` ou `Resend`) contendo o invite formal padrão.
+- **Vantagem:** O corretor recebe uma notificação na caixa de entrada com os botões "Aceitar/Recusar" e este email entra automaticamente no calendário.
+- **Desvantagem:** Exige configuração de um servidor de disparo de e-mails para garantir que não caem na caixa de SPAM e não se sincroniza em "Real-Time" se um calendário mudar de horário sem disparar um novo e-mail.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Qual a sua preferência MVP?** 
+> A **Opção A (Subscrição Sincrona de URL WebCal)** é de longe a prática mais usada em ferramentas SaaS modernas (como Airbnb, Booking, Calendly) devido ao seu atrito nulo com as políticas Antispam de e-mail. Caso deseje avançar com a Opção A, nós criaremos uma nova rota `GET /api/calendar/[corretor_id].ics` que cospe o calendário exato do corretor. Posso prosseguir com esta arquitetura?
+
+## Proposed Changes (Para a Opção A)
+
+### O Motor `.ics`
+#### [NEW] `src/app/api/calendar/[id]/route.ts`
+- Rota pura exportadora de texto no Header (`text/calendar`).
+- Lê a base de dados em busca dos `Eventos` em que o Corretor X e a Agência Y participam.
+- Converte essas structs para sintaxe padrão `BEGIN:VCALENDAR... BEGIN:VEVENT...`.
+
+### A Secção de "Sincronização" no UI
+#### [MODIFY] `src/app/admin/corretores/page.tsx` (Ou no modal de Edição de Corretor)
+- Adição de um botão "Gerar Link de Sincronização Google/Apple" e botão "Copiar Link`🔗`".
+- Um pequeno modal de instrução mostrando ao gestor ou ao próprio utilizador como colar o link na sua aplicação de e-mail do sistema operativo.
+
+## Open Questions
+
+Se a decisão for a Opção A, teremos de expor a rota publicamente (ou num hash longo aleatório, ex: `/api/calendar/sync_token_4j93fa.ics`) para que o Google Servers a consigam ler do exterior no ambiente Cloud. Confirma a aceitação dessa infraestrutura criptográfica leve?
