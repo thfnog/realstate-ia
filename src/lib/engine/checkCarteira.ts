@@ -7,7 +7,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase';
 
-export async function checkCarteira(telefone: string): Promise<{
+export async function checkCarteira(telefone: string, imobiliariaId: string): Promise<{
   isExisting: boolean;
   corretorId: string | null;
   leadAnterior: { nome: string; corretor_id: string | null } | null;
@@ -16,6 +16,7 @@ export async function checkCarteira(telefone: string): Promise<{
     .from('leads')
     .select('id, nome, corretor_id')
     .eq('telefone', telefone)
+    .eq('imobiliaria_id', imobiliariaId)
     .order('criado_em', { ascending: false })
     .limit(1);
 

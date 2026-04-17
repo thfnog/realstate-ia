@@ -40,23 +40,26 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
 
     // Step 1: Check portfolio
     console.log(`📋 Step 1: Verificando carteira (${config.flag} ${config.label})...`);
-    const carteira = await checkCarteira(lead.telefone);
+    const carteira = await checkCarteira(lead.telefone, lead.imobiliaria_id);
 
     let corretor: Corretor | null = null;
     let corretorAnteriorNome: string | undefined;
 
     if (carteira.isExisting && carteira.corretorId) {
       // Existing client — fetch the assigned broker
-      console.log(`  → Cliente existente. Corretor anterior: ${carteira.corretorId}`);
       const { data } = await supabaseAdmin
         .from('corretores')
         .select('*')
         .eq('id', carteira.corretorId)
+        .eq('ativo', true) // REGRA DO DONO: Só mantém se o corretor estiver ativo
         .single();
 
       if (data) {
+        console.log(`  → Cliente existente. Corretor mantido da carteira: ${data.nome}`);
         corretor = data as Corretor;
         corretorAnteriorNome = corretor.nome;
+      } else {
+        console.log(`  → Cliente existente, mas corretor anterior (${carteira.corretorId}) está inativo ou não existe nas tabelas desta agência.`);
       }
     }
 

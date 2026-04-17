@@ -3,6 +3,37 @@ import { supabaseAdmin } from '@/lib/supabase';
 import * as mock from '@/lib/mockDb';
 import type { StatusLead } from '@/lib/database.types';
 
+// GET: Get lead details
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    if (mock.isMockMode()) {
+      const lead = mock.getLeadById(id);
+      if (!lead) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+      return NextResponse.json(lead);
+    }
+
+    const { data: lead, error } = await supabaseAdmin
+      .from('leads')
+      .select('*, corretores(*)')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(lead);
+  } catch (err) {
+    console.error('SERVER ERROR GET LEAD:', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
+
 // PATCH: Update lead status
 export async function PATCH(
   request: Request,

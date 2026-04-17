@@ -106,10 +106,9 @@ export function createUsuario(data: Omit<Usuario, 'id' | 'criado_em'>): Usuario 
 
 // ===== Corretores =====
 
-export function getCorretores(): Corretor[] {
-  return [...corretores].sort(
-    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
-  );
+export function getCorretores(imobId?: string): Corretor[] {
+  if (imobId) return corretores.filter((c) => c.imobiliaria_id === imobId);
+  return [...corretores];
 }
 
 export function getCorretorById(id: string): Corretor | undefined {
@@ -195,8 +194,8 @@ export function getLeadById(id: string): Lead | undefined {
   return leads.find((l) => l.id === id);
 }
 
-export function getLeadByTelefone(telefone: string): Lead | undefined {
-  return leads.find((l) => l.telefone === telefone);
+export function getLeadByTelefone(telefone: string, imobId?: string): Lead | undefined {
+  return leads.find((l) => l.telefone === telefone && (!imobId || l.imobiliaria_id === imobId));
 }
 
 export function createLead(data: Omit<Lead, 'id' | 'criado_em'>): Lead {

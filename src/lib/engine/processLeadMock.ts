@@ -29,15 +29,21 @@ export async function processLeadMockMode(lead: Lead): Promise<ProcessResult> {
 
     // Step 1: Check portfolio
     console.log(`📋 Step 1: Verificando carteira (${config.flag} ${config.label})...`);
-    const existingLead = mock.getLeadByTelefone(lead.telefone);
+    const existingLead = mock.getLeadByTelefone(lead.telefone, lead.imobiliaria_id);
     const isExisting = existingLead !== undefined && existingLead.id !== lead.id;
     let corretor: Corretor | null = null;
     let corretorAnteriorNome: string | undefined;
 
     if (isExisting && existingLead?.corretor_id) {
-      corretor = mock.getCorretorById(existingLead.corretor_id) || null;
-      if (corretor) corretorAnteriorNome = corretor.nome;
-      console.log(`  → Cliente existente. Corretor anterior: ${corretorAnteriorNome}`);
+      const bFound = mock.getCorretorById(existingLead.corretor_id);
+      // REGRA DO DONO: Só mantém se o corretor ainda estiver ativo na imobiliária
+      if (bFound && bFound.ativo) {
+        corretor = bFound;
+        corretorAnteriorNome = corretor.nome;
+        console.log(`  → Cliente existente. Corretor mantido da carteira: ${corretorAnteriorNome}`);
+      } else {
+        console.log(`  → Cliente existente, mas corretor anterior (${existingLead.corretor_id}) está inativo ou não existe. Seguindo para escala.`);
+      }
     }
 
     // Step 2: Assign broker
@@ -50,11 +56,11 @@ export async function processLeadMockMode(lead: Lead): Promise<ProcessResult> {
         corretor = escalaHoje[0].corretores;
         console.log(`  ✅ Corretor de plantão hoje: ${corretor.nome}`);
       } else {
-        // Fallback: first active broker
-        const allCorretores = mock.getCorretores().filter((c) => c.ativo);
+        // Fallback: first active broker of THIS imobiliaria
+        const allCorretores = mock.getCorretores(lead.imobiliaria_id).filter((c) => c.ativo);
         if (allCorretores.length > 0) {
-          corretor = allCorretores[allCorretores.length - 1]; // Oldest first
-          console.log(`  ⚠️ Sem plantão. Atribuído: ${corretor.nome}`);
+          corretor = allCorretores[0]; // First active
+          console.log(`  ⚠️ Sem plantão. Atribuído por fila local: ${corretor.nome}`);
         }
       }
     }
