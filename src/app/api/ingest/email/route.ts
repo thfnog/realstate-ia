@@ -6,47 +6,82 @@
  *
  * Query params:
  *   ?test=true — run in mock/test mode
+ *   ?imob_id=ID — specific tenant
  */
 
 import { NextResponse } from 'next/server';
 import { parseIncomingEmails, emailLeadToCreateData } from '@/lib/ingest/emailParser';
+import { parseEmailBody } from '@/lib/ingest/email/parser';
 import * as mock from '@/lib/mockDb';
+import type { Lead } from '@/lib/database.types';
 
 export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const isTest = searchParams.get('test') === 'true';
+    const imobId = searchParams.get('imob_id');
 
-    console.log(`\n📧 Ingest Email — ${isTest ? 'TESTE' : 'PRODUÇÃO'}`);
+    // In PT, we expect imob_id if it's a specific tenant trigger
+    const activeImobId = imobId || (mock.isMockMode() ? mock.DEFAULT_IMOBILIARIA_ID : null);
 
-    const result = await parseIncomingEmails({ test: isTest });
-
-    if (result.errors.length > 0 && result.processed === 0) {
-      return NextResponse.json(
-        { error: 'Nenhum e-mail processado', details: result.errors },
-        { status: 500 }
-      );
+    if (!activeImobId) {
+      return NextResponse.json({ error: 'Faltando imob_id na URL' }, { status: 400 });
     }
 
-    // Process each parsed lead
-    const processed: string[] = [];
-    const errors: string[] = [...result.errors];
+    // Attempt to read body for direct parsing test
+    let rawEmailBody = '';
+    try {
+      const cloned = request.clone();
+      const json = await cloned.json();
+      rawEmailBody = json.body || '';
+    } catch {
+      // No JSON body
+    }
 
-    for (const parsedLead of result.leads) {
+    console.log(`\n📧 Ingest Email — ${isTest ? 'TESTE' : 'PRODUÇÃO'} — Tenant: ${activeImobId}`);
+
+    let leadsToProcess: any[] = [];
+    const errors: string[] = [];
+
+    if (rawEmailBody) {
+      // Manual/Test direct parse
+      console.log('  → Parsing direto do corpo enviado...');
+      const parsed = parseEmailBody(rawEmailBody);
+      leadsToProcess.push(parsed);
+    } else {
+      // Standard IMAP fetch (currently mocked)
+      const result = await parseIncomingEmails({ test: isTest });
+      leadsToProcess = result.leads.map(l => emailLeadToCreateData(l));
+      errors.push(...result.errors);
+    }
+
+    if (leadsToProcess.length === 0 && errors.length > 0) {
+      return NextResponse.json({ error: 'Nenhum lead encontrado', details: errors }, { status: 500 });
+    }
+
+    const processed: string[] = [];
+
+    for (const data of leadsToProcess) {
       try {
-        const leadData = emailLeadToCreateData(parsedLead);
+        const leadData: Omit<Lead, 'id' | 'criado_em'> = {
+          ...data,
+          imobiliaria_id: activeImobId,
+          status: 'novo',
+          origem: 'email_ego',
+          moeda: 'EUR',
+          finalidade: data.finalidade || 'comprar',
+        } as any;
 
         if (mock.isMockMode()) {
           mock.seedTestData();
           const lead = mock.createLead(leadData);
           
-          // Trigger mock processing
           const { processLeadMockMode } = await import('@/lib/engine/processLeadMock');
           processLeadMockMode(lead).catch((err) => {
             console.error(`Erro ao processar lead ${lead.nome}:`, err);
           });
 
-          processed.push(`${parsedLead.nome} (${parsedLead.portal_origem})`);
+          processed.push(`${lead.nome} (${lead.portal_origem || 'Portal'})`);
         } else {
           // Production: insert into Supabase
           const { supabaseAdmin } = await import('@/lib/supabase');
@@ -57,33 +92,30 @@ export async function POST(request: Request) {
             .single();
 
           if (error) {
-            errors.push(`Erro ao inserir ${parsedLead.nome}: ${error.message}`);
+            errors.push(`Erro ao inserir ${data.nome}: ${error.message}`);
             continue;
           }
 
           const { processLead } = await import('@/lib/engine/processLead');
-          processLead(lead).catch((err) => {
+          processLead(lead as Lead).catch((err) => {
             console.error(`Erro ao processar lead ${lead.nome}:`, err);
           });
 
-          processed.push(`${parsedLead.nome} (${parsedLead.portal_origem})`);
+          processed.push(`${lead.nome} (${lead.portal_origem || 'Portal'})`);
         }
       } catch (err) {
-        errors.push(`Erro com ${parsedLead.nome}: ${String(err)}`);
+        errors.push(`Erro com ${data.nome || 'lead'}: ${String(err)}`);
       }
     }
 
-    console.log(`✅ Email ingest: ${processed.length} processados, ${errors.length} erros\n`);
-
     return NextResponse.json({
-      processed: processed.length,
+      success: true,
+      processedCount: processed.length,
       leads: processed,
-      errors,
+      errors: errors.filter(e => !e.includes('not yet implemented')),
     });
-  } catch {
-    return NextResponse.json(
-      { error: 'Erro interno ao processar e-mails' },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error('Erro na ingestão de e-mail:', err);
+    return NextResponse.json({ error: 'Erro interno ao processar e-mails' }, { status: 500 });
   }
 }

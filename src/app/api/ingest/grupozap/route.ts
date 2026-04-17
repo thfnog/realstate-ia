@@ -55,6 +55,13 @@ function portalLabel(source: string): string {
 
 export async function POST(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const imobId = searchParams.get('imob_id');
+
+    if (!imobId) {
+      return NextResponse.json({ error: 'Faltando imob_id na URL do webhook' }, { status: 400 });
+    }
+
     // Validate webhook secret
     const secret = process.env.GRUPOZAP_WEBHOOK_SECRET;
     if (secret) {
@@ -64,40 +71,61 @@ export async function POST(request: Request) {
       }
     }
 
-    const body: GrupoZapPayload = await request.json();
+    const body = await request.json();
+
+    // Standardize fields from Canal Pro / Grupo OLX unified payload
+    // Note: They sometimes wrap fields in 'lead' or 'contact' or send them flat.
+    const name = body.name || body.lead?.name || body.contact?.name;
+    const phone = body.phone || body.lead?.phone || body.contact?.phone;
+    const email = body.email || body.lead?.email || body.contact?.email;
+    const ddd = body.ddd || body.lead?.ddd || '';
+    const message = body.message || body.lead?.message || body.contact?.message;
+    const listingId = body.clientListingId || body.originListingId || body.listing?.id;
+    const source = body.leadOrigin || body.source || 'ZAP';
+    const type = body.extraData?.leadType || 'CONTACT_FORM';
+    const finalidade = body.transactionType === 'RENT' ? 'alugar' : 'comprar';
 
     // Validate required fields
-    if (!body.lead?.name || !body.lead?.phone) {
+    if (!name || (!phone && !email)) {
       return NextResponse.json(
-        { error: 'Campos obrigatórios: lead.name, lead.phone' },
+        { error: 'Dados insuficientes (nome e contato necessários)' },
         { status: 400 }
       );
     }
 
-    console.log(`\n🌐 Webhook Grupo OLX — ${body.source} — ${body.lead.name}`);
+    const fullPhone = ddd ? `${ddd}${phone}` : phone;
+
+    console.log(`\n🌐 Webhook Grupo OLX — ${source} — ${name}`);
 
     const leadData: Omit<Lead, 'id' | 'criado_em'> = {
-      nome: body.lead.name,
-      telefone: normalizePhone(body.lead.phone),
+      imobiliaria_id: imobId,
+      nome: name,
+      telefone: normalizePhone(fullPhone),
       origem: 'webhook_grupozap' as LeadSource,
-      portal_origem: portalLabel(body.source),
+      portal_origem: source,
       moeda: 'BRL' as Moeda,
-      finalidade: null,
+      finalidade: finalidade as any,
       prazo: null,
       pagamento: null,
-      descricao_interesse: body.lead.message || (body.listing?.title ? `Interesse em: ${body.listing.title}` : null),
+      descricao_interesse: message || (listingId ? `Referência Imóvel: ${listingId} (${type})` : null),
       tipo_interesse: null,
       orcamento: null,
       area_interesse: null,
       quartos_interesse: null,
       vagas_interesse: null,
-      bairros_interesse: body.listing?.address ? [body.listing.address] : null,
+      bairros_interesse: null,
       corretor_id: null,
       status: 'novo',
     };
 
     if (mock.isMockMode()) {
       mock.seedTestData();
+      // Ensure imob exists in mock
+      const imob = mock.getImobiliariaById(imobId);
+      if (!imob) {
+        return NextResponse.json({ error: 'Imobiliária não encontrada no Mock' }, { status: 404 });
+      }
+
       const lead = mock.createLead(leadData);
 
       const { processLeadMockMode } = await import('@/lib/engine/processLeadMock');
@@ -105,7 +133,7 @@ export async function POST(request: Request) {
         console.error(`Erro ao processar lead webhook ${lead.nome}:`, err);
       });
 
-      console.log(`✅ Lead criado via webhook: ${lead.nome} (${body.source})\n`);
+      console.log(`✅ Lead criado via webhook (MOCK): ${lead.nome} (${source})\n`);
       return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
     }
 
@@ -127,9 +155,10 @@ export async function POST(request: Request) {
       console.error(`Erro ao processar lead webhook ${lead.nome}:`, err);
     });
 
-    console.log(`✅ Lead webhook processado: ${lead.nome} (${body.source})\n`);
+    console.log(`✅ Lead webhook processado: ${lead.nome} (${source})\n`);
     return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('Erro grave no webhook:', err);
     return NextResponse.json(
       { error: 'Erro interno ao processar webhook' },
       { status: 500 }
