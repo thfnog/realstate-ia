@@ -135,7 +135,7 @@ export default function ConfigPage() {
       <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
         <h2 className="text-lg font-semibold text-text-primary mb-4">Canais de entrada</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Form */}
+          {/* Form - Global */}
           <div className={`rounded-xl border-2 p-4 ${channels.form ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -143,53 +143,59 @@ export default function ConfigPage() {
                 <h3 className="font-medium text-text-primary">Formulário</h3>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.form ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                {channels.form ? 'Ativo' : 'Inativo'}
+                Ativo
               </span>
             </div>
             <p className="text-xs text-text-muted">Leads recebidos via formulário público do site</p>
           </div>
 
-          {/* Email */}
-          <div className={`rounded-xl border-2 p-4 ${channels.email ? 'border-purple-200 bg-purple-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📧</span>
-                <h3 className="font-medium text-text-primary">E-mail eGO</h3>
+          {/* Email - PT Only */}
+          {isPT && (
+            <div className={`rounded-xl border-2 p-4 ${channels.email ? 'border-purple-200 bg-purple-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📧</span>
+                  <h3 className="font-medium text-text-primary">E-mail eGO</h3>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.email ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-500'}`}>
+                  Ativo
+                </span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.email ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-500'}`}>
-                {channels.email ? 'Ativo' : 'Inativo'}
-              </span>
+              <p className="text-xs text-text-muted">Parser de notificações de portais via IMAP (Idealista, Imovirtual, etc.)</p>
             </div>
-            <p className="text-xs text-text-muted">Parser de notificações de portais via IMAP (Idealista, Imovirtual, etc.)</p>
-          </div>
+          )}
 
-          {/* Webhook */}
-          <div className={`rounded-xl border-2 p-4 ${channels.webhook ? 'border-orange-200 bg-orange-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🌐</span>
-                <h3 className="font-medium text-text-primary">Webhook Grupo OLX</h3>
+          {/* Webhook - BR Only */}
+          {!isPT && (
+            <div className={`rounded-xl border-2 p-4 ${channels.webhook ? 'border-orange-200 bg-orange-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🌐</span>
+                  <h3 className="font-medium text-text-primary">Webhook Grupo OLX</h3>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.webhook ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
+                  Ativo
+                </span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.webhook ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
-                {channels.webhook ? 'Ativo' : 'Inativo'}
-              </span>
+              <p className="text-xs text-text-muted">Recebe leads de ZAP Imóveis, OLX e VivaReal via Canal Pro</p>
             </div>
-            <p className="text-xs text-text-muted">Recebe leads de ZAP Imóveis, OLX e VivaReal via Canal Pro</p>
-          </div>
+          )}
 
-          {/* WhatsApp */}
-          <div className={`rounded-xl border-2 p-4 ${channels.whatsapp ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">💬</span>
-                <h3 className="font-medium text-text-primary">WhatsApp</h3>
+          {/* WhatsApp - BR Only (Currently) */}
+          {!isPT && (
+            <div className={`rounded-xl border-2 p-4 ${channels.whatsapp ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">💬</span>
+                  <h3 className="font-medium text-text-primary">WhatsApp</h3>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.whatsapp ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                  Ativo
+                </span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.whatsapp ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                {channels.whatsapp ? 'Ativo' : 'Inativo'}
-              </span>
+              <p className="text-xs text-text-muted">Recepção de leads diretos pelo WhatsApp Business</p>
             </div>
-            <p className="text-xs text-text-muted">Recepção de leads diretos pelo WhatsApp Business</p>
-          </div>
+          )}
         </div>
       </div>
 
@@ -289,16 +295,20 @@ export default function ConfigPage() {
                 <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads?imob_id={`\${id}`}</td>
                 <td className="py-2 px-3 text-text-secondary">Criar lead (formulário)</td>
               </tr>
-              <tr>
-                <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
-                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/email</td>
-                <td className="py-2 px-3 text-text-secondary">Trigger parse e-mail (PT)</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
-                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/grupozap</td>
-                <td className="py-2 px-3 text-text-secondary">Webhook Grupo OLX (BR)</td>
-              </tr>
+              {isPT && (
+                <tr>
+                  <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
+                  <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/email</td>
+                  <td className="py-2 px-3 text-text-secondary">Trigger parse e-mail (PT)</td>
+                </tr>
+              )}
+              {!isPT && (
+                <tr>
+                  <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
+                  <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/grupozap</td>
+                  <td className="py-2 px-3 text-text-secondary">Webhook Grupo OLX (BR)</td>
+                </tr>
+              )}
               <tr>
                 <td className="py-2 px-3"><span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">GET</span></td>
                 <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads</td>
