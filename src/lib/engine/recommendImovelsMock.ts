@@ -9,8 +9,8 @@ import { formatCurrency, getConfig } from '@/lib/countryConfig';
 import type { Lead } from '@/lib/database.types';
 import type { ScoredImovel } from './recommendImoveis';
 
-export function recommendImovelsMock(lead: Lead): ScoredImovel[] {
-  const config = getConfig();
+export function recommendImovelsMock(lead: Lead, configIn?: any): ScoredImovel[] {
+  const config = configIn || getConfig();
   let imoveis = mock.getImoveis('disponivel');
 
   // v2: Filter by compatible currency

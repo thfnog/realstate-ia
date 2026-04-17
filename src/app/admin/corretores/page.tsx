@@ -8,6 +8,7 @@ export default function CorretoresPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [form, setForm] = useState({ nome: '', telefone: '', email: '', ativo: true });
 
   async function fetchCorretores() {
@@ -75,7 +76,8 @@ export default function CorretoresPage() {
   function copyWebcalLink(id: string) {
     const uri = `${window.location.origin}/api/calendar/${id}.ics`;
     navigator.clipboard.writeText(uri).then(() => {
-      alert('Link WebCal (iCalendar) copiado com sucesso!\n\nAbra o seu Google Calendar -> Definições -> "Adicionar calendário" -> "A partir do URL" e cole este link para receber marcações de visitas automaticamente no telemóvel.');
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
     }).catch(() => {
       alert(`Link WebCal para partilha:\n${uri}`);
     });
@@ -149,11 +151,17 @@ export default function CorretoresPage() {
                   </button>
                   <button
                     onClick={() => copyWebcalLink(c.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-alt border border-slate-200 hover:bg-white text-slate-700 hover:text-primary hover:border-primary/40 text-xs font-semibold transition-all"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                      copiedId === c.id 
+                        ? 'bg-green-500 text-white border-green-600 shadow-inner' 
+                        : 'bg-surface-alt border-slate-200 hover:bg-white text-slate-700 hover:text-primary hover:border-primary/40'
+                    }`}
                     title="Copiar Link iCalendar / WebCal para Sincronização"
                   >
-                    <span>📅</span>
-                    <span className="hidden sm:inline">WebCal</span>
+                    <span>{copiedId === c.id ? '✅' : '📅'}</span>
+                    <span className="hidden sm:inline">
+                      {copiedId === c.id ? 'Copiado!' : 'WebCal'}
+                    </span>
                   </button>
                   <button onClick={() => openEdit(c)} className="text-primary hover:text-primary-hover text-xs font-medium shrink-0">
                     Editar

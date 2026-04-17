@@ -8,6 +8,7 @@ import * as mock from '@/lib/mockDb';
 import type { Lead, Corretor } from '@/lib/database.types';
 import { recommendImovelsMock } from './recommendImovelsMock';
 import { sendBriefing } from './sendBriefing';
+import { getConfigByCode } from '@/lib/countryConfig';
 
 export interface ProcessResult {
   success: boolean;
@@ -22,8 +23,12 @@ export async function processLeadMockMode(lead: Lead): Promise<ProcessResult> {
   console.log(`\n🚀 [MOCK] Processando lead: ${lead.nome} (${lead.telefone})`);
 
   try {
+    // Step 0: Regionalization
+    const imob = mock.getImobiliariaById(lead.imobiliaria_id);
+    const config = getConfigByCode(imob?.config_pais || 'PT');
+
     // Step 1: Check portfolio
-    console.log('📋 Step 1: Verificando carteira...');
+    console.log(`📋 Step 1: Verificando carteira (${config.flag} ${config.label})...`);
     const existingLead = mock.getLeadByTelefone(lead.telefone);
     const isExisting = existingLead !== undefined && existingLead.id !== lead.id;
     let corretor: Corretor | null = null;
@@ -67,13 +72,14 @@ export async function processLeadMockMode(lead: Lead): Promise<ProcessResult> {
     const imoveis = recommendImovelsMock(lead);
 
     // Step 4: Send briefing
-    console.log('📱 Step 4: Enviando briefing...');
+    console.log('📱 Step 4: Enviando briefing regionalizado...');
     const whatsappResult = await sendBriefing({
       lead,
       corretor,
       imoveis,
       isExistingClient: isExisting,
       corretorAnteriorNome,
+      config,
     });
 
     console.log(`✅ Lead processado com sucesso! Corretor: ${corretor.nome}\n`);

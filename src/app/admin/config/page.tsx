@@ -23,14 +23,20 @@ export default function ConfigPage() {
     fetch('/api/imobiliaria')
       .then(res => res.json())
       .then(data => {
-        if (data.config_pais) {
+        if (data.id) {
           setCountryMode(data.config_pais);
           setImobId(data.id);
           setNome(data.nome_fantasia);
+          // NEW READ ONLY FIELDS
+          setFiscalId(data.identificador_fiscal || '-');
+          setRegId(data.numero_registro || '-');
         }
         setLoading(false);
       });
   }, []);
+  
+  const [fiscalId, setFiscalId] = useState('');
+  const [regId, setRegId] = useState('');
 
   const isPT = countryMode === 'PT';
 
@@ -42,18 +48,7 @@ export default function ConfigPage() {
     ? `${window.location.origin}/api/ingest/grupozap?imob_id=${imobId}`
     : `/api/ingest/grupozap?imob_id=${imobId}`;
 
-  async function updateCountry(val: 'PT' | 'BR') {
-    setLoading(true);
-    await fetch('/api/imobiliaria', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config_pais: val }),
-    });
-    setCountryMode(val);
-    setLoading(false);
-    // Usually reload page so layout contexts adapt securely
-    window.location.reload();
-  }
+
 
   async function testEmailConnection() {
     setTesting(true);
@@ -82,36 +77,35 @@ export default function ConfigPage() {
         <p className="text-text-secondary text-sm mt-1">Configuração do sistema e canais de entrada</p>
       </div>
 
-      {/* Tenant Context Panel */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">⚙️ Espaço de Trabalho (Tenant)</h2>
-            <p className="text-sm text-text-secondary mt-1">Conta: <strong>{nome}</strong> ({imobId})</p>
+      {/* Tenant Identity Panel */}
+      <div className="bg-white rounded-xl border border-border-light overflow-hidden mb-6">
+        <div className="bg-slate-50 border-b border-border-light px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🏢</span>
+            <div>
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Perfil da Agência</h2>
+              <p className="text-xs text-text-secondary">{nome} • ID: {imobId}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200">
+             <span className="text-lg">{isPT ? '🇵🇹' : '🇧🇷'}</span>
+             <span className="text-xs font-bold text-slate-700">{isPT ? 'PORTUGAL' : 'BRASIL'}</span>
           </div>
         </div>
-
-        <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-text-primary">Interruptor de País Base</h3>
-            <p className="text-sm text-text-secondary">Isto afeta moedas, formulários e integração webhook em toda a empresa ao vivo.</p>
+        
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isPT ? 'NIF / NIPC' : 'CNPJ'}</span>
+            <span className="text-sm font-mono font-semibold text-text-primary bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">{fiscalId}</span>
           </div>
-          
-          <div className="flex bg-white p-1 rounded-lg border border-slate-200">
-            <button
-              onClick={() => updateCountry('PT')}
-              disabled={loading}
-              className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${isPT ? 'bg-primary text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
-            >
-              🇵🇹 Portugal
-            </button>
-            <button
-              onClick={() => updateCountry('BR')}
-              disabled={loading}
-              className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${!isPT ? 'bg-primary text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
-            >
-              🇧🇷 Brasil
-            </button>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isPT ? 'Licença AMI' : 'CRECI PJ'}</span>
+            <span className="text-sm font-semibold text-text-primary bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">{regId}</span>
+          </div>
+          <div className="md:col-span-2 p-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
+             <p className="text-[11px] text-indigo-700 font-medium">
+               ℹ️ As configurações regionais (Moeda e Terminologia) são fixadas no registro da agência e não podem ser alteradas para garantir a integridade dos históricos de leads e vendas.
+             </p>
           </div>
         </div>
       </div>

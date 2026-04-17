@@ -58,6 +58,17 @@ export function getImobiliariaById(id: string): Imobiliaria | undefined {
 }
 
 export function createImobiliaria(data: Omit<Imobiliaria, 'id' | 'criado_em'>): Imobiliaria {
+  // Enforce unique strong keys
+  const idExists = imobiliarias.find(i => i.identificador_fiscal === data.identificador_fiscal);
+  if (idExists) {
+    throw new Error('DUPLICATE_IDENTIFIER');
+  }
+
+  const regExists = imobiliarias.find(i => i.numero_registro === data.numero_registro);
+  if (regExists) {
+    throw new Error('DUPLICATE_REGISTRATION');
+  }
+
   const imob: Imobiliaria = {
     id: randomUUID(),
     criado_em: new Date().toISOString(),
@@ -525,6 +536,8 @@ export function seedTestData() {
   // 1. Create Default Imobiliaria
   createImobiliaria({
     nome_fantasia: 'Imobiliária Demonstração',
+    identificador_fiscal: '00000000000',
+    numero_registro: config.code === 'PT' ? 'AMI-0000' : 'CRECI 0000-J',
     plano: 'free',
     config_pais: config.code as 'PT' | 'BR',
   });

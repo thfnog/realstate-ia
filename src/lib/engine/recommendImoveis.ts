@@ -15,6 +15,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
+import { formatCurrency, getConfig } from '@/lib/countryConfig';
 import type { Imovel, Lead } from '@/lib/database.types';
 
 export type ScoredImovel = Imovel & {
@@ -22,7 +23,8 @@ export type ScoredImovel = Imovel & {
   scoreBreakdown: string[];
 };
 
-export async function recommendImoveis(lead: Lead): Promise<ScoredImovel[]> {
+export async function recommendImoveis(lead: Lead, configIn?: any): Promise<ScoredImovel[]> {
+  const config = configIn || getConfig();
   // Fetch all available properties
   const { data: imoveis, error } = await supabaseAdmin
     .from('imoveis')
@@ -62,7 +64,7 @@ export async function recommendImoveis(lead: Lead): Promise<ScoredImovel[]> {
       const maxVal = lead.orcamento * 1.15;
       if (imovel.valor >= minVal && imovel.valor <= maxVal) {
         score += 4;
-        breakdown.push(`Valor R$${imovel.valor.toLocaleString('pt-BR')} (dentro de ±15%): +4`);
+        breakdown.push(`Valor ${formatCurrency(imovel.valor, config)} (±15%): +4`);
       }
     }
 

@@ -5,6 +5,8 @@
 export type Imobiliaria = {
   id: string;
   nome_fantasia: string;
+  identificador_fiscal: string; // CNPJ (BR) or NIF/NIPC (PT)
+  numero_registro: string; // CRECI-PJ (BR) or Licença AMI (PT)
   plano: 'free' | 'pro';
   config_pais: 'PT' | 'BR';
   criado_em: string;

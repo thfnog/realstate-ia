@@ -18,6 +18,7 @@ interface BriefingData {
   imoveis: ScoredImovel[];
   isExistingClient: boolean;
   corretorAnteriorNome?: string;
+  config?: any; // Avoiding circular dependency if possible, or just using getConfigByCode
 }
 
 function formatWhatsAppLink(telefone: string): string {
@@ -30,7 +31,7 @@ function formatWhatsAppLink(telefone: string): string {
  */
 export function buildBriefingMessage(data: BriefingData): string {
   const { lead, corretor, imoveis, isExistingClient, corretorAnteriorNome } = data;
-  const config = getConfig();
+  const config = data.config || getConfig();
 
   const lines: string[] = [];
 

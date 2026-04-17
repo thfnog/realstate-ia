@@ -14,6 +14,7 @@ import { checkCarteira } from './checkCarteira';
 import { assignCorretor } from './assignCorretor';
 import { recommendImoveis } from './recommendImoveis';
 import { sendBriefing } from './sendBriefing';
+import { getConfigByCode } from '@/lib/countryConfig';
 
 export interface ProcessResult {
   success: boolean;
@@ -28,8 +29,17 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
   console.log(`\n🚀 Processando lead: ${lead.nome} (${lead.telefone})`);
 
   try {
+    // Step 0: Fetch Tenant Config (Regionalization)
+    const { data: imob } = await supabaseAdmin
+      .from('imobiliarias')
+      .select('config_pais')
+      .eq('id', lead.imobiliaria_id)
+      .single();
+    
+    const config = getConfigByCode(imob?.config_pais || 'PT');
+
     // Step 1: Check portfolio
-    console.log('📋 Step 1: Verificando carteira...');
+    console.log(`📋 Step 1: Verificando carteira (${config.flag} ${config.label})...`);
     const carteira = await checkCarteira(lead.telefone);
 
     let corretor: Corretor | null = null;
@@ -81,13 +91,14 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
     const imoveis = await recommendImoveis(lead);
 
     // Step 4: Send briefing
-    console.log('📱 Step 4: Enviando briefing...');
+    console.log('📱 Step 4: Enviando briefing regionalizado...');
     const whatsappResult = await sendBriefing({
       lead,
       corretor,
       imoveis,
       isExistingClient: carteira.isExisting,
       corretorAnteriorNome,
+      config, // Pass the regional config
     });
 
     console.log(`✅ Lead processado com sucesso! Corretor: ${corretor.nome}`);

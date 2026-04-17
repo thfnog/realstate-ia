@@ -88,7 +88,14 @@ const configs: Record<CountryCode, CountryConfig> = {
  */
 export function getConfig(): CountryConfig {
   const mode = (process.env.NEXT_PUBLIC_COUNTRY_MODE || 'PT').toUpperCase() as CountryCode;
-  return configs[mode] || configs.PT;
+  return getConfigByCode(mode);
+}
+
+/**
+ * Returns configuration for a specific country code.
+ */
+export function getConfigByCode(code: CountryCode): CountryConfig {
+  return configs[code] || configs.PT;
 }
 
 /**

@@ -12,6 +12,11 @@ function formatDateICS(dateStr: string, addHours = 0): string {
   return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
+function formatDateOnlyICS(dateStr: string): string {
+  // Returns YYYYMMDD for all-day events
+  return dateStr.replace(/-/g, '');
+}
+
 export async function GET(request: Request, context: { params: { token: string } }) {
   try {
     // A token here often comes with .ics extension natively via URL
@@ -23,6 +28,7 @@ export async function GET(request: Request, context: { params: { token: string }
     }
 
     let eventosCorretor: EventoComDetalhes[] = [];
+    let escalaCorretor: any[] = [];
     let imobName = "ImobIA Sync";
 
     if (mock.isMockMode()) {
@@ -36,12 +42,13 @@ export async function GET(request: Request, context: { params: { token: string }
        const corretor = corretores.find(c => c.id === rawId);
        if (!corretor) return new NextResponse('Corretor inválido', { status: 404 });
 
-       // Get Events where this 'Corretor' is scaled or directly assigned
-       // Wait, Eventos can be directly assigned via corretor_id in 'Evento'
-       // Or the Corretor bisa theoretically be retrieved via 'Escala' checking.
-       // The simplest MVP calendar: Get all Events of the Broker's Imobiliaria that they are explicitly assigned to!
+       // Get Events where this 'Corretor' is explicitly assigned
        const allEventos = mock.getEventos();
        eventosCorretor = allEventos.filter(e => e.corretor_id === rawId);
+
+       // Get Escala (Duty days)
+       const allEscala = mock.getEscala();
+       escalaCorretor = allEscala.filter(e => e.corretor_id === rawId);
 
     } else {
        // Cloud db flow
@@ -53,13 +60,14 @@ export async function GET(request: Request, context: { params: { token: string }
 
        if (corErr || !corretor) return new NextResponse('Corretor inválido', { status: 404 });
 
-       const { data: qEvents } = await supabaseAdmin
-        .from('eventos')
-        .select('*, lead:leads(*)')
-        .eq('corretor_id', rawId)
-        .order('data_hora', { ascending: true });
+       // Fetch Events and Escala in parallel
+       const [qEvents, qEscala] = await Promise.all([
+         supabaseAdmin.from('eventos').select('*, lead:leads(*)').eq('corretor_id', rawId).order('data_hora', { ascending: true }),
+         supabaseAdmin.from('escala').select('*').eq('corretor_id', rawId).order('data', { ascending: true })
+       ]);
 
-       if (qEvents) eventosCorretor = qEvents;
+       if (qEvents.data) eventosCorretor = qEvents.data;
+       if (qEscala.data) escalaCorretor = qEscala.data;
     }
 
     // Build the .ics text format natively
@@ -72,11 +80,12 @@ X-WR-CALNAME:${imobName} - Assinaturas e Visitas
 X-WR-TIMEZONE:UTC
 `;
 
+    // 1. Add Scheduled Events (Visits, Meetings, etc)
     for (const evt of eventosCorretor) {
-      if (evt.status === 'cancelado') continue; // Don't sync cancelled events
+      if (evt.status === 'cancelado') continue; 
 
       const startICS = formatDateICS(evt.data_hora);
-      const endICS = formatDateICS(evt.data_hora, 1); // Mocking duration: 1 hour later
+      const endICS = formatDateICS(evt.data_hora, 1); 
       
       const evtTitle = `[${evt.tipo.toUpperCase()}] ${evt.titulo} ${evt.lead ? `(Hospede: ${evt.lead.nome})` : ''}`;
       const evtDesc = evt.descricao || 'Conferir dashboard interno ImobIA';
@@ -91,6 +100,22 @@ SUMMARY:${evtTitle.replace(/\n}/g, ' ')}
 DESCRIPTION:${evtDesc.replace(/\n}/g, ' ')}
 LOCATION:${loc.replace(/\n}/g, ' ')}
 STATUS:CONFIRMED
+END:VEVENT
+`;
+    }
+
+    // 2. Add Duty Days (Escala) as All-Day Events
+    for (const esc of escalaCorretor) {
+      const dateICS = formatDateOnlyICS(esc.data);
+      
+      icsContent += `BEGIN:VEVENT
+UID:${esc.id}@imobia-app.com
+DTSTAMP:${dateICS}T000000Z
+DTSTART;VALUE=DATE:${dateICS}
+SUMMARY:🚩 PLANTÃO ImobIA
+DESCRIPTION:Você está escalado para o plantão neste dia.
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
 END:VEVENT
 `;
     }
