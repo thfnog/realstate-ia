@@ -49,6 +49,7 @@ const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos } = 
 
 // ===== Check if we should use mock =====
 export function isMockMode(): boolean {
+  if (process.env.NEXT_PUBLIC_MOCK_MODE === 'true') return true;
   return !process.env.SUPABASE_URL || process.env.SUPABASE_URL.trim() === '';
 }
 

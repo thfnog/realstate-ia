@@ -29,7 +29,23 @@ export async function signIn(email: string, password: string): Promise<string | 
     }
   }
 
-  const user = getUsuarioByEmail(email);
+  let user;
+
+  if (isMockMode()) {
+    user = getUsuarioByEmail(email);
+  } else {
+    // REAL MODE: Query Supabase
+    const { supabaseAdmin } = await import('@/lib/supabase');
+    const { data, error } = await supabaseAdmin
+      .from('usuarios')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error || !data) return null;
+    user = data;
+  }
+
   if (!user) return null;
   
   // Note: we just compare string passwords for mock tests.
