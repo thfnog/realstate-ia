@@ -61,19 +61,28 @@ export async function POST(request: Request) {
        // For now, using a fallback to the first imobiliaria if no mapping exists
        const { data: imobs } = await supabaseAdmin
          .from('imobiliarias')
-         .select('id')
+         .select('id, config_pais')
          .limit(1);
        
        if (imobs && imobs.length > 0) {
          imobiliaria_id = imobs[0].id;
        }
     }
+     
+     // Determinar moeda com base no país da imobiliária
+     const { data: imobData } = await supabaseAdmin
+       .from('imobiliarias')
+       .select('config_pais')
+       .eq('id', imobiliaria_id)
+       .single();
+     const moeda = imobData?.config_pais === 'BR' ? 'BRL' : 'EUR';
     
     const leadData = {
       imobiliaria_id,
       nome: name || extracted.nome || 'Lead WhatsApp',
       telefone: sender.replace(/\D/g, ''), // Clean phone number
       email: null,
+      moeda,
       tipo_interesse: extracted.tipo_interesse || null,
       orcamento: extracted.orcamento || null,
       quartos_interesse: extracted.quartos || null,
