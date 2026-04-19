@@ -12,7 +12,7 @@ const PROVIDER = (process.env.WHATSAPP_PROVIDER || 'evolution') as 'twilio' | 'e
 
 // Evolution Config
 const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://35.172.170.210:8080';
-const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || '';
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'ImobIA_Sec_2024_!';
 const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'teste';
 
 // Twilio Config
