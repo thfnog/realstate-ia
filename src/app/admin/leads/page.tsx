@@ -7,11 +7,14 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
   novo: { label: 'Novo', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
   em_atendimento: { label: 'Em atendimento', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
   visita_agendada: { label: 'Visita agendada', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
-  fechado: { label: 'Fechado', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
+  negociacao: { label: 'Negociação', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+  contrato: { label: 'Em Contrato', color: 'text-sky-700', bg: 'bg-sky-50 border-sky-200' },
+  fechado: { label: 'Fechado 🎉', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
   sem_interesse: { label: 'Sem interesse', color: 'text-slate-600', bg: 'bg-slate-50 border-slate-200' },
 };
 
 export default function LeadsPage() {
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('kanban');
   const [leads, setLeads] = useState<LeadComCorretor[]>([]);
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,37 +200,61 @@ export default function LeadsPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Fila de Leads</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Funil de Vendas</h1>
           <p className="text-text-secondary text-sm mt-1">
-            Atualização automática a cada 30 segundos • {leads.length} lead(s)
+            {viewMode === 'kanban' ? 'Visão por estágios' : 'Visão em lista'} • {leads.length} lead(s)
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <select
-            value={origemFilter}
-            onChange={(e) => setOrigemFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          >
-            <option value="">Todas origens</option>
-            <option value="formulario">Formulário</option>
-            <option value="email_ego">E-mail eGO</option>
-            <option value="webhook_grupozap">Grupo OLX</option>
-            <option value="whatsapp">WhatsApp</option>
-          </select>
+        <div className="flex items-center gap-4">
+          {/* Toggle View Mode */}
+          <div className="flex bg-surface-alt p-1 rounded-xl border border-border-light shadow-inner">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'table' ? 'bg-white text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              📋 Tabela
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'kanban' ? 'bg-white text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              📊 Funil
+            </button>
+          </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          >
-            <option value="">Todos os status</option>
-            <option value="novo">Novos</option>
-            <option value="em_atendimento">Em atendimento</option>
-            <option value="visita_agendada">Visita agendada</option>
-            <option value="fechado">Fechados</option>
-            <option value="sem_interesse">Sem interesse</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={origemFilter}
+              onChange={(e) => setOrigemFilter(e.target.value)}
+              className="px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="">Todas origens</option>
+              <option value="formulario">Formulário</option>
+              <option value="email_ego">E-mail eGO</option>
+              <option value="webhook_grupozap">Grupo OLX</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="">Todos os status</option>
+              <option value="novo">Novos</option>
+              <option value="em_atendimento">Em atendimento</option>
+              <option value="visita_agendada">Visita agendada</option>
+              <option value="negociacao">Negociação</option>
+              <option value="contrato">Em Contrato</option>
+              <option value="fechado">Fechados</option>
+              <option value="sem_interesse">Sem interesse</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -246,9 +273,93 @@ export default function LeadsPage() {
           <p className="text-4xl mb-3">📭</p>
           <p className="text-text-secondary">Nenhum lead encontrado</p>
         </div>
+      ) : viewMode === 'kanban' ? (
+        /* ===== KANBAN VIEW (Funil de Vendas) ===== */
+        <div className="flex gap-4 min-h-[600px] overflow-x-auto pb-8 scrollbar-hide">
+           {['novo', 'em_atendimento', 'visita_agendada', 'negociacao', 'contrato', 'fechado'].map((status) => {
+              const columnLeads = leads.filter(l => l.status === status);
+              const config = statusConfig[status];
+              return (
+                <div key={status} className="flex flex-col gap-4 min-w-[300px] max-w-[300px]">
+                   {/* Column Header */}
+                   <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${config.bg.replace('bg-', 'bg-')}`} />
+                        <h3 className="text-sm font-black text-text-primary uppercase tracking-tight">{config.label}</h3>
+                      </div>
+                      <span className="text-[10px] font-black text-text-muted bg-white border border-border-light px-2 py-0.5 rounded-full shadow-sm">
+                        {columnLeads.length}
+                      </span>
+                   </div>
+
+                   {/* Cards Container */}
+                   <div className="flex-1 bg-surface-alt/50 rounded-[2rem] border border-border-light/50 p-3 space-y-3 min-h-[500px]">
+                      {columnLeads.map(lead => (
+                        <div 
+                          key={lead.id}
+                          className="bg-white p-5 rounded-2xl border border-border-light shadow-sm hover:shadow-xl hover:border-primary/20 transition-all group cursor-pointer relative overflow-hidden"
+                          onClick={() => openAgendaModal(lead)}
+                        >
+                           {/* Status line at top */}
+                           <div className={`absolute top-0 left-0 right-0 h-1 ${config.bg.split(' ')[0]}`} />
+
+                           <div className="flex justify-between items-start mb-3">
+                              <div>
+                                 <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">{lead.nome}</h4>
+                                 <p className="text-[10px] text-text-muted mt-0.5">{lead.telefone}</p>
+                              </div>
+                              <div className="flex gap-1.5">
+                                 {lead.origem === 'whatsapp' && (
+                                    <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-xs animate-pulse" title="Vindo do WhatsApp Bot">
+                                       🤖
+                                    </div>
+                                 )}
+                                 <div className="w-6 h-6 rounded-lg bg-surface-alt flex items-center justify-center text-[10px] grayscale group-hover:grayscale-0 transition-all border border-border-light shadow-sm">
+                                    {(() => {
+                                       const { getOrigemLabel } = require('@/lib/countryConfig');
+                                       return getOrigemLabel(lead.origem).icon;
+                                    })()}
+                                 </div>
+                              </div>
+                           </div>
+                           
+                           <div className="bg-surface-alt/50 p-3 rounded-xl border border-border-light/50 mb-4">
+                              <p className="text-[10px] font-bold text-text-primary leading-tight">
+                                 {getProfileSummary(lead)}
+                              </p>
+                           </div>
+
+                           <div className="flex items-center justify-between pt-3 border-t border-border-light/50">
+                              <div className="flex items-center gap-2">
+                                 {lead.corretores ? (
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-primary to-indigo-500 flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-sm" title={lead.corretores.nome}>
+                                       {lead.corretores.nome.charAt(0)}
+                                    </div>
+                                 ) : (
+                                    <div className="w-6 h-6 rounded-full bg-rose-50 flex items-center justify-center text-[10px] text-rose-500 font-black border-2 border-white shadow-sm" title="Sem corretor">
+                                       ?
+                                    </div>
+                                 )}
+                                 <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">{lead.corretores?.nome.split(' ')[0] || 'Ninguém'}</span>
+                              </div>
+                              <span className="text-[9px] font-black text-text-tertiary uppercase">{formatDate(lead.criado_em).split(',')[0]}</span>
+                           </div>
+                        </div>
+                      ))}
+                      
+                      {columnLeads.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border-light/30 rounded-2xl opacity-40">
+                           <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Livre</span>
+                        </div>
+                      )}
+                   </div>
+                </div>
+              );
+           })}
+        </div>
       ) : (
-        /* ===== TABLE LAYOUT ===== */
-        <div className="bg-white rounded-xl border border-border-light overflow-hidden">
+        /* ===== TABLE VIEW (Visão em Lista) ===== */
+        <div className="bg-white rounded-[2rem] border border-border-light overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

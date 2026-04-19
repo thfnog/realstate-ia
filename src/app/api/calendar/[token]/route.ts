@@ -17,7 +17,7 @@ function formatDateOnlyICS(dateStr: string): string {
   return dateStr.replace(/-/g, '');
 }
 
-export async function GET(request: Request, context: { params: { token: string } }) {
+export async function GET(request: Request, context: { params: Promise<{ token: string }> }) {
   try {
     // A token here often comes with .ics extension natively via URL
     const { token } = await context.params;

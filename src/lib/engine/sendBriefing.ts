@@ -91,11 +91,11 @@ export function buildBriefingMessage(data: BriefingData): string {
     lines.push(`🏡 *Sugestões de imóveis similares (${imoveis.length}):*`);
     imoveis.forEach((im, idx) => {
       lines.push('');
-      lines.push(`*${idx + 1}. ${im.tipo.charAt(0).toUpperCase() + im.tipo.slice(1)} — ${im.bairro}*`);
+      lines.push(`*${idx + 1}. ${im.tipo.charAt(0).toUpperCase() + im.tipo.slice(1)} — ${im.freguesia}*`);
       lines.push(`   Valor: ${formatCurrency(im.valor, config)}`);
-      if (im.area_m2) lines.push(`   Área: ${im.area_m2}m²`);
+      if (im.area_util) lines.push(`   Área: ${im.area_util}m²`);
       if (im.quartos) lines.push(`   ${config.terminology.quartosLabel}: ${formatQuartos(im.quartos, config)}`);
-      lines.push(`   Vagas: ${im.vagas}`);
+      lines.push(`   Vagas: ${im.vagas_garagem}`);
       lines.push(`   Score: ${im.score} pts`);
     });
     lines.push('');

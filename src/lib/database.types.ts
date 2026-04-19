@@ -34,22 +34,74 @@ export type Corretor = {
   criado_em: string;
 };
 
-export type TipoImovel = 'apartamento' | 'casa' | 'terreno';
-export type StatusImovel = 'disponivel' | 'vendido' | 'alugado';
+export type TipoImovel = 'apartamento' | 'casa' | 'terreno' | 'loja' | 'escritorio' | 'garagem' | 'armazem' | 'quintal';
+export type StatusImovel = 'disponivel' | 'reservado' | 'vendido' | 'arrendado' | 'retirado';
+export type NegocioImovel = 'residencial' | 'comercial' | 'investimento';
 export type Moeda = 'EUR' | 'BRL';
+
+export type ImovelFoto = {
+  id: string;
+  url_thumb: string;
+  url_media: string;
+  url_original: string;
+  legenda?: string;
+  ordem: number;
+  is_capa: boolean;
+};
 
 export type Imovel = {
   id: string;
   imobiliaria_id: string;
+  referencia: string;
+  titulo: string;
+  pais: 'PT' | 'BR';
+  distrito: string; // Estado no BR
+  concelho: string; // Cidade no BR
+  freguesia: string; // Bairro no BR
+  rua: string | null;
+  numero: string | null;
+  codigo_postal: string | null;
+  latitude: number | null;
+  longitude: number | null;
+
   tipo: TipoImovel;
-  bairro: string;
+  finalidade: 'venda' | 'arrendamento' | 'ambos';
+  negocio: NegocioImovel;
+  corretor_id: string | null;
+  data_captacao: string;
+  origem_captacao: string;
+
+  // Características (Terminologia flexível via config)
+  area_bruta: number | null;
+  area_util: number | null;
+  area_terreno: number | null;
+  quartos: number | null; // Tipologia T em PT
+  suites: number | null;
+  casas_banho: number | null;
+  vagas_garagem: number;
+  andar: number | null;
+  ano_construcao: number | null;
+  estado_conservacao: string | null;
+  certificado_energetico: string | null;
+  orientacao_solar: string[] | null;
+  comodidades: string[] | null;
+
+  // Financeiro
   valor: number;
   moeda: Moeda;
-  area_m2: number | null;
-  quartos: number | null;
-  vagas: number;
+  valor_avaliacao: number | null;
+  imi_iptu_anual: number | null;
+  condominio_mensal: number | null;
+  aceita_permuta: boolean;
+  aceita_financiamento: boolean;
+
+  // Descrição
+  descricao: string | null;
+  pontos_venda: string[] | null;
+  observacoes_internas: string | null;
+
   status: StatusImovel;
-  link_fotos: string | null;
+  fotos: ImovelFoto[];
   criado_em: string;
 };
 
@@ -65,7 +117,7 @@ export type EscalaComCorretor = Escala & {
 };
 
 export type Finalidade = 'comprar' | 'alugar' | 'investir';
-export type StatusLead = 'novo' | 'em_atendimento' | 'visita_agendada' | 'fechado' | 'sem_interesse';
+export type StatusLead = 'novo' | 'em_atendimento' | 'visita_agendada' | 'negociacao' | 'contrato' | 'fechado' | 'sem_interesse';
 export type LeadSource = 'formulario' | 'email_ego' | 'webhook_grupozap' | 'whatsapp' | 'manual';
 
 export type Lead = {

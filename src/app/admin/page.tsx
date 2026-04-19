@@ -249,7 +249,7 @@ export default function AdminDashboard() {
             ➕ Novo corretor
           </Link>
           <Link
-            href="/admin/escala"
+            href="/admin/agenda"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-subtle text-primary font-medium text-sm hover:bg-primary hover:text-white transition-all"
           >
             📅 Gerenciar escala

@@ -69,31 +69,31 @@ export async function recommendImoveis(lead: Lead, configIn?: any): Promise<Scor
     }
 
     // 4. Área within ±20% (+2)
-    if (lead.area_interesse && imovel.area_m2) {
+    if (lead.area_interesse && imovel.area_util) {
       const minArea = lead.area_interesse * 0.80;
       const maxArea = lead.area_interesse * 1.20;
-      if (imovel.area_m2 >= minArea && imovel.area_m2 <= maxArea) {
+      if (imovel.area_util >= minArea && imovel.area_util <= maxArea) {
         score += 2;
-        breakdown.push(`Área ${imovel.area_m2}m² (dentro de ±20%): +2`);
+        breakdown.push(`Área ${imovel.area_util}m² (dentro de ±20%): +2`);
       }
     }
 
     // 5. Bairro match (+3)
     if (lead.bairros_interesse && lead.bairros_interesse.length > 0) {
-      const bairroNorm = imovel.bairro.toLowerCase().trim();
+      const bairroNorm = imovel.freguesia.toLowerCase().trim();
       const match = lead.bairros_interesse.some(
         (b) => b.toLowerCase().trim() === bairroNorm
       );
       if (match) {
         score += 3;
-        breakdown.push(`Bairro ${imovel.bairro}: +3`);
+        breakdown.push(`Bairro ${imovel.freguesia}: +3`);
       }
     }
 
     // 6. Vagas match (+1)
-    if (lead.vagas_interesse && imovel.vagas === lead.vagas_interesse) {
+    if (lead.vagas_interesse && imovel.vagas_garagem === lead.vagas_interesse) {
       score += 1;
-      breakdown.push(`Vagas ${imovel.vagas}: +1`);
+      breakdown.push(`Vagas ${imovel.vagas_garagem}: +1`);
     }
 
     return {
@@ -111,7 +111,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any): Promise<Scor
 
   console.log(`🏠 ${recommended.length} imóveis recomendados (de ${imoveis.length} disponíveis)`);
   recommended.forEach((r) => {
-    console.log(`  - ${r.tipo} em ${r.bairro}: ${r.score} pts [${r.scoreBreakdown.join(', ')}]`);
+    console.log(`  - ${r.tipo} em ${r.freguesia}: ${r.score} pts [${r.scoreBreakdown.join(', ')}]`);
   });
 
   return recommended;

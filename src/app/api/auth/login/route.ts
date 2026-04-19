@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { signIn } from '@/lib/auth';
+import * as mock from '@/lib/mockDb';
 
 export async function POST(request: Request) {
   try {
+    if (mock.isMockMode()) {
+       mock.seedTestData();
+    }
     const { email, password } = await request.json();
 
     if (!email || !password) {

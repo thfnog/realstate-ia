@@ -1,60 +1,90 @@
 /**
- * WhatsApp Integration via Twilio
+ * WhatsApp Integration Provider
  * 
- * Sends WhatsApp messages using the Twilio API.
- * Falls back to console logging when credentials are not configured.
+ * Suporta múltiplos provedores:
+ * 1. Twilio (Oficial / Pago)
+ * 2. Evolution API (Open Source / Grátis por mensagem)
  */
 
 import twilio from 'twilio';
 
+const PROVIDER = (process.env.WHATSAPP_PROVIDER || 'evolution') as 'twilio' | 'evolution' | 'mock';
+
+// Evolution Config
+const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://localhost:8080';
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || '';
+const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'MainInstance';
+
+// Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
 
-// Check if Twilio is configured
-const isTwilioConfigured = !!(accountSid && authToken && accountSid.length > 5);
-
-// Create Twilio client only if credentials are available
-const client = isTwilioConfigured ? twilio(accountSid, authToken) : null;
-
 /**
- * Send a WhatsApp message via Twilio.
- * If Twilio is not configured, logs the message to console as fallback.
- * 
- * @param to - Phone number in format "whatsapp:+55XXXXXXXXXXX"
- * @param body - Message body text
- * @returns Message SID if sent, or "console-fallback" if logged only
+ * Envia uma mensagem de WhatsApp usando o provedor configurado.
  */
 export async function sendWhatsAppMessage(to: string, body: string): Promise<string> {
-  // Ensure the 'to' number has the WhatsApp prefix
-  const toFormatted = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+  // Limpeza básica do número (apenas dígitos)
+  const cleanTo = to.replace(/\D/g, '');
 
-  if (!client) {
-    console.log('\n========================================');
-    console.log('📱 WHATSAPP BRIEFING (console fallback)');
-    console.log('========================================');
-    console.log(`Para: ${toFormatted}`);
-    console.log('----------------------------------------');
-    console.log(body);
-    console.log('========================================\n');
-    return 'console-fallback';
+  if (PROVIDER === 'mock' || (!EVOLUTION_API_KEY && !accountSid)) {
+    console.log('\n📱 [MOCK WHATSAPP] To:', to, '\nBody:', body);
+    return 'mock-sid';
   }
 
-  try {
-    const message = await client.messages.create({
-      from: fromNumber,
-      to: toFormatted,
-      body,
-    });
+  // --- REGRAS EVOLUTION API ---
+  if (PROVIDER === 'evolution' && EVOLUTION_API_KEY) {
+    try {
+      const response = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+        method: 'POST',
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          number: cleanTo,
+          options: {
+            delay: 1200,
+            presence: 'composing',
+            linkPreview: true
+          },
+          textMessage: {
+            text: body
+          }
+        })
+      });
 
-    console.log(`✅ WhatsApp enviado com sucesso. SID: ${message.sid}`);
-    return message.sid;
-  } catch (error) {
-    console.error('❌ Erro ao enviar WhatsApp:', error);
-    // Log the message anyway so it's not lost
-    console.log('\n📱 MENSAGEM QUE SERIA ENVIADA:');
-    console.log(`Para: ${toFormatted}`);
-    console.log(body);
-    throw error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Evolution API Error: ${response.status} - ${errorText}`);
+      }
+
+      console.log(`✅ WhatsApp enviado via Evolution API para ${cleanTo}`);
+      return 'evolution-success';
+    } catch (error) {
+      console.error('❌ Erro Evolution API:', error);
+      throw error;
+    }
   }
+
+  // --- REGRAS TWILIO ---
+  if (PROVIDER === 'twilio' && accountSid && authToken) {
+    const client = twilio(accountSid, authToken);
+    const toFormatted = `whatsapp:+${cleanTo}`;
+    
+    try {
+      const message = await client.messages.create({
+        from: fromNumber,
+        to: toFormatted,
+        body,
+      });
+      console.log(`✅ WhatsApp enviado via Twilio. SID: ${message.sid}`);
+      return message.sid;
+    } catch (error) {
+      console.error('❌ Erro Twilio:', error);
+      throw error;
+    }
+  }
+
+  return 'no-provider-configured';
 }

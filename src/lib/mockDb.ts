@@ -70,10 +70,10 @@ export function createImobiliaria(data: Omit<Imobiliaria, 'id' | 'criado_em'>): 
   }
 
   const imob: Imobiliaria = {
-    id: randomUUID(),
+    id: (data as any).id || randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
-  };
+  } as Imobiliaria;
   imobiliarias.push(imob);
   return imob;
 }
@@ -153,9 +153,13 @@ export function getImovelById(id: string): Imovel | undefined {
   return imoveis.find((i) => i.id === id);
 }
 
-export function createImovel(data: Omit<Imovel, 'id' | 'criado_em'>): Imovel {
+import { gerarReferencia } from './imoveis/referencia';
+
+export function createImovel(data: Omit<Imovel, 'id' | 'criado_em' | 'referencia'>): Imovel {
+  const nextSeq = imoveis.filter(i => i.tipo === data.tipo).length + 1;
   const imovel: Imovel = {
     id: randomUUID(),
+    referencia: gerarReferencia(data.tipo, nextSeq),
     criado_em: new Date().toISOString(),
     ...data,
   };
@@ -322,16 +326,16 @@ function seedPT() {
   createCorretor({ imobiliaria_id: iId, nome: 'Maria Costa', telefone: '+351912345004', email: 'maria@imob.pt', ativo: false });
 
   // Create properties (Portugal — T1, T2, T3, etc.)
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Chiado', valor: 350000, moeda, area_m2: 65, quartos: 2, vagas: 1, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Cascais', valor: 480000, moeda, area_m2: 90, quartos: 3, vagas: 2, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'casa', bairro: 'Sintra', valor: 520000, moeda, area_m2: 140, quartos: 4, vagas: 2, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Alfama', valor: 220000, moeda, area_m2: 45, quartos: 1, vagas: 0, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'casa', bairro: 'Cascais', valor: 750000, moeda, area_m2: 200, quartos: 5, vagas: 3, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'terreno', bairro: 'Sintra', valor: 180000, moeda, area_m2: 400, quartos: null, vagas: 0, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Parque das Nações', valor: 420000, moeda, area_m2: 80, quartos: 3, vagas: 1, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'casa', bairro: 'Chiado', valor: 680000, moeda, area_m2: 130, quartos: 3, vagas: 1, status: 'vendido', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Parque das Nações', valor: 310000, moeda, area_m2: 60, quartos: 2, vagas: 1, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Alfama', valor: 280000, moeda, area_m2: 55, quartos: 1, vagas: 0, status: 'disponivel', link_fotos: null });
+  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Chiado', valor: 350000, moeda, area_util: 65, quartos: 2, vagas_garagem: 1, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Cascais', valor: 480000, moeda, area_util: 90, quartos: 3, vagas_garagem: 2, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'casa', freguesia: 'Sintra', valor: 520000, moeda, area_util: 140, quartos: 4, vagas_garagem: 2, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Alfama', valor: 220000, moeda, area_util: 45, quartos: 1, vagas_garagem: 0, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'casa', freguesia: 'Cascais', valor: 750000, moeda, area_util: 200, quartos: 5, vagas_garagem: 3, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'terreno', freguesia: 'Sintra', valor: 180000, moeda, area_util: 400, quartos: null, vagas_garagem: 0, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Parque das Nações', valor: 420000, moeda, area_util: 80, quartos: 3, vagas_garagem: 1, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'casa', freguesia: 'Chiado', valor: 680000, moeda, area_util: 130, quartos: 3, vagas_garagem: 1, status: 'vendido', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Parque das Nações', valor: 310000, moeda, area_util: 60, quartos: 2, vagas_garagem: 1, status: 'disponivel', link_fotos: null } as any);
+  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Alfama', valor: 280000, moeda, area_util: 55, quartos: 1, vagas_garagem: 0, status: 'disponivel', link_fotos: null } as any);
 
   // Create schedule
   const today = new Date();
@@ -366,6 +370,7 @@ function seedPT() {
   sampleLeads.forEach((sl, idx) => {
     const o = origins[idx];
     createLead({
+      imobiliaria_id: iId,
       nome: sl.nome,
       telefone: sl.telefone,
       origem: o.origem,
@@ -428,20 +433,47 @@ function seedBR() {
   const c3 = createCorretor({ imobiliaria_id: iId, nome: 'Roberto Silva', telefone: '+5511999990003', email: 'roberto@imob.com', ativo: true });
   createCorretor({ imobiliaria_id: iId, nome: 'Juliana Costa', telefone: '+5511999990004', email: 'juliana@imob.com', ativo: false });
 
-  // Create properties
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Centro', valor: 450000, moeda, area_m2: 72, quartos: 2, vagas: 1, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Jardins', valor: 680000, moeda, area_m2: 95, quartos: 3, vagas: 2, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'casa', bairro: 'Vila Nova', valor: 520000, moeda, area_m2: 120, quartos: 3, vagas: 2, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Centro', valor: 320000, moeda, area_m2: 55, quartos: 1, vagas: 1, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'casa', bairro: 'Jardins', valor: 850000, moeda, area_m2: 180, quartos: 4, vagas: 3, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'terreno', bairro: 'Vila Nova', valor: 200000, moeda, area_m2: 300, quartos: null, vagas: 0, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Moema', valor: 750000, moeda, area_m2: 88, quartos: 3, vagas: 2, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'casa', bairro: 'Centro', valor: 480000, moeda, area_m2: 110, quartos: 3, vagas: 1, status: 'vendido', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Moema', valor: 420000, moeda, area_m2: 65, quartos: 2, vagas: 1, status: 'disponivel', link_fotos: null });
-  createImovel({ imobiliaria_id: iId, tipo: 'apartamento', bairro: 'Vila Nova', valor: 380000, moeda, area_m2: 70, quartos: 2, vagas: 1, status: 'disponivel', link_fotos: null });
+  // Seed Indaiatuba (BR) Properties for testing
+  const today = new Date();
+  const indaiatubaSamples = [
+    { titulo: 'Ap Alto Padrão - Swiss Park', tipo: 'apartamento' as const, freguesia: 'Swiss Park', valor: 1200000, area_util: 120, quartos: 3, status: 'disponivel' as const },
+    { titulo: 'Mansão Helvetia Park', tipo: 'casa' as const, freguesia: 'Helvetia Park', valor: 5500000, area_util: 400, quartos: 4, status: 'disponivel' as const },
+    { titulo: 'Lote Oportunidade - Jardins Império', tipo: 'terreno' as const, freguesia: 'Jardins do Império', valor: 450000, area_util: 250, quartos: 0, status: 'disponivel' as const },
+    { titulo: 'Apto Econômico - Centro', tipo: 'apartamento' as const, freguesia: 'Centro', valor: 400000, area_util: 65, quartos: 2, status: 'disponivel' as const },
+    { titulo: 'Casa Moderna - Indaiatuba Park', tipo: 'casa' as const, freguesia: 'Indaiatuba Park', valor: 2400000, area_util: 200, quartos: 3, status: 'disponivel' as const },
+    { titulo: 'Cobertura Jardim Pau Preto', tipo: 'apartamento' as const, freguesia: 'Jardim Pau Preto', valor: 1100000, area_util: 90, quartos: 3, status: 'reservado' as const },
+    { titulo: 'Casa Térrea Maria Antonieta', tipo: 'casa' as const, freguesia: 'Maria Antonieta', valor: 1600000, area_util: 150, quartos: 3, status: 'disponivel' as const },
+    { titulo: 'Lote premium no Bréscia', tipo: 'terreno' as const, freguesia: 'Bréscia', valor: 750000, area_util: 300, quartos: 0, status: 'disponivel' as const },
+    { titulo: 'Ap Compacto Vila Sotto', tipo: 'apartamento' as const, freguesia: 'Vila Sotto', valor: 600000, area_util: 55, quartos: 2, status: 'disponivel' as const },
+    { titulo: 'Casa Familiar no Many', tipo: 'casa' as const, freguesia: 'Many', valor: 2100000, area_util: 180, quartos: 3, status: 'vendido' as const },
+  ];
+
+  indaiatubaSamples.forEach((s) => {
+    createImovel({
+      imobiliaria_id: iId,
+      titulo: s.titulo,
+      tipo: s.tipo,
+      pais: 'BR',
+      distrito: 'SP',
+      concelho: 'Indaiatuba',
+      freguesia: s.freguesia,
+      valor: s.valor,
+      moeda: 'BRL',
+      area_util: s.area_util,
+      quartos: s.quartos,
+      vagas_garagem: 2,
+      status: s.status,
+      finalidade: 'venda',
+      negocio: 'residencial',
+      data_captacao: today.toISOString().split('T')[0],
+      origem_captacao: 'angariação própria',
+      aceita_permuta: false,
+      aceita_financiamento: true,
+      fotos: [],
+    } as any);
+  });
 
   // Create schedule
-  const today = new Date();
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -462,36 +494,35 @@ function seedBR() {
   ];
 
   const sampleLeads = [
-    { nome: 'Maria Oliveira', telefone: '(11) 91234-5001', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 500000, bairros: ['Centro'] },
-    { nome: 'João Santos', telefone: '(11) 91234-5002', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 3, orcamento: 3500, bairros: ['Moema', 'Jardins'] },
-    { nome: 'Ana Paula Costa', telefone: '(11) 91234-5003', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 550000, bairros: ['Vila Nova'] },
-    { nome: 'Carlos Eduardo', telefone: '(11) 91234-5004', finalidade: 'investir' as const, tipo: 'apartamento', quartos: 2, orcamento: 400000, bairros: ['Centro', 'Moema'] },
-    { nome: 'Fernanda Lima', telefone: '(11) 91234-5005', finalidade: 'comprar' as const, tipo: null, quartos: null, orcamento: null, bairros: null },
-    { nome: 'Paulo Ribeiro', telefone: '(11) 91234-5006', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 3, orcamento: 700000, bairros: ['Jardins'] },
+    { nome: 'Maria Oliveira', telefone: '+5511912345001', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 500000, bairros: ['Centro'], status: 'novo' as const, origem: 'whatsapp' as const },
+    { nome: 'João Santos', telefone: '+5511912345002', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 3, orcamento: 3500, bairros: ['Moema', 'Jardins'], status: 'em_atendimento' as const, origem: 'formulario' as const },
+    { nome: 'Ana Paula Costa', telefone: '+5511912345003', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 1600000, bairros: ['Swiss Park'], status: 'visita_agendada' as const, origem: 'whatsapp' as const },
+    { nome: 'Carlos Eduardo', telefone: '+5511912345004', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 5500000, bairros: ['Helvetia Park'], status: 'negociacao' as const, origem: 'manual' as const },
+    { nome: 'Fernanda Lima', telefone: '+5511912345005', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 3, orcamento: 1200000, bairros: ['Swiss Park'], status: 'contrato' as const, origem: 'manual' as const },
+    { nome: 'Ricardo Souza', telefone: '+5511912345006', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 2400000, bairros: ['Indaiatuba Park'], status: 'fechado' as const, origem: 'whatsapp' as const },
   ];
 
-  sampleLeads.forEach((sl, idx) => {
-    const o = origins[idx];
+  sampleLeads.forEach((l, idx) => {
     createLead({
       imobiliaria_id: iId,
-      nome: sl.nome,
-      telefone: sl.telefone,
-      origem: o.origem,
-      portal_origem: o.portal,
+      nome: l.nome,
+      telefone: l.telefone,
+      origem: l.origem,
+      portal_origem: l.origem === 'whatsapp' ? 'Bot Inteligente' : null,
       moeda,
-      finalidade: sl.finalidade,
-      prazo: sl.finalidade === 'comprar' ? '3-6 meses' : null,
-      pagamento: sl.finalidade === 'comprar' ? 'financiamento' : null,
+      finalidade: l.finalidade,
+      prazo: '3-6 meses',
+      pagamento: 'financiamento',
       descricao_interesse: null,
-      tipo_interesse: sl.tipo,
-      orcamento: sl.orcamento,
+      tipo_interesse: l.tipo,
+      orcamento: l.orcamento,
       area_interesse: null,
-      quartos_interesse: sl.quartos,
-      vagas_interesse: null,
-      bairros_interesse: sl.bairros,
-      corretor_id: idx < 3 ? c1.id : null,
-      status: idx < 2 ? 'em_atendimento' : 'novo',
-    });
+      quartos_interesse: l.quartos,
+      vagas_interesse: 2,
+      bairros_interesse: l.bairros,
+      corretor_id: idx % 2 === 0 ? c1.id : c2.id,
+      status: l.status,
+    } as any);
   });
 
   // Seed Events (BR)
@@ -527,36 +558,37 @@ function seedBR() {
 }
 
 export function seedTestData() {
-  if (corretores.length > 0) return; // Already seeded
-
   const config = getConfig();
-  console.log(`🌱 Seeding mock database (${config.flag} ${config.label})...`);
+  
+  // 1. Create Default Imobiliaria if missing
+  if (!imobiliarias.some(i => i.id === DEFAULT_IMOBILIARIA_ID)) {
+    console.log(`🌱 Seeding mock database (Force BR for JetAgency)...`);
+    createImobiliaria({
+      id: DEFAULT_IMOBILIARIA_ID,
+      nome_fantasia: 'JetAgency Imobiliária',
+      identificador_fiscal: '00000000000',
+      numero_registro: 'CRECI 12345-J',
+      plano: 'premium',
+      config_pais: 'BR', // Force BR for these tests
+    } as any);
+  }
 
-  // 1. Create Default Imobiliaria
-  createImobiliaria({
-    nome_fantasia: 'Imobiliária Demonstração',
-    identificador_fiscal: '00000000000',
-    numero_registro: config.code === 'PT' ? 'AMI-0000' : 'CRECI 0000-J',
-    plano: 'free',
-    config_pais: config.code as 'PT' | 'BR',
-  });
-  // Force ID to match default
-  if (imobiliarias[0]) imobiliarias[0].id = DEFAULT_IMOBILIARIA_ID;
-
-  // 2. Create Default User (Admin)
-  createUsuario({
-    imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
-    email: 'admin@imobiliaria.com',
-    hash_senha: 'hashed_password_mock', // not required since we mock auth for now
-    role: 'admin',
-    corretor_id: null,
-  });
-  if (usuarios[0]) usuarios[0].id = DEFAULT_USUARIO_ID;
-
+  // 2. Create Default User (Admin - BR) if missing
+  if (!usuarios.some(u => u.email === 'admin@jetagency.br')) {
+    createUsuario({
+      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
+      email: 'admin@jetagency.br',
+      hash_senha: 'admin123',
+      role: 'admin',
+      corretor_id: null,
+    });
+  }
+  
+  // 3. Ensure we have sufficient properties
   if (config.code === 'PT') {
-    seedPT();
+    if (imoveis.length < 3) seedPT();
   } else {
-    seedBR();
+    if (imoveis.length < 10) seedBR();
   }
 
   console.log(`  ✅ ${corretores.length} ${config.terminology.corretorPlural.toLowerCase()}`);

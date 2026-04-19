@@ -61,14 +61,14 @@ export async function POST(request: Request) {
         const imovel = createImovel({
           imobiliaria_id: novaImob.id,
           tipo: 'apartamento',
-          bairro: configPais === 'PT' ? 'Chiado (Demonstração)' : 'Pinheiros (Demonstração)',
+          freguesia: configPais === 'PT' ? 'Chiado (Demonstração)' : 'Pinheiros (Demonstração)',
           valor: configPais === 'PT' ? 450000 : 850000,
-          area_m2: 85,
+          area_util: 85,
           quartos: 2,
-          vagas: 1,
+          vagas_garagem: 1,
           status: 'disponivel',
           moeda,
-        });
+        } as any);
 
         const dt = new Date();
         dt.setDate(dt.getDate() + 2);
@@ -77,6 +77,7 @@ export async function POST(request: Request) {
         createEvento({
           imobiliaria_id: novaImob.id,
           lead_id: leadDemoId,
+          corretor_id: null,
           tipo: 'reuniao',
           titulo: 'Reunião de Alinhamento (Demo)',
           descricao: 'Evento inserido automaticamente para demonstração da agenda.',

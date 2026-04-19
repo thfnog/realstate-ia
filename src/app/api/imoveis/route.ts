@@ -12,11 +12,21 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
+  const corretor_id = searchParams.get('corretor_id');
 
   if (mock.isMockMode()) {
     mock.seedTestData();
-    const imoveis = mock.getImoveis(status || undefined);
-    return NextResponse.json(imoveis.filter(i => i.imobiliaria_id === session.imobiliaria_id));
+    let imoveis = mock.getImoveis(status || undefined);
+    
+    // Multi-tenant filtering
+    imoveis = imoveis.filter(i => i.imobiliaria_id === session.imobiliaria_id);
+    
+    // Filter by broker if requested (e.g. "My properties")
+    if (corretor_id) {
+       imoveis = imoveis.filter(i => i.corretor_id === corretor_id);
+    }
+
+    return NextResponse.json(imoveis);
   }
 
   let query = supabaseAdmin
@@ -25,16 +35,11 @@ export async function GET(request: Request) {
     .eq('imobiliaria_id', session.imobiliaria_id)
     .order('criado_em', { ascending: false });
 
-  if (status) {
-    query = query.eq('status', status);
-  }
+  if (status) query = query.eq('status', status);
+  if (corretor_id) query = query.eq('corretor_id', corretor_id);
 
   const { data, error } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
@@ -46,45 +51,66 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    const imovelData = {
+      imobiliaria_id: session.imobiliaria_id,
+      titulo: body.titulo,
+      tipo: body.tipo,
+      pais: body.pais || (getConfig().code),
+      distrito: body.distrito,
+      concelho: body.concelho,
+      freguesia: body.freguesia,
+      rua: body.rua,
+      numero: body.numero,
+      codigo_postal: body.codigo_postal,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      finalidade: body.finalidade || 'venda',
+      negocio: body.negocio || 'residencial',
+      corretor_id: body.corretor_id || null,
+      data_captacao: body.data_captacao || new Date().toISOString(),
+      origem_captacao: body.origem_captacao || 'manual',
+      area_bruta: body.area_bruta || null,
+      area_util: body.area_util || null,
+      area_terreno: body.area_terreno || null,
+      quartos: body.quartos || null,
+      suites: body.suites || null,
+      casas_banho: body.casas_banho || null,
+      vagas_garagem: body.vagas_garagem || 0,
+      andar: body.andar || null,
+      ano_construcao: body.ano_construcao || null,
+      estado_conservacao: body.estado_conservacao || null,
+      certificado_energetico: body.certificado_energetico || null,
+      orientacao_solar: body.orientacao_solar || null,
+      comodidades: body.comodidades || [],
+      valor: body.valor,
+      moeda: body.moeda || (getConfig().currency.code as Moeda),
+      valor_avaliacao: body.valor_avaliacao || null,
+      imi_iptu_anual: body.imi_iptu_anual || null,
+      condominio_mensal: body.condominio_mensal || null,
+      aceita_permuta: body.aceita_permuta || false,
+      aceita_financiamento: body.aceita_financiamento || true,
+      descricao: body.descricao || null,
+      pontos_venda: body.pontos_venda || [],
+      observacoes_internas: body.observacoes_internas || null,
+      status: body.status || 'disponivel',
+      fotos: body.fotos || [],
+    };
+
     if (mock.isMockMode()) {
-      const imovel = mock.createImovel({
-        imobiliaria_id: session.imobiliaria_id,
-        tipo: body.tipo,
-        bairro: body.bairro,
-        valor: body.valor,
-        area_m2: body.area_m2 || null,
-        quartos: body.quartos || null,
-        vagas: body.vagas || 0,
-        status: body.status || 'disponivel',
-        link_fotos: body.link_fotos || null,
-        moeda: body.moeda || (getConfig().currency.code as Moeda),
-      });
+      const imovel = mock.createImovel(imovelData);
       return NextResponse.json(imovel, { status: 201 });
     }
 
     const { data, error } = await supabaseAdmin
       .from('imoveis')
-      .insert({
-        imobiliaria_id: session.imobiliaria_id,
-        tipo: body.tipo,
-        bairro: body.bairro,
-        valor: body.valor,
-        area_m2: body.area_m2 || null,
-        quartos: body.quartos || null,
-        vagas: body.vagas || 0,
-        status: body.status || 'disponivel',
-        link_fotos: body.link_fotos || null,
-        moeda: body.moeda || (getConfig().currency.code as Moeda),
-      })
+      .insert(imovelData)
       .select()
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
-  } catch {
+  } catch (err: any) {
+    console.error('API Error:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

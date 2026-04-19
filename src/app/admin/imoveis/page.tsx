@@ -1,27 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { Imovel, TipoImovel, StatusImovel, Moeda } from '@/lib/database.types';
-import { getConfig, formatCurrency as formatCurrencyConfig } from '@/lib/countryConfig';
-
-const emptyImovel = {
-  tipo: 'apartamento' as TipoImovel,
-  bairro: '',
-  valor: '',
-  area_m2: '',
-  quartos: '',
-  vagas: '',
-  status: 'disponivel' as StatusImovel,
-  link_fotos: '',
-};
+import { getConfigByCode, formatCurrency as formatCurrencyConfig, CountryConfig } from '@/lib/countryConfig';
 
 export default function ImoveisPage() {
-  const config = getConfig();
+  const [config, setConfig] = useState<CountryConfig>(getConfigByCode('PT'));
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyImovel);
+  const [filter, setFilter] = useState({ status: '', tipo: '' });
+
+  async function fetchConfig() {
+    try {
+      const res = await fetch('/api/imobiliaria');
+      const data = await res.json();
+      if (data && data.config_pais) {
+        setConfig(getConfigByCode(data.config_pais));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar config:', err);
+    }
+  }
 
   async function fetchImoveis() {
     try {
@@ -35,60 +35,10 @@ export default function ImoveisPage() {
     }
   }
 
-  useEffect(() => { fetchImoveis(); }, []);
-
-  function openNew() {
-    setForm(emptyImovel);
-    setEditingId(null);
-    setShowModal(true);
-  }
-
-  function openEdit(imovel: Imovel) {
-    setForm({
-      tipo: imovel.tipo,
-      bairro: imovel.bairro,
-      valor: String(imovel.valor),
-      area_m2: imovel.area_m2 ? String(imovel.area_m2) : '',
-      quartos: imovel.quartos ? String(imovel.quartos) : '',
-      vagas: String(imovel.vagas),
-      status: imovel.status,
-      link_fotos: imovel.link_fotos || '',
-    });
-    setEditingId(imovel.id);
-    setShowModal(true);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const body = {
-      tipo: form.tipo,
-      bairro: form.bairro,
-      valor: parseFloat(form.valor),
-      area_m2: form.area_m2 ? parseFloat(form.area_m2) : null,
-      quartos: form.quartos ? parseInt(form.quartos) : null,
-      vagas: form.vagas ? parseInt(form.vagas) : 0,
-      status: form.status,
-      link_fotos: form.link_fotos || null,
-      moeda: config.currency.code as Moeda,
-    };
-
-    if (editingId) {
-      await fetch(`/api/imoveis/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-    } else {
-      await fetch('/api/imoveis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-    }
-
-    setShowModal(false);
-    fetchImoveis();
-  }
+  useEffect(() => { 
+    fetchConfig();
+    fetchImoveis(); 
+  }, []);
 
   async function handleDelete(id: string) {
     if (!confirm('Excluir este imóvel?')) return;
@@ -96,167 +46,177 @@ export default function ImoveisPage() {
     fetchImoveis();
   }
 
-  function formatCurrency(value: number): string {
-    return formatCurrencyConfig(value, config);
-  }
-
   const statusBadge: Record<string, string> = {
-    disponivel: 'bg-green-50 text-green-700 border-green-200',
-    vendido: 'bg-red-50 text-red-700 border-red-200',
-    alugado: 'bg-blue-50 text-blue-700 border-blue-200',
+    disponivel: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    reservado: 'bg-amber-50 text-amber-700 border-amber-200',
+    vendido: 'bg-rose-50 text-rose-700 border-rose-200',
+    arrendado: 'bg-sky-50 text-sky-700 border-sky-200',
+    retirado: 'bg-slate-50 text-slate-700 border-slate-200',
   };
 
+  const filtered = imoveis.filter(im => {
+    if (filter.status && im.status !== filter.status) return false;
+    if (filter.tipo && im.tipo !== filter.tipo) return false;
+    return true;
+  });
+
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Imóveis</h1>
-          <p className="text-text-secondary text-sm mt-1">{imoveis.length} imóvel(is) cadastrado(s)</p>
+          <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">Gestão de Imóveis</h1>
+          <p className="text-text-secondary text-sm mt-1">Gerencie sua carteira de imóveis para {config.label}.</p>
         </div>
-        <button
-          onClick={openNew}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/20"
+        <Link
+          href="/admin/imoveis/novo"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
         >
-          ➕ Novo imóvel
-        </button>
+          <span className="text-xl">🏠</span>
+          Captar novo imóvel
+        </Link>
+      </div>
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
+             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Total na Carteira</p>
+             <p className="text-2xl font-black text-text-primary">{imoveis.length}</p>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
+             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Disponíveis</p>
+             <p className="text-2xl font-black text-emerald-600">{imoveis.filter(i => i.status === 'disponivel').length}</p>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
+             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Em Negociação</p>
+             <p className="text-2xl font-black text-amber-500">{imoveis.filter(i => i.status === 'reservado').length}</p>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
+             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Fechados</p>
+             <p className="text-2xl font-black text-primary">{imoveis.filter(i => i.status === 'vendido' || i.status === 'arrendado').length}</p>
+          </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-surface-alt/50 p-4 rounded-2xl flex flex-wrap gap-4 items-center border border-border-light">
+          <div className="flex items-center gap-2">
+             <span className="text-xs font-bold text-text-secondary uppercase">Status:</span>
+             <select 
+                value={filter.status} 
+                onChange={e => setFilter({...filter, status: e.target.value})}
+                className="bg-white border border-border-light rounded-lg px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none"
+             >
+                <option value="">Todos</option>
+                <option value="disponivel">Disponíveis</option>
+                <option value="reservado">Reservados</option>
+                <option value="vendido">Vendidos</option>
+             </select>
+          </div>
+          <div className="flex items-center gap-2">
+             <span className="text-xs font-bold text-text-secondary uppercase">Tipo:</span>
+             <select 
+                value={filter.tipo} 
+                onChange={e => setFilter({...filter, tipo: e.target.value})}
+                className="bg-white border border-border-light rounded-lg px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none"
+             >
+                <option value="">Todos</option>
+                <option value="apartamento">Apartamento</option>
+                <option value="casa">Casa</option>
+                <option value="terreno">Terreno</option>
+             </select>
+          </div>
       </div>
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-border-light p-5 animate-pulse">
-              <div className="h-4 w-40 bg-surface-alt rounded mb-3" />
-              <div className="h-3 w-24 bg-surface-alt rounded" />
-            </div>
+            <div key={i} className="bg-white rounded-3xl border border-border-light h-64 animate-pulse shadow-sm" />
           ))}
         </div>
-      ) : imoveis.length === 0 ? (
-        <div className="bg-white rounded-xl border border-border-light p-12 text-center">
-          <p className="text-4xl mb-3">🏠</p>
-          <p className="text-text-secondary mb-4">Nenhum imóvel cadastrado</p>
-          <button onClick={openNew} className="text-primary font-medium text-sm hover:underline">
-            Cadastrar primeiro imóvel
-          </button>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-border-light p-20 text-center shadow-sm">
+          <p className="text-6xl mb-6 scale-110">🏠</p>
+          <h2 className="text-xl font-bold text-text-primary">Nenhum imóvel encontrado</h2>
+          <p className="text-text-secondary mt-2 mb-8">Comece captando seu primeiro imóvel para a agência.</p>
+          <Link href="/admin/imoveis/novo" className="px-8 py-3 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
+            Captar primeiro imóvel
+          </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-border-light overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border-light bg-surface-alt/50">
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">Tipo</th>
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">Bairro</th>
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">Valor</th>
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">Área</th>
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">{config.terminology.quartosLabel}</th>
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">Vagas</th>
-                  <th className="text-left px-4 py-3 font-medium text-text-secondary">Status</th>
-                  <th className="text-right px-4 py-3 font-medium text-text-secondary">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imoveis.map((im) => (
-                  <tr key={im.id} className="border-b border-border-light last:border-0 hover:bg-surface-hover transition-colors">
-                    <td className="px-4 py-3 capitalize font-medium text-text-primary">{im.tipo}</td>
-                    <td className="px-4 py-3 text-text-secondary">{im.bairro}</td>
-                    <td className="px-4 py-3 text-text-primary font-medium">{formatCurrency(im.valor)}</td>
-                    <td className="px-4 py-3 text-text-secondary">{im.area_m2 ? `${im.area_m2}m²` : '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{im.quartos || '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{im.vagas}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border capitalize ${statusBadge[im.status] || ''}`}>
-                        {im.status === 'disponivel' ? 'Disponível' : im.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => openEdit(im)} className="text-primary hover:text-primary-hover text-xs font-medium mr-3">
-                        Editar
-                      </button>
-                      <button onClick={() => handleDelete(im.id)} className="text-danger hover:text-red-700 text-xs font-medium">
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((im) => (
+            <div key={im.id} className="group bg-white rounded-3xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              {/* Image Preview */}
+              <div className="relative h-48 bg-surface-alt overflow-hidden">
+                {im.fotos && im.fotos.length > 0 ? (
+                  <img src={im.fotos.find(f => f.is_capa)?.url_media || im.fotos[0].url_media} alt={im.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                    <span className="text-4xl">📸</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider mt-2">Sem Fotos</span>
+                  </div>
+                )}
+                
+                <div className="absolute top-4 left-4">
+                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${statusBadge[im.status]}`}>
+                      {im.status}
+                   </span>
+                </div>
+                
+                <div className="absolute bottom-4 right-4">
+                   <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black text-text-primary shadow-sm border border-white">
+                      {im.referencia}
+                   </span>
+                </div>
+              </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-border-light">
-              <h2 className="text-lg font-bold text-text-primary">
-                {editingId ? 'Editar imóvel' : 'Novo imóvel'}
-              </h2>
+              {/* Card Content */}
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-2">
+                   <div>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">{im.tipo} • {im.concelho}</p>
+                      <h3 className="font-bold text-text-primary line-clamp-1 group-hover:text-primary transition-colors">{im.titulo || 'Imóvel sem título'}</h3>
+                   </div>
+                </div>
+
+                <div className="flex gap-4 mt-4 py-3 border-y border-border-light/50">
+                    <div className="flex items-center gap-1">
+                       <span className="text-xs">🛏️</span>
+                       <span className="text-xs font-bold text-text-secondary">{im.quartos || '—'} {config.terminology.quartosLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                       <span className="text-xs">📐</span>
+                       <span className="text-xs font-bold text-text-secondary">{im.area_util || im.area_bruta || '—'} m²</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-6">
+                   <span className="text-lg font-black text-text-primary">
+                      {formatCurrencyConfig(im.valor, config)}
+                   </span>
+                   
+                   <div className="flex gap-2">
+                      <Link 
+                        href={`/admin/imoveis/${im.id}`}
+                        className="p-2 rounded-xl bg-surface-alt hover:bg-surface-hover text-text-secondary transition-all"
+                        title="Ver Detalhes"
+                      >
+                         👁️
+                      </Link>
+                      <button 
+                        onClick={() => handleDelete(im.id)}
+                        className="p-2 rounded-xl bg-surface-alt hover:bg-rose-50 hover:text-rose-600 text-text-secondary transition-all"
+                        title="Excluir"
+                      >
+                         🗑️
+                      </button>
+                   </div>
+                </div>
+              </div>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Tipo</label>
-                  <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoImovel })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                    <option value="apartamento">Apartamento</option>
-                    <option value="casa">Casa</option>
-                    <option value="terreno">Terreno</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Status</label>
-                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as StatusImovel })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                    <option value="disponivel">Disponível</option>
-                    <option value="vendido">Vendido</option>
-                    <option value="alugado">Alugado</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Bairro</label>
-                <input type="text" required value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Valor ({config.currency.symbol})</label>
-                  <input type="number" required value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Área (m²)</label>
-                  <input type="number" value={form.area_m2} onChange={(e) => setForm({ ...form, area_m2: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">{config.terminology.quartosLabel}</label>
-                  <input type="number" value={form.quartos} onChange={(e) => setForm({ ...form, quartos: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Vagas</label>
-                  <input type="number" value={form.vagas} onChange={(e) => setForm({ ...form, vagas: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Link de fotos (opcional)</label>
-                <input type="url" value={form.link_fotos} onChange={(e) => setForm({ ...form, link_fotos: e.target.value })} placeholder="https://..." className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:bg-surface-alt transition-all">
-                  Cancelar
-                </button>
-                <button type="submit" className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/20">
-                  {editingId ? 'Salvar' : 'Cadastrar'}
-                </button>
-              </div>
-            </form>
-          </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
+

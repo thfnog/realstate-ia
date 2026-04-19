@@ -96,8 +96,9 @@ export async function parseIncomingEmails(options?: { test?: boolean }): Promise
 /**
  * Converts a parsed email lead into the internal Lead creation format.
  */
-export function emailLeadToCreateData(parsed: ParsedEmailLead): Omit<Lead, 'id' | 'criado_em'> {
+export function emailLeadToCreateData(parsed: ParsedEmailLead, imobiliariaId: string): Omit<Lead, 'id' | 'criado_em'> {
   return {
+    imobiliaria_id: imobiliariaId,
     nome: parsed.nome,
     telefone: parsed.telefone.replace(/\s/g, ''),
     origem: 'email_ego' as LeadSource,

@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     } else {
       // Standard IMAP fetch (currently mocked)
       const result = await parseIncomingEmails({ test: isTest });
-      leadsToProcess = result.leads.map(l => emailLeadToCreateData(l));
+      leadsToProcess = result.leads.map(l => emailLeadToCreateData(l, activeImobId!));
       errors.push(...result.errors);
     }
 
