@@ -70,8 +70,23 @@ EXEMPLO DE SAÍDA:
       })
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Erro na API do Groq:', response.status, errorText);
+      return {};
+    }
+
     const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
+    const rawContent = data.choices?.[0]?.message?.content;
+
+    if (!rawContent) {
+      console.error('⚠️ Resposta do Groq sem conteúdo:', data);
+      return {};
+    }
+
+    // Clean markdown code blocks if the model included them
+    const cleanJson = rawContent.replace(/```json\n?|```/g, '').trim();
+    const result = JSON.parse(cleanJson);
     
     console.log('✅ Dados extraídos via IA:', result);
     return result as AILeadProfile;
