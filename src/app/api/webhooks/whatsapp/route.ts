@@ -20,31 +20,67 @@ import * as mock from '@/lib/mockDb';
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
-    const { sender, text, name } = payload;
+    
+    let sender = payload.sender;
+    let text = payload.text;
+    let name = payload.name;
+    let instanceName = payload.instance;
+
+    // 1. Evolution API V2 — Extraction Logic
+    if (payload.event === 'messages.upsert' && payload.data) {
+      const msgData = payload.data;
+      
+      // Ignore messages sent by the bot itself to prevent loops
+      if (msgData.key?.fromMe) {
+        return NextResponse.json({ success: true, status: 'skipped_from_me' });
+      }
+
+      sender = msgData.key?.remoteJid?.split('@')[0] || '';
+      text = msgData.message?.conversation || 
+             msgData.message?.extendedTextMessage?.text || 
+             msgData.message?.imageMessage?.caption || 
+             '';
+      name = msgData.pushName || '';
+    }
 
     if (!sender || !text) {
+      console.log('⚠️ Payload incompleto ou evento não suportado:', payload.event);
       return NextResponse.json({ error: 'Payload incompleto' }, { status: 400 });
     }
 
-    // 1. Extração de inteligência via IA (Groq)
+    console.log(`📩 Nova mensagem de ${name} (${sender}): "${text}"`);
+
+    // 2. Extração de inteligência via IA (Groq)
     const extracted = await extractLeadWithAI(text);
 
-    // 2. Criação do Lead (Associa à imobiliária default no modo mock)
-    const imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
+    // 3. Determinação da Imobiliária
+    let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
+    
+    if (!mock.isMockMode()) {
+       // Lookup imobiliaria by instance name in production
+       // For now, using a fallback to the first imobiliaria if no mapping exists
+       const { data: imobs } = await supabaseAdmin
+         .from('imobiliarias')
+         .select('id')
+         .limit(1);
+       
+       if (imobs && imobs.length > 0) {
+         imobiliaria_id = imobs[0].id;
+       }
+    }
     
     const leadData = {
       imobiliaria_id,
       nome: name || extracted.nome || 'Lead WhatsApp',
-      telefone: sender,
+      telefone: sender.replace(/\D/g, ''), // Clean phone number
       email: null,
       tipo_interesse: extracted.tipo_interesse || null,
       orcamento: extracted.orcamento || null,
       quartos_interesse: extracted.quartos || null,
       bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],
       status: 'novo',
-      tags: ['whatsapp-bot', 'indaiatuba'],
-      origem: 'whatsapp',
-      portal_origem: 'Bot Direto'
+      origem: 'whatsapp' as any,
+      portal_origem: instanceName || 'WhatsApp Bot'
     };
 
     let newLead;
