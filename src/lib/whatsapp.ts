@@ -27,6 +27,9 @@ export async function sendWhatsAppMessage(to: string, body: string): Promise<str
   // Limpeza básica do número (apenas dígitos)
   const cleanTo = to.replace(/\D/g, '');
 
+  // Depuração de Provedor
+  console.log(`🔍 [DEBUG WHATSAPP] Provider: ${PROVIDER}, API Key Configurada: ${!!EVOLUTION_API_KEY}`);
+
   if (PROVIDER === 'mock' || (!EVOLUTION_API_KEY && !accountSid)) {
     console.log('\n📱 [MOCK WHATSAPP] To:', to, '\nBody:', body);
     return 'mock-sid';
