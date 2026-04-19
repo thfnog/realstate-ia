@@ -14,6 +14,7 @@ import { checkCarteira } from './checkCarteira';
 import { assignCorretor } from './assignCorretor';
 import { recommendImoveis } from './recommendImoveis';
 import { sendBriefing } from './sendBriefing';
+import { sendAutoReplyToLead } from './sendAutoReply';
 import { getConfigByCode } from '@/lib/countryConfig';
 
 export interface ProcessResult {
@@ -102,6 +103,14 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
       isExistingClient: carteira.isExisting,
       corretorAnteriorNome,
       config, // Pass the regional config
+    });
+    
+    // Step 5: Send auto-reply to Lead (First-person, personalized)
+    console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
+    await sendAutoReplyToLead({
+      lead,
+      corretor,
+      config,
     });
 
     console.log(`✅ Lead processado com sucesso! Corretor: ${corretor.nome}`);

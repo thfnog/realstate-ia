@@ -11,9 +11,9 @@ import twilio from 'twilio';
 const PROVIDER = (process.env.WHATSAPP_PROVIDER || 'evolution') as 'twilio' | 'evolution' | 'mock';
 
 // Evolution Config
-const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://localhost:8080';
+const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://35.172.170.210:8080';
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || '';
-const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'MainInstance';
+const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'teste';
 
 // Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
