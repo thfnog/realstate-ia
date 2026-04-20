@@ -46,14 +46,9 @@ export async function sendWhatsAppMessage(to: string, body: string): Promise<str
         },
         body: JSON.stringify({
           number: cleanTo,
-          options: {
-            delay: 1200,
-            presence: 'composing',
-            linkPreview: true
-          },
-          textMessage: {
-            text: body
-          }
+          text: body,
+          delay: 1200,
+          linkPreview: true
         })
       });
 
