@@ -10,6 +10,7 @@ export default function ImoveisPage() {
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: '', tipo: '' });
+  const [searchTerm, setSearchTerm] = useState('');
 
   async function fetchConfig() {
     try {
@@ -57,6 +58,15 @@ export default function ImoveisPage() {
   const filtered = imoveis.filter(im => {
     if (filter.status && im.status !== filter.status) return false;
     if (filter.tipo && im.tipo !== filter.tipo) return false;
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const refMatch = im.referencia.toLowerCase().includes(term);
+      const titleMatch = im.titulo?.toLowerCase().includes(term);
+      const concelhoMatch = im.concelho?.toLowerCase().includes(term);
+      if (!refMatch && !titleMatch && !concelhoMatch) return false;
+    }
+    
     return true;
   });
 
@@ -98,6 +108,17 @@ export default function ImoveisPage() {
 
       {/* Filters */}
       <div className="bg-surface-alt/50 p-4 rounded-2xl flex flex-wrap gap-4 items-center border border-border-light">
+          <div className="flex-1 min-w-[200px] relative">
+             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">🔍</span>
+             <input 
+                type="text"
+                placeholder="Buscar por referência, título ou cidade..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full bg-white border border-border-light rounded-xl pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+             />
+          </div>
+
           <div className="flex items-center gap-2">
              <span className="text-xs font-bold text-text-secondary uppercase">Status:</span>
              <select 

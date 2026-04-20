@@ -29,6 +29,8 @@ export interface ProcessResult {
 
 export interface ProcessOptions {
   skipAutoReply?: boolean;
+  forceAutoReply?: boolean;
+  customReply?: string;
 }
 
 export async function processLead(lead: Lead, options: ProcessOptions = {}): Promise<ProcessResult> {
@@ -129,12 +131,13 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
     });
     
     // Step 5: Send auto-reply to Lead (First-person, personalized)
-    if (!options?.skipAutoReply) {
+    if (options?.forceAutoReply || !options?.skipAutoReply) {
       console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
       await sendAutoReplyToLead({
         lead,
         corretor,
         config,
+        customMessage: options?.customReply
       });
     } else {
       console.log('⏭️ Step 5: Auto-reply ignorado (não é lead confirmado ou solicitado pular)');

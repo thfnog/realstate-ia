@@ -10,10 +10,11 @@ import MapPicker from './MapPicker'; // MapPicker already has a ReadOnly style o
 interface ImovelDetalhesViewProps {
   imovel: Imovel;
   config: CountryConfig;
-  onDelete: () => void;
+  onDelete?: () => void;
+  isAdmin?: boolean;
 }
 
-export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelDetalhesViewProps) {
+export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin = true }: ImovelDetalhesViewProps) {
   const [activePhoto, setActivePhoto] = useState(0);
 
   const stats = [
@@ -24,7 +25,8 @@ export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelD
   ];
 
   function handleShareWhatsApp() {
-    const message = `Olá! Tenho um imóvel excelente que combina com seu perfil:\n\n🏠 *${imovel.titulo}*\n📍 ${imovel.freguesia}, ${imovel.concelho}\n💰 *${formatCurrency(imovel.valor, config)}*\n🛏️ ${imovel.quartos} qts | 📐 ${imovel.area_util}m²\n\nConfira os detalhes e localização aqui!`;
+    const propertyUrl = typeof window !== 'undefined' ? `${window.location.origin}/imoveis/${imovel.id}` : '';
+    const message = `Olá! Gostaria de compartilhar este imóvel que combina com seu perfil:\n\n🏠 *${imovel.titulo || 'Imóvel Selecionado'}*\n📍 ${imovel.freguesia || ''}, ${imovel.concelho || ''}\n💰 *${formatCurrency(imovel.valor, config)}*\n🛏️ ${imovel.quartos || '—'} qts | 📐 ${imovel.area_util || '—'}m²\n\nConfira todos os detalhes aqui:\n🔗 ${propertyUrl}\n\nFico à disposição para agendarmos uma visita!`;
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
   }
@@ -48,25 +50,33 @@ export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelD
                 {imovel.status}
              </span>
           </div>
-          <h1 className="text-3xl font-black text-text-primary tracking-tight mt-2">{imovel.titulo}</h1>
+          <h1 className="text-3xl font-black text-text-primary tracking-tight mt-2">{imovel.titulo || 'Detalhes do Imóvel'}</h1>
           <p className="text-text-secondary flex items-center gap-2">
-             <span className="text-lg">📍</span> {imovel.rua}{imovel.numero ? `, ${imovel.numero}` : ''} • {imovel.freguesia}, {imovel.concelho}
+             <span className="text-lg">📍</span> 
+             {isAdmin ? (
+               <>{imovel.rua}{imovel.numero ? `, ${imovel.numero}` : ''} • {imovel.freguesia}, {imovel.concelho}</>
+             ) : (
+               <>{[imovel.freguesia, imovel.concelho].filter(Boolean).join(', ')}</>
+             )}
           </p>
         </div>
-        <div className="flex gap-3">
-           <Link 
-             href={`/admin/imoveis/${imovel.id}/editar`}
-             className="px-6 py-3 rounded-2xl bg-surface-alt hover:bg-surface-hover text-text-primary font-bold transition-all border border-border-light flex items-center gap-2"
-           >
-             <span>✏️</span> Editar Dados
-           </Link>
-           <button 
-             onClick={onDelete}
-             className="px-6 py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold transition-all border border-rose-200 flex items-center gap-2"
-           >
-             <span>🗑️</span> Excluir
-           </button>
-        </div>
+
+        {isAdmin && (
+          <div className="flex gap-3">
+            <Link 
+              href={`/admin/imoveis/${imovel.id}/editar`}
+              className="px-6 py-3 rounded-2xl bg-surface-alt hover:bg-surface-hover text-text-primary font-bold transition-all border border-border-light flex items-center gap-2"
+            >
+              <span>✏️</span> Editar Dados
+            </Link>
+            <button 
+              onClick={onDelete}
+              className="px-6 py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold transition-all border border-rose-200 flex items-center gap-2"
+            >
+              <span>🗑️</span> Excluir
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content Grid */}
@@ -191,20 +201,22 @@ export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelD
                  />
               </div>
 
-              <div className="mt-8 space-y-3">
-                 <button 
-                   onClick={handleGeneratePDF}
-                   className="w-full py-4 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
-                 >
-                    Gerar PDF para Cliente
-                 </button>
-                 <button 
-                   onClick={handleShareWhatsApp}
-                   className="w-full py-4 rounded-2xl bg-white text-text-primary border-2 border-border-light font-black hover:bg-surface-alt transition-all"
-                 >
-                    Compartilhar via WhatsApp
-                 </button>
-              </div>
+              {isAdmin && (
+                <div className="mt-8 space-y-3">
+                   <button 
+                     onClick={handleGeneratePDF}
+                     className="w-full py-4 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
+                   >
+                      Gerar PDF para Cliente
+                   </button>
+                   <button 
+                     onClick={handleShareWhatsApp}
+                     className="w-full py-4 rounded-2xl bg-white text-text-primary border-2 border-border-light font-black hover:bg-surface-alt transition-all"
+                   >
+                      Compartilhar via WhatsApp
+                   </button>
+                </div>
+              )}
            </div>
 
            {/* Small Map Card */}
@@ -215,7 +227,8 @@ export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelD
                     lat={imovel.latitude}
                     lng={imovel.longitude}
                     onChange={() => {}} // Read only here
-                    address={`${imovel.rua}, ${imovel.concelho}`}
+                    address={isAdmin ? `${imovel.rua}, ${imovel.concelho}` : `${imovel.freguesia}, ${imovel.concelho}`}
+                    isAdmin={isAdmin}
                  />
               </div>
            </div>

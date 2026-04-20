@@ -9,11 +9,10 @@
  */
 
 import type { 
-  Corretor, Imovel, Lead, Escala, Moeda, LeadSource, Evento, EventoComDetalhes,
+  Corretor, Imovel, Lead, LeadComCorretor, Escala, Moeda, LeadSource, Evento, EventoComDetalhes,
   Imobiliaria, Usuario
 } from '@/lib/database.types';
 import { getConfig } from '@/lib/countryConfig';
-import { randomUUID } from 'crypto';
 
 // ===== Default Tenant Constants =====
 export const DEFAULT_IMOBILIARIA_ID = 'imob-0000-default-id';
@@ -71,7 +70,7 @@ export function createImobiliaria(data: Omit<Imobiliaria, 'id' | 'criado_em'>): 
   }
 
   const imob: Imobiliaria = {
-    id: (data as any).id || randomUUID(),
+    id: (data as any).id || crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
   } as Imobiliaria;
@@ -97,7 +96,7 @@ export function getUsuarioById(id: string): Usuario | undefined {
 
 export function createUsuario(data: Omit<Usuario, 'id' | 'criado_em'>): Usuario {
   const user: Usuario = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
   };
@@ -118,7 +117,7 @@ export function getCorretorById(id: string): Corretor | undefined {
 
 export function createCorretor(data: Omit<Corretor, 'id' | 'criado_em'>): Corretor {
   const corretor: Corretor = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
   };
@@ -154,12 +153,16 @@ export function getImovelById(id: string): Imovel | undefined {
   return imoveis.find((i) => i.id === id);
 }
 
+export function getImovelByReferencia(referencia: string): Imovel | undefined {
+  return imoveis.find((i) => i.referencia.toUpperCase() === referencia.toUpperCase());
+}
+
 import { gerarReferencia } from './imoveis/referencia';
 
 export function createImovel(data: Omit<Imovel, 'id' | 'criado_em' | 'referencia'>): Imovel {
   const nextSeq = imoveis.filter(i => i.tipo === data.tipo).length + 1;
   const imovel: Imovel = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     referencia: gerarReferencia(data.tipo, nextSeq),
     criado_em: new Date().toISOString(),
     ...data,
@@ -184,7 +187,7 @@ export function deleteImovel(id: string): boolean {
 
 // ===== Leads =====
 
-export function getLeads(status?: string): (Lead & { corretores: Corretor | null })[] {
+export function getLeads(status?: string): LeadComCorretor[] {
   let result = [...leads];
   if (status) result = result.filter((l) => l.status === status);
   return result
@@ -192,6 +195,7 @@ export function getLeads(status?: string): (Lead & { corretores: Corretor | null
     .map((l) => ({
       ...l,
       corretores: l.corretor_id ? getCorretorById(l.corretor_id) || null : null,
+      imoveis: l.imovel_id ? getImovelById(l.imovel_id) || null : null,
     }));
 }
 
@@ -205,7 +209,7 @@ export function getLeadByTelefone(telefone: string, imobId?: string): Lead | und
 
 export function createLead(data: Omit<Lead, 'id' | 'criado_em'>): Lead {
   const lead: Lead = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
   };
@@ -213,13 +217,14 @@ export function createLead(data: Omit<Lead, 'id' | 'criado_em'>): Lead {
   return lead;
 }
 
-export function updateLead(id: string, data: Partial<Lead>): (Lead & { corretores: Corretor | null }) | null {
+export function updateLead(id: string, data: Partial<Lead>): LeadComCorretor | null {
   const idx = leads.findIndex((l) => l.id === id);
   if (idx === -1) return null;
   leads[idx] = { ...leads[idx], ...data };
   return {
     ...leads[idx],
     corretores: leads[idx].corretor_id ? getCorretorById(leads[idx].corretor_id!) || null : null,
+    imoveis: leads[idx].imovel_id ? getImovelById(leads[idx].imovel_id!) || null : null,
   };
 }
 
@@ -288,7 +293,7 @@ export function createEscala(data: { imobiliaria_id: string; corretor_id: string
   if (exists) return { error: 'duplicate' };
 
   const entry: Escala = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     imobiliaria_id: data.imobiliaria_id,
     corretor_id: data.corretor_id,
     data: data.data,
@@ -326,7 +331,7 @@ export function getEventos(leadId?: string, start?: string, end?: string): Event
 
 export function createEvento(data: Omit<Evento, 'id' | 'criado_em'>): Evento {
   const evento: Evento = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
   };
@@ -394,7 +399,7 @@ function seedPT() {
   ];
 
   const sampleLeads = [
-    { nome: 'Miguel Silva', telefone: '+351911111111', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 350000, bairros: ['Chiado', 'Alfama'] },
+    { nome: 'Miguel Silva', telefone: '+351911111111', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 350000, bairros: ['Chiado', 'Alfama'], descricao: 'Interesse em T2 com vista para o rio.' },
     { nome: 'Sofia Martins', telefone: '+351922222222', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 1, orcamento: 1200, bairros: ['Alfama'] },
     { nome: 'Ricardo Almeida', telefone: '+351933333333', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 550000, bairros: ['Sintra'] },
     { nome: 'Inês Pereira', telefone: '+351944444444', finalidade: 'investir' as const, tipo: 'apartamento', quartos: 2, orcamento: 300000, bairros: ['Parque das Nações'] },
@@ -414,7 +419,7 @@ function seedPT() {
       finalidade: sl.finalidade,
       prazo: sl.finalidade === 'comprar' ? '3-6 meses' : null,
       pagamento: sl.finalidade === 'comprar' ? 'financiamento' : null,
-      descricao_interesse: null,
+      descricao_interesse: (sl as any).descricao || null,
       tipo_interesse: sl.tipo,
       orcamento: sl.orcamento,
       area_interesse: null,
@@ -529,7 +534,7 @@ function seedBR() {
   ];
 
   const sampleLeads = [
-    { nome: 'Maria Oliveira', telefone: '+5511912345001', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 500000, bairros: ['Centro'], status: 'novo' as const, origem: 'whatsapp' as const },
+    { nome: 'Maria Oliveira', telefone: '+5511912345001', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 500000, bairros: ['Centro'], status: 'novo' as const, origem: 'whatsapp' as const, descricao_interesse: 'Gostaria de saber mais sobre o apartamento no Swiss Park que vi no anúncio.' },
     { nome: 'João Santos', telefone: '+5511912345002', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 3, orcamento: 3500, bairros: ['Moema', 'Jardins'], status: 'em_atendimento' as const, origem: 'formulario' as const },
     { nome: 'Ana Paula Costa', telefone: '+5511912345003', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 1600000, bairros: ['Swiss Park'], status: 'visita_agendada' as const, origem: 'whatsapp' as const },
     { nome: 'Carlos Eduardo', telefone: '+5511912345004', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 5500000, bairros: ['Helvetia Park'], status: 'negociacao' as const, origem: 'manual' as const },
@@ -548,7 +553,7 @@ function seedBR() {
       finalidade: l.finalidade,
       prazo: '3-6 meses',
       pagamento: 'financiamento',
-      descricao_interesse: null,
+      descricao_interesse: l.descricao_interesse || null,
       tipo_interesse: l.tipo,
       orcamento: l.orcamento,
       area_interesse: null,

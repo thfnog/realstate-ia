@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { extractLeadWithAI } from '@/lib/engine/aiExtractor';
 import { processLead } from '@/lib/engine/processLead';
+import { processFollowUpIntelligence } from '@/lib/engine/aiScheduler';
 import * as mock from '@/lib/mockDb';
 
 /**
@@ -131,24 +132,78 @@ export async function POST(request: Request) {
 
      const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
     
+    // 3. Busca de Lead Existente ou Criação
+    let lead;
+    const phoneClean = sender.replace(/\D/g, '');
+
+    if (mock.isMockMode()) {
+       lead = mock.getLeadByTelefone(phoneClean);
+    } else {
+       const { data } = await supabaseAdmin
+         .from('leads')
+         .select('*')
+         .eq('telefone', phoneClean)
+         .maybeSingle();
+       lead = data;
+    }
+
+    if (lead) {
+       console.log(`👤 Lead existente encontrado: ${lead.nome}. Processando Inteligência de Follow-up...`);
+       
+       // Handle existing lead scheduling intelligence
+       const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
+       
+       if (aiResponse) {
+          console.log('🤖 IA de Agendamento sugerindo horários...');
+          await processLead(lead.id, { 
+            forceAutoReply: true, 
+            customReply: aiResponse 
+          });
+          return NextResponse.json({ success: true, status: 'processed_scheduling_followup' });
+       }
+
+       return NextResponse.json({ success: true, status: 'processed_existing_lead_no_action' });
+    }
+
+    // 3. Detecção de Referência de Imóvel no Texto
+    let imovel_id: string | null = null;
+    const refMatch = text.match(/imóvel\s+([A-Z]{3,4}\d+)/i); // Captura padrões como APT2026001 ou CAS2026001
+    if (refMatch) {
+      const referencia = refMatch[1];
+      console.log(`🔍 Referência de imóvel detectada na mensagem: ${referencia}`);
+      
+      let imovel;
+      if (mock.isMockMode()) {
+        imovel = mock.getImovelByReferencia(referencia);
+      } else {
+        const { data } = await supabaseAdmin.from('imoveis').select('id').eq('referencia', referencia).single();
+        imovel = data;
+      }
+      
+      if (imovel) {
+        imovel_id = imovel.id;
+        console.log(`🔗 Vínculo automático criado com o imóvel ID: ${imovel_id}`);
+      }
+    }
+
     const leadData = {
       imobiliaria_id,
       nome: name || extracted.nome || 'Lead WhatsApp',
-      telefone: sender.replace(/\D/g, ''), // Clean phone number
+      telefone: phoneClean,
       email: null,
       moeda,
       tipo_interesse: extracted.tipo_interesse || null,
       orcamento: extracted.orcamento || null,
       quartos_interesse: extracted.quartos || null,
       bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],
-      descricao_interesse: text, // Salva a mensagem original para contexto
+      descricao_interesse: text, 
+      imovel_id, // Vincular automaticamente ao imóvel encontrado
       status: 'novo',
       origem: 'whatsapp' as any,
       portal_origem: instanceName || 'WhatsApp Bot'
     };
 
     let newLead;
-
     if (mock.isMockMode()) {
        newLead = mock.createLead(leadData as any);
     } else {
@@ -161,9 +216,8 @@ export async function POST(request: Request) {
        newLead = data;
     }
 
-    // 3. Processamento Inteligente (Matching + Atribuição + Briefing)
-    // Só envia resposta automática se a IA tiver certeza que é um lead (is_lead === true)
-    const processResult = await processLead(newLead, {
+    // 4. Processamento Inteligente (Matching + Atribuição + Briefing)
+    const processResult = await processLead(newLead.id, {
       skipAutoReply: extracted.is_lead !== true
     });
 

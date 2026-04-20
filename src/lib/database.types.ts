@@ -139,12 +139,14 @@ export type Lead = {
   vagas_interesse: number | null;
   bairros_interesse: string[] | null;
   corretor_id: string | null;
+  imovel_id?: string | null;
   status: StatusLead;
   criado_em: string;
 };
 
 export type LeadComCorretor = Lead & {
   corretores: Corretor | null;
+  imoveis: Imovel | null;
 };
 
 // =============================================

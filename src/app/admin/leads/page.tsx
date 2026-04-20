@@ -33,6 +33,8 @@ export default function LeadsPage() {
   });
   const [matchingImoveis, setMatchingImoveis] = useState<any[]>([]);
   const [loadingMatching, setLoadingMatching] = useState(false);
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [msgStatus, setMsgStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -140,6 +142,7 @@ export default function LeadsPage() {
     setSelectedLead(lead);
     setLoadingEventos(true);
     setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '' });
+    setMsgStatus('idle'); // Reset messaging status
     
     try {
       const res = await fetch(`/api/eventos?lead_id=${lead.id}`);
@@ -369,6 +372,12 @@ export default function LeadsPage() {
                            </div>
                            
                            <div className="bg-surface-alt/50 p-3 rounded-xl border border-border-light/50 mb-4">
+                              {lead.imoveis && (
+                                <div className="flex items-center gap-1.5 mb-2 p-1.5 bg-primary/5 rounded-lg border border-primary/10">
+                                  <span className="text-[10px]">🏠</span>
+                                  <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Interesse: {lead.imoveis.referencia}</span>
+                                </div>
+                              )}
                               <p className="text-[10px] font-bold text-text-primary leading-tight mb-1.5">
                                  {getProfileSummary(lead)}
                               </p>
@@ -512,9 +521,14 @@ export default function LeadsPage() {
 
                       {/* Perfil */}
                       <td className="px-4 py-3 text-text-muted max-w-[200px]">
-                        <span className="truncate block">{getProfileSummary(lead)}</span>
+                        {lead.imoveis && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/5 text-primary text-[9px] font-black uppercase mb-1 border border-primary/10">
+                            🏠 {lead.imoveis.referencia}
+                          </span>
+                        )}
+                        <span className="truncate block font-bold text-text-primary text-[11px]">{getProfileSummary(lead)}</span>
                         {lead.descricao_interesse && (
-                          <span className="text-xs italic text-text-muted/70 truncate block" title={lead.descricao_interesse}>
+                          <span className="text-[10px] italic text-text-muted/70 truncate block" title={lead.descricao_interesse}>
                             &ldquo;{lead.descricao_interesse.slice(0, 50)}...&rdquo;
                           </span>
                         )}
@@ -631,6 +645,36 @@ export default function LeadsPage() {
             <div className="flex-1 overflow-y-auto flex flex-col md:flex-row">
               {/* Left col: Event history */}
               <div className="flex-1 p-6 border-r border-border-light bg-slate-50/30">
+                
+                 {/* 📩 MENSAGEM ORIGINAL DO CLIENTE */}
+                 {selectedLead.descricao_interesse && (
+                   <div className="mb-8 p-4 rounded-xl bg-amber-50/50 border border-amber-200/50">
+                     <h3 className="text-[10px] font-black text-amber-900 uppercase tracking-widest mb-2 flex items-center gap-2">
+                       <span>📩</span> Mensagem Original do Cliente
+                     </h3>
+                     {selectedLead.imoveis && (
+                        <div className="mb-3 p-3 bg-white rounded-lg border border-amber-100 flex items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary text-xl">🏠</div>
+                              <div>
+                                 <p className="text-[10px] font-black text-primary uppercase">Imóvel de Interesse</p>
+                                 <p className="text-sm font-bold text-text-primary">{selectedLead.imoveis.referencia} — {selectedLead.imoveis.titulo}</p>
+                              </div>
+                           </div>
+                           <Link 
+                             href={`/admin/imoveis/${selectedLead.imovel_id}`}
+                             className="px-3 py-1.5 bg-primary text-white text-[10px] font-black uppercase rounded-lg hover:bg-primary-hover transition-all"
+                           >
+                              Ver Imóvel
+                           </Link>
+                        </div>
+                     )}
+                     <p className="text-sm text-amber-800 italic leading-relaxed">
+                       "{selectedLead.descricao_interesse}"
+                     </p>
+                   </div>
+                 )}
+
                 <h3 className="font-semibold text-text-primary mb-5 flex items-center gap-2">
                   <span>📅</span> Histórico de Processos
                 </h3>
@@ -647,7 +691,7 @@ export default function LeadsPage() {
                   </div>
                 ) : (
                   <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
-                    {leadEventos.map((evt, idx) => (
+                    {leadEventos.map((evt) => (
                       <div key={evt.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                         {/* Timeline dot */}
                         <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-200 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
@@ -752,8 +796,10 @@ export default function LeadsPage() {
                       onClick={async () => {
                         const area = document.getElementById('manualMsg') as HTMLTextAreaElement;
                         const msg = area?.value;
-                        if (!msg) return;
+                        if (!msg || sendingMsg) return;
                         
+                        setSendingMsg(true);
+                        setMsgStatus('idle');
                         try {
                           const res = await fetch(`/api/leads/${selectedLead.id}/message`, {
                              method: 'POST',
@@ -761,18 +807,33 @@ export default function LeadsPage() {
                              body: JSON.stringify({ message: msg })
                           });
                           if (res.ok) {
-                            alert('Mensagem enviada com sucesso!');
+                            setMsgStatus('success');
                             area.value = '';
+                            
+                            // Auto-move to "Em Atendimento" if it was "Novo"
+                            if (selectedLead.status === 'novo') {
+                               updateStatus(selectedLead.id, 'em_atendimento');
+                            }
                           } else {
-                            alert('Erro ao enviar mensagem.');
+                            setMsgStatus('error');
                           }
                         } catch {
-                          alert('Erro de conexão.');
+                          setMsgStatus('error');
+                        } finally {
+                          setSendingMsg(false);
+                          setTimeout(() => setMsgStatus('idle'), 3000);
                         }
                       }}
-                      className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md shadow-indigo-100"
+                      disabled={sendingMsg}
+                      className={`w-full py-2 rounded-xl font-bold text-xs transition-all shadow-md ${
+                        msgStatus === 'success' ? 'bg-emerald-500 text-white shadow-emerald-100' :
+                        msgStatus === 'error' ? 'bg-red-500 text-white shadow-red-100' :
+                        'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'
+                      } disabled:opacity-50`}
                     >
-                      🚀 Enviar agora para o Lead
+                      {sendingMsg ? '⏳ Enviando...' : 
+                       msgStatus === 'success' ? '✅ Enviado!' :
+                       msgStatus === 'error' ? '❌ Erro no envio' : '🚀 Enviar agora para o Lead'}
                     </button>
                   </div>
                 </div>
@@ -786,52 +847,71 @@ export default function LeadsPage() {
                   </h3>
                   
                   <form onSubmit={handleCreateEvent} className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Tipo de Evento</label>
-                      <select 
-                        value={newEvent.tipo} onChange={e => setNewEvent({...newEvent, tipo: e.target.value as TipoEvento})}
-                        className="w-full text-sm px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
-                      >
-                        <option value="visita">🏠 Visita</option>
-                        <option value="reuniao">🤝 Reunião</option>
-                        <option value="vistoria">🔍 Vistoria</option>
-                        <option value="cartorio">🏛️ Cartório</option>
-                        <option value="assinatura">✍️ Assinatura</option>
-                        <option value="outro">📌 Outro</option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Data e Hora</label>
-                        <input 
-                          type="datetime-local" required
-                          value={newEvent.data_hora} onChange={e => setNewEvent({...newEvent, data_hora: e.target.value})}
-                          className="w-full text-sm px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 outline-none"
-                        />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Tipo</label>
+                        <select 
+                          value={newEvent.tipo} 
+                          onChange={e => setNewEvent({...newEvent, tipo: e.target.value as TipoEvento})}
+                          className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none"
+                        >
+                          <option value="visita">🏠 Visita</option>
+                          <option value="reuniao">🤝 Reunião</option>
+                          <option value="assinatura">✍️ Assinatura</option>
+                          <option value="cartorio">🏛️ Cartório</option>
+                        </select>
                       </div>
-
-                      <div>
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Título</label>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Data/Hora</label>
                         <input 
-                          type="text" required placeholder="Ex: Visita ao Swiss Park"
-                          value={newEvent.titulo} onChange={e => setNewEvent({...newEvent, titulo: e.target.value})}
-                          className="w-full text-sm px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 outline-none"
+                          type="datetime-local" 
+                          required
+                          value={newEvent.data_hora}
+                          onChange={e => setNewEvent({...newEvent, data_hora: e.target.value})}
+                          className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none"
                         />
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Observações</label>
-                      <textarea 
-                        rows={2} placeholder="Detalhes extras..."
-                        value={newEvent.descricao} onChange={e => setNewEvent({...newEvent, descricao: e.target.value})}
-                        className="w-full text-sm px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 outline-none resize-none"
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Título</label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="Ex: Visita no local"
+                        value={newEvent.titulo}
+                        onChange={e => setNewEvent({...newEvent, titulo: e.target.value})}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none transition-all focus:bg-white"
                       />
                     </div>
 
-                    <button type="submit" className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm transition-all shadow-lg shadow-primary/20">
-                      💾 Salvar e Agendar
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Local</label>
+                      <input 
+                        type="text" 
+                        placeholder="Endereço ou virtual"
+                        value={newEvent.local}
+                        onChange={e => setNewEvent({...newEvent, local: e.target.value})}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Observações</label>
+                      <textarea 
+                        placeholder="Detalhes importantes..."
+                        rows={2}
+                        value={newEvent.descricao}
+                        onChange={e => setNewEvent({...newEvent, descricao: e.target.value})}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all uppercase tracking-widest mt-2"
+                    >
+                      Agendar Evento
                     </button>
                   </form>
                 </div>

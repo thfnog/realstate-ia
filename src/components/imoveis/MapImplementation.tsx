@@ -10,6 +10,7 @@ interface MapImplementationProps {
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
   address?: string;
+  isAdmin?: boolean;
 }
 
 // Fix marker icon issue
@@ -21,17 +22,17 @@ const DefaultIcon = L.icon({
 });
 
 // Helper component that can use the useMap hook
-function ChangeView({ center }: { center: [number, number] }) {
+function ChangeView({ center, isAdmin = true }: { center: [number, number], isAdmin?: boolean }) {
   const map = useMap();
   useEffect(() => {
     if (center && center[0] !== 0) {
-      map.setView(center, 15);
+      map.setView(center, isAdmin ? 15 : 13);
     }
-  }, [center, map]);
+  }, [center, map, isAdmin]);
   return null;
 }
 
-export default function MapImplementation({ lat, lng, onChange, address }: MapImplementationProps) {
+export default function MapImplementation({ lat, lng, onChange, address, isAdmin = true }: MapImplementationProps) {
   const [position, setPosition] = useState<[number, number] | null>(lat && lng ? [lat, lng] : null);
 
   const defaultCenter: [number, number] = position || [-23.1895, -47.2151]; // Indaiatuba
@@ -54,18 +55,20 @@ export default function MapImplementation({ lat, lng, onChange, address }: MapIm
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-        <span>Arraste o pin para ajustar</span>
-        {address && (
-          <button 
-            type="button" 
-            onClick={handleGeocode}
-            className="text-primary hover:underline hover:text-primary-hover flex items-center gap-1"
-          >
-            🧭 Buscar Endereço
-          </button>
-        )}
-      </div>
+      {isAdmin && (
+        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+          <span>Arraste o pin para ajustar</span>
+          {address && (
+            <button 
+              type="button" 
+              onClick={handleGeocode}
+              className="text-primary hover:underline hover:text-primary-hover flex items-center gap-1"
+            >
+              🧭 Buscar Endereço
+            </button>
+          )}
+        </div>
+      )}
       
       <div className="h-64 w-full rounded-2xl overflow-hidden border border-border-light shadow-inner relative z-0">
         <MapContainer 
@@ -77,7 +80,7 @@ export default function MapImplementation({ lat, lng, onChange, address }: MapIm
             attribution='&copy; OpenStreetMap'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {position && <Marker 
+          {position && isAdmin && <Marker 
             position={position} 
             icon={DefaultIcon}
             draggable={true} 
@@ -91,7 +94,7 @@ export default function MapImplementation({ lat, lng, onChange, address }: MapIm
               }
             }} 
           />}
-          <ChangeView center={defaultCenter} />
+          <ChangeView center={defaultCenter} isAdmin={isAdmin} />
         </MapContainer>
       </div>
     </div>

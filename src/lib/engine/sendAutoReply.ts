@@ -12,6 +12,7 @@ interface AutoReplyData {
   lead: Lead;
   corretor: Corretor;
   config: any;
+  customMessage?: string;
 }
 
 /**
@@ -38,8 +39,8 @@ export function buildAutoReplyMessage(data: AutoReplyData): string {
  * Envia a saudação automática para o Lead.
  */
 export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> {
-  const { lead } = data;
-  const message = buildAutoReplyMessage(data);
+  const { lead, customMessage } = data;
+  const message = customMessage || buildAutoReplyMessage(data);
 
   // Enviar para o WhatsApp do Lead
   const result = await sendWhatsAppMessage(lead.telefone, message);

@@ -15,6 +15,7 @@ interface MapPickerProps {
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
   address?: string;
+  isAdmin?: boolean;
 }
 
 export default function MapPicker(props: MapPickerProps) {
