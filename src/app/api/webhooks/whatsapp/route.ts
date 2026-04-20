@@ -27,15 +27,24 @@ export async function POST(request: Request) {
     let instanceName = payload.instance;
 
     // 1. Evolution API V2 — Extraction Logic
+    let remoteJid = payload.data?.key?.remoteJid || '';
+
     if (payload.event === 'messages.upsert' && payload.data) {
       const msgData = payload.data;
+      remoteJid = msgData.key?.remoteJid || '';
       
       // Ignore messages sent by the bot itself to prevent loops
       if (msgData.key?.fromMe) {
         return NextResponse.json({ success: true, status: 'skipped_from_me' });
       }
 
-      sender = msgData.key?.remoteJid?.split('@')[0] || '';
+      // NOISE FILTER: Ignore messages from groups (@g.us)
+      if (remoteJid.includes('@g.us')) {
+        console.log(`🚫 Mensagem de grupo ignorada: ${remoteJid}`);
+        return NextResponse.json({ success: true, status: 'skipped_group' });
+      }
+
+      sender = remoteJid.split('@')[0] || '';
       text = msgData.message?.conversation || 
              msgData.message?.extendedTextMessage?.text || 
              msgData.message?.imageMessage?.caption || 
@@ -50,8 +59,18 @@ export async function POST(request: Request) {
 
     console.log(`📩 Nova mensagem de ${name} (${sender}): "${text}"`);
 
-    // 2. Extração de inteligência via IA (Groq)
+    // 2. Extração e Classificação via IA (Groq)
     const extracted = await extractLeadWithAI(text);
+
+    // AI TRIAGE: If not a lead intent, skip creation
+    if (extracted.is_lead === false) {
+      console.log(`♻️ Ruído detectado e descartado: "${text}" (${extracted.resumo_ia})`);
+      return NextResponse.json({ 
+        success: true, 
+        status: 'discarded_noise',
+        reason: extracted.resumo_ia 
+      });
+    }
 
     // 3. Determinação da Imobiliária
     let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
@@ -69,13 +88,21 @@ export async function POST(request: Request) {
        }
     }
      
-     // Determinar moeda com base no país da imobiliária
-     const { data: imobData } = await supabaseAdmin
-       .from('imobiliarias')
-       .select('config_pais')
-       .eq('id', imobiliaria_id)
-       .single();
-     const moeda = imobData?.config_pais === 'BR' ? 'BRL' : 'EUR';
+     let config_pais = 'BR';
+    
+     if (mock.isMockMode()) {
+        const imob = mock.getImobiliariaById(imobiliaria_id);
+        config_pais = imob?.config_pais || 'BR';
+     } else {
+        const { data: imobData } = await supabaseAdmin
+          .from('imobiliarias')
+          .select('config_pais')
+          .eq('id', imobiliaria_id)
+          .single();
+        config_pais = imobData?.config_pais || 'BR';
+     }
+
+     const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
     
     const leadData = {
       imobiliaria_id,

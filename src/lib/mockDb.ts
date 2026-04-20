@@ -238,6 +238,25 @@ export function deleteLead(id: string): boolean {
   return true;
 }
 
+export function purgeLeads(imobId: string): void {
+  // Delete events first
+  const leadIds = leads.filter(l => l.imobiliaria_id === imobId).map(l => l.id);
+  
+  // Remove events linked to those leads
+  for (let i = eventos.length - 1; i >= 0; i--) {
+    if (leadIds.includes(eventos[i].lead_id)) {
+      eventos.splice(i, 1);
+    }
+  }
+
+  // Remove leads
+  for (let i = leads.length - 1; i >= 0; i--) {
+    if (leads[i].imobiliaria_id === imobId) {
+      leads.splice(i, 1);
+    }
+  }
+}
+
 // ===== Escala =====
 
 export function getEscala(start?: string, end?: string): (Escala & { corretores: Corretor | null })[] {

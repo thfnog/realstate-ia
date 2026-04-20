@@ -12,6 +12,7 @@ export interface AILeadProfile {
   concelho?: string;  // Cidade
   orcamento?: number;
   quartos?: number;
+  is_lead: boolean; // TRUE if it is real estate related, FALSE if noise/social
   resumo_ia?: string;
 }
 
@@ -28,30 +29,39 @@ export async function extractLeadWithAI(text: string): Promise<AILeadProfile> {
   }
 
   const prompt = `
-Você é um assistente especializado em imobiliárias brasileiras.
-Sua tarefa é extrair informações estruturadas de mensagens de clientes interessados em imóveis.
+Você é um classificador e extrator de dados para uma imobiliária brasileira.
+Sua tarefa é triar mensagens do WhatsApp e extrair informações apenas se forem relevantes para o negócio imobiliário (compra, venda, aluguel, dúvidas sobre imóveis).
 
 MENSAGEM DO CLIENTE:
 "${text}"
 
-REGRAS:
+REGRAS DE CLASSIFICAÇÃO (is_lead):
+- Marque "is_lead": true se o cliente demonstrar interesse em imóveis, pedir preços, agendamentos, ou der informações de perfil.
+- Marque "is_lead": false se for apenas saudação ("bom dia", "tudo bem?"), conversa social, spam, ou assunto totalmente irrelevante para a imobiliária.
+
+REGRAS DE EXTRAÇÃO:
 1. Extraia o nome se mencionado.
 2. Identifique o tipo: 'apartamento', 'casa' ou 'terreno'.
 3. Identifique o bairro (freguesia) e cidade (concelho).
 4. Converta valores monetários para números puros (ex: 1.5 milhão = 1500000).
 5. Extraia o número de quartos.
 6. Se não encontrar uma informação, deixe nulo.
-7. Retorne APENAS um objeto JSON puro, sem explicações.
+7. Retorne APENAS um objeto JSON puro.
 
-EXEMPLO DE SAÍDA:
+EXEMPLO DE SAÍDA (LEAD):
 {
+  "is_lead": true,
   "nome": "Roberto",
   "tipo_interesse": "casa",
   "freguesia": "Swiss Park",
-  "concelho": "Indaiatuba",
   "orcamento": 1800000,
-  "quartos": 3,
-  "resumo_ia": "Cliente busca casa de alto padrão no Swiss Park."
+  "resumo_ia": "Cliente busca casa de alto padrão."
+}
+
+EXEMPLO DE SAÍDA (RUÍDO):
+{
+  "is_lead": false,
+  "resumo_ia": "Conversa social ou saudação genérica."
 }
   `;
 

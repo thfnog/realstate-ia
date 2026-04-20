@@ -9,6 +9,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
+import * as mock from '@/lib/mockDb';
 import type { Lead, Corretor } from '@/lib/database.types';
 import { checkCarteira } from './checkCarteira';
 import { assignCorretor } from './assignCorretor';
@@ -31,13 +32,20 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
 
   try {
     // Step 0: Fetch Tenant Config (Regionalization)
-    const { data: imob } = await supabaseAdmin
-      .from('imobiliarias')
-      .select('config_pais')
-      .eq('id', lead.imobiliaria_id)
-      .single();
+    let config_pais = 'PT';
+    if (mock.isMockMode()) {
+      const imob = mock.getImobiliariaById(lead.imobiliaria_id);
+      config_pais = imob?.config_pais || 'PT';
+    } else {
+      const { data: imob } = await supabaseAdmin
+        .from('imobiliarias')
+        .select('config_pais')
+        .eq('id', lead.imobiliaria_id)
+        .single();
+      config_pais = imob?.config_pais || 'PT';
+    }
     
-    const config = getConfigByCode(imob?.config_pais || 'PT');
+    const config = getConfigByCode(config_pais);
 
     // Step 1: Check portfolio
     console.log(`📋 Step 1: Verificando carteira (${config.flag} ${config.label})...`);
@@ -48,14 +56,21 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
 
     if (carteira.isExisting && carteira.corretorId) {
       // Existing client — fetch the assigned broker
-      const { data } = await supabaseAdmin
-        .from('corretores')
-        .select('*')
-        .eq('id', carteira.corretorId)
-        .eq('ativo', true) // REGRA DO DONO: Só mantém se o corretor estiver ativo
-        .single();
+      let data: Corretor | null = null;
+      
+      if (mock.isMockMode()) {
+        data = mock.getCorretorById(carteira.corretorId) || null;
+      } else {
+        const { data: dbCorretor } = await supabaseAdmin
+          .from('corretores')
+          .select('*')
+          .eq('id', carteira.corretorId)
+          .eq('ativo', true)
+          .single();
+        data = dbCorretor as Corretor;
+      }
 
-      if (data) {
+      if (data && data.ativo) {
         console.log(`  → Cliente existente. Corretor mantido da carteira: ${data.nome}`);
         corretor = data as Corretor;
         corretorAnteriorNome = corretor.nome;
@@ -85,10 +100,14 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
     }
 
     // Update the lead with the assigned broker
-    await supabaseAdmin
-      .from('leads')
-      .update({ corretor_id: corretor.id })
-      .eq('id', lead.id);
+    if (mock.isMockMode()) {
+      mock.updateLead(lead.id, { corretor_id: corretor.id });
+    } else {
+      await supabaseAdmin
+        .from('leads')
+        .update({ corretor_id: corretor.id })
+        .eq('id', lead.id);
+    }
 
     // Step 3: Recommend properties
     console.log('🏠 Step 3: Buscando imóveis similares...');

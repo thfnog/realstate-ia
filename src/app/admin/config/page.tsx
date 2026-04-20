@@ -278,7 +278,7 @@ export default function ConfigPage() {
       )}
 
       {/* API Endpoints Reference */}
-      <div className="bg-white rounded-xl border border-border-light p-6">
+      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
         <h2 className="text-lg font-semibold text-text-primary mb-4">📡 Endpoints da API</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -321,6 +321,48 @@ export default function ConfigPage() {
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* DANGER ZONE */}
+      <div className="bg-rose-50 rounded-xl border border-rose-200 overflow-hidden mb-12">
+        <div className="bg-rose-100/50 px-6 py-4 border-b border-rose-200">
+           <h2 className="text-rose-800 font-bold flex items-center gap-2">
+             <span className="text-xl">⚠️</span> ZONA DE PERIGO
+           </h2>
+        </div>
+        <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+           <div className="flex-1">
+              <h3 className="text-lg font-bold text-rose-900 mb-1">Limpar Todos os Leads</h3>
+              <p className="text-sm text-rose-700">
+                Esta ação exclui permanentemente todos os leads e agendamentos/eventos de sua imobiliária. 
+                Use com cautela para limpar dados de teste antes de uma demonstração real.
+              </p>
+           </div>
+           
+           <button 
+             onClick={async () => {
+               if (window.confirm("VOCÊ TEM CERTEZA? Esta ação não pode ser desfeita. Todos os leads e eventos serão excluídos.")) {
+                   const code = window.prompt("Para confirmar, digite 'EXCLUIR' abaixo:");
+                   if (code === 'EXCLUIR') {
+                      try {
+                        const res = await fetch('/api/admin/purge', { method: 'POST' });
+                        if (res.ok) {
+                           alert('✅ Sucesso! Os leads e eventos foram removidos.');
+                           window.location.reload();
+                        } else {
+                           alert('❌ Falha ao limpar banco.');
+                        }
+                      } catch {
+                        alert('❌ Erro na comunicação com o servidor.');
+                      }
+                   }
+               }
+             }}
+             className="whitespace-nowrap px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-lg shadow-rose-200 transition-all hover:scale-105 active:scale-95"
+           >
+             🗑️ Limpar Todos os Leads
+           </button>
         </div>
       </div>
     </div>
