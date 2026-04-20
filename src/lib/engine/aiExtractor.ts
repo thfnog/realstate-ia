@@ -63,7 +63,7 @@ EXEMPLO DE SAÍDA:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192', // Modelo rápido e eficiente
+        model: 'llama-3.1-8b-instant', // Modelo rápido e eficiente
         messages: [{ role: 'user', content: prompt }],
         temperature: 0,
         response_format: { type: 'json_object' }

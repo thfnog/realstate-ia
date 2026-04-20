@@ -8,7 +8,7 @@
 
 import twilio from 'twilio';
 
-const PROVIDER = (process.env.WHATSAPP_PROVIDER || 'evolution') as 'twilio' | 'evolution' | 'mock';
+const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twilio' | 'evolution' | 'mock';
 
 // Evolution Config
 const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://35.172.170.210:8080';
