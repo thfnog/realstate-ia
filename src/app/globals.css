@@ -137,3 +137,34 @@ html {
 .bg-gradient-form {
   background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
 }
+
+/* Print Styles for Property Flyer */
+@media print {
+  nav, .no-print, button, aside, footer {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .max-w-7xl {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+    border: 1px solid #eee !important;
+  }
+  .rounded-3xl {
+    border-radius: 12px !important;
+  }
+  img {
+    max-height: 400px !important;
+  }
+}
+

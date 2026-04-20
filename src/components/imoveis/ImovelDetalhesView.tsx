@@ -23,6 +23,16 @@ export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelD
     { label: 'Área Útil', value: `${imovel.area_util || '—'} m²`, icon: '📐' },
   ];
 
+  function handleShareWhatsApp() {
+    const message = `Olá! Tenho um imóvel excelente que combina com seu perfil:\n\n🏠 *${imovel.titulo}*\n📍 ${imovel.freguesia}, ${imovel.concelho}\n💰 *${formatCurrency(imovel.valor, config)}*\n🛏️ ${imovel.quartos} qts | 📐 ${imovel.area_util}m²\n\nConfira os detalhes e localização aqui!`;
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  }
+
+  function handleGeneratePDF() {
+    window.print();
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
       {/* Header Section */}
@@ -182,10 +192,16 @@ export default function ImovelDetalhesView({ imovel, config, onDelete }: ImovelD
               </div>
 
               <div className="mt-8 space-y-3">
-                 <button className="w-full py-4 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20">
+                 <button 
+                   onClick={handleGeneratePDF}
+                   className="w-full py-4 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
+                 >
                     Gerar PDF para Cliente
                  </button>
-                 <button className="w-full py-4 rounded-2xl bg-white text-text-primary border-2 border-border-light font-black hover:bg-surface-alt transition-all">
+                 <button 
+                   onClick={handleShareWhatsApp}
+                   className="w-full py-4 rounded-2xl bg-white text-text-primary border-2 border-border-light font-black hover:bg-surface-alt transition-all"
+                 >
                     Compartilhar via WhatsApp
                  </button>
               </div>

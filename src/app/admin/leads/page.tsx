@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import type { LeadComCorretor, StatusLead, Evento, TipoEvento, Corretor } from '@/lib/database.types';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -30,6 +31,8 @@ export default function LeadsPage() {
   const [newEvent, setNewEvent] = useState({
     tipo: 'visita' as TipoEvento, titulo: '', descricao: '', data_hora: '', local: ''
   });
+  const [matchingImoveis, setMatchingImoveis] = useState<any[]>([]);
+  const [loadingMatching, setLoadingMatching] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -142,10 +145,25 @@ export default function LeadsPage() {
       const res = await fetch(`/api/eventos?lead_id=${lead.id}`);
       const data = await res.json();
       if (Array.isArray(data)) setLeadEventos(data);
+      
+      // Also fetch matching imoveis
+      setLoadingMatching(true);
+      const resImov = await fetch('/api/imoveis');
+      const allImoveis = await resImov.json();
+      
+      const suggestions = allImoveis.filter((imob: any) => {
+        if (lead.tipo_interesse && imob.tipo.toLowerCase() !== lead.tipo_interesse.toLowerCase()) return false;
+        if (lead.orcamento && imob.valor > (lead.orcamento * 1.1)) return false;
+        if (lead.quartos_interesse && imob.quartos < lead.quartos_interesse) return false;
+        return true;
+      });
+      setMatchingImoveis(suggestions);
+      
     } catch {
-      console.error('Erro ao buscar eventos');
+      console.error('Erro ao buscar eventos/sugestões');
     } finally {
       setLoadingEventos(false);
+      setLoadingMatching(false);
     }
   }
 
@@ -652,6 +670,45 @@ export default function LeadsPage() {
                     ))}
                   </div>
                 )}
+
+                {/* 🏠 SUGGESTED PROPERTIES SECTION */}
+                <div className="mt-10 pt-10 border-t border-border-light">
+                  <h3 className="font-semibold text-text-primary mb-5 flex items-center gap-2">
+                    <span>🏠</span> Imóveis Sugeridos (Match)
+                  </h3>
+                  
+                  {loadingMatching ? (
+                    <div className="flex gap-4 overflow-x-auto pb-4">
+                       {[1,2].map(i => <div key={i} className="min-w-[200px] h-32 bg-slate-100 rounded-2xl animate-pulse"></div>)}
+                    </div>
+                  ) : matchingImoveis.length === 0 ? (
+                    <div className="p-6 bg-slate-50 border border-dashed border-border-light rounded-xl text-center">
+                      <p className="text-[10px] text-text-muted uppercase tracking-widest">Nenhum imóvel combina com o perfil exato</p>
+                    </div>
+                  ) : (
+                    <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
+                      {matchingImoveis.map(imob => (
+                        <div key={imob.id} className="min-w-[240px] max-w-[240px] p-4 bg-white rounded-2xl border border-border-light shadow-sm hover:shadow-md transition-all group">
+                          <div className="h-24 rounded-xl overflow-hidden mb-3">
+                             <img 
+                               src={imob.fotos?.[0]?.url_media || 'https://placehold.co/400x300?text=ImobIA'} 
+                               className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
+                               alt="Imóvel"
+                             />
+                          </div>
+                          <h4 className="text-xs font-bold text-text-primary truncate">{imob.titulo}</h4>
+                          <p className="text-[10px] text-primary font-black mt-1">{(imob.valor / 1000).toFixed(0)}k • {imob.freguesia}</p>
+                          <Link 
+                            href={`/admin/imoveis/${imob.id}`}
+                            className="mt-3 block text-center py-2 rounded-lg bg-surface-alt text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
+                          >
+                            Ver Detalhes
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Right col: New Event Form & WhatsApp Chat */}

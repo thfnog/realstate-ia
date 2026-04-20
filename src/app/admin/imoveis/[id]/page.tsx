@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Imovel } from '@/lib/database.types';
 import { getConfigByCode, CountryConfig } from '@/lib/countryConfig';
 import ImovelDetalhesView from '@/components/imoveis/ImovelDetalhesView';
+import ImovelMatchingLeads from '@/components/imoveis/ImovelMatchingLeads';
 
 export default function ImovelViewPage() {
   const router = useRouter();
@@ -57,10 +58,15 @@ export default function ImovelViewPage() {
   if (!imovel || !config) return <div className="p-20 text-center text-rose-500 font-bold">Imóvel não encontrado.</div>;
 
   return (
-    <ImovelDetalhesView 
-      imovel={imovel} 
-      config={config} 
-      onDelete={handleDelete}
-    />
+    <div className="space-y-8">
+      <ImovelDetalhesView 
+        imovel={imovel} 
+        config={config} 
+        onDelete={handleDelete}
+      />
+      <div className="max-w-7xl mx-auto">
+        <ImovelMatchingLeads imovel={imovel} />
+      </div>
+    </div>
   );
 }
