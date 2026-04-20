@@ -25,7 +25,7 @@ export async function extractLeadWithAI(text: string): Promise<AILeadProfile> {
   if (!GROQ_API_KEY) {
     console.warn('⚠️ GROQ_API_KEY não configurada. Usando fallback básico.');
     // Poderia chamar o extrator Regex antigo como fallback
-    return {};
+    return { is_lead: true };
   }
 
   const prompt = `
@@ -83,7 +83,7 @@ EXEMPLO DE SAÍDA (RUÍDO):
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Erro na API do Groq:', response.status, errorText);
-      return {};
+      return { is_lead: true };
     }
 
     const data = await response.json();
@@ -91,7 +91,7 @@ EXEMPLO DE SAÍDA (RUÍDO):
 
     if (!rawContent) {
       console.error('⚠️ Resposta do Groq sem conteúdo:', data);
-      return {};
+      return { is_lead: true };
     }
 
     // Clean markdown code blocks if the model included them
@@ -103,6 +103,6 @@ EXEMPLO DE SAÍDA (RUÍDO):
 
   } catch (error) {
     console.error('❌ Erro na extração via Groq:', error);
-    return {};
+    return { is_lead: true };
   }
 }

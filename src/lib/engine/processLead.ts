@@ -32,7 +32,7 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
 
   try {
     // Step 0: Fetch Tenant Config (Regionalization)
-    let config_pais = 'PT';
+    let config_pais: 'PT' | 'BR' = 'PT';
     if (mock.isMockMode()) {
       const imob = mock.getImobiliariaById(lead.imobiliaria_id);
       config_pais = imob?.config_pais || 'PT';
