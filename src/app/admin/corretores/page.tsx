@@ -85,14 +85,14 @@ export default function CorretoresPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Corretores</h1>
           <p className="text-text-secondary text-sm mt-1">{corretores.length} corretor(es)</p>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/20"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/20 w-full sm:w-auto"
         >
           ➕ Novo corretor
         </button>

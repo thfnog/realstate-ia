@@ -94,3 +94,40 @@ export async function PATCH(
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
+
+// DELETE: Delete lead
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    if (mock.isMockMode()) {
+      const deleted = mock.deleteLead(id);
+      if (!deleted) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Delete associated events first in Supabase if needed (though normally handled by FK CASCADE)
+    // For safety with supabaseAdmin:
+    await supabaseAdmin
+      .from('eventos')
+      .delete()
+      .eq('lead_id', id);
+
+    const { error } = await supabaseAdmin
+      .from('leads')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Erro ao deletar lead:', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}

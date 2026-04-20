@@ -156,7 +156,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-6 flex justify-between items-end">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
           <p className="text-text-secondary mt-1">Visão geral da imobiliária</p>

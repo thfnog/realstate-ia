@@ -117,7 +117,7 @@ export type EscalaComCorretor = Escala & {
 };
 
 export type Finalidade = 'comprar' | 'alugar' | 'investir';
-export type StatusLead = 'novo' | 'em_atendimento' | 'visita_agendada' | 'negociacao' | 'contrato' | 'fechado' | 'sem_interesse';
+export type StatusLead = 'novo' | 'em_atendimento' | 'visita_agendada' | 'negociacao' | 'contrato' | 'fechado' | 'sem_interesse' | 'descartado';
 export type LeadSource = 'formulario' | 'email_ego' | 'webhook_grupozap' | 'whatsapp' | 'manual';
 
 export type Lead = {

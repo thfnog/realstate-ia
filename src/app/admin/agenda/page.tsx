@@ -58,6 +58,13 @@ export default function AgendaPage() {
     fetchData();
   }, []);
 
+  // Auto-select corretor if only one exists
+  useEffect(() => {
+    if (corretores.length === 1 && !selectedCorretorId) {
+      setSelectedCorretorId(corretores[0].id);
+    }
+  }, [corretores, selectedCorretorId]);
+
   function handlePrevMonth() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   }
@@ -160,12 +167,12 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in flex flex-col h-[calc(100vh-2rem)]">
-      <div className="flex items-center justify-between mb-4 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 shrink-0 gap-2">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Agenda & Processos</h1>
           <p className="text-text-secondary text-sm mt-1">Acompanhamento de visitas, assinaturas e cartório.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-end sm:self-auto">
           <button 
             onClick={fetchData}
             className="p-2.5 rounded-xl border border-border-light bg-white text-text-secondary hover:text-primary hover:bg-primary-subtle transition-all"
@@ -178,20 +185,20 @@ export default function AgendaPage() {
 
       <div className="bg-white rounded-xl border border-border-light p-4 flex-1 flex flex-col min-h-0">
         {/* Calendar Header Controls */}
-        <div className="flex items-center justify-between mb-6 shrink-0">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-slate-800 w-48">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 shrink-0 gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <h2 className="text-xl font-bold text-slate-800 sm:w-48">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
-            <div className="flex items-center bg-surface-alt rounded-lg p-1">
+            <div className="flex items-center bg-surface-alt rounded-lg p-1 w-fit">
               <button onClick={handlePrevMonth} className="px-3 py-1 rounded hover:bg-white text-slate-600 font-medium">←</button>
               <button onClick={handleToday} className="px-4 py-1 rounded hover:bg-white text-slate-800 font-medium text-sm">Hoje</button>
               <button onClick={handleNextMonth} className="px-3 py-1 rounded hover:bg-white text-slate-600 font-medium">→</button>
             </div>
             
             {/* NOVO: MODO ESCALA TOGGLE E SELECTOR */}
-            <div className={`flex items-center ml-2 lg:ml-4 gap-3 pl-2 lg:pl-4 border-l border-border-light text-sm transition-all ${modoEscala ? 'bg-primary-subtle rounded-lg px-2 py-1' : ''}`}>
-              <label className="flex items-center gap-2 cursor-pointer font-bold text-primary select-none">
+            <div className={`flex items-center gap-3 px-2 py-1 border-border-light text-sm transition-all sm:border-l ${modoEscala ? 'bg-primary-subtle rounded-lg' : ''}`}>
+              <label className="flex items-center gap-2 cursor-pointer font-bold text-primary select-none shrink-0">
                 <div className={`w-8 h-4 bg-slate-300 rounded-full relative transition-colors ${modoEscala ? '!bg-primary' : ''}`}>
                   <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-all ${modoEscala ? 'left-[18px]' : 'left-0.5'}`}></div>
                 </div>
@@ -201,28 +208,31 @@ export default function AgendaPage() {
                   onChange={(e) => setModoEscala(e.target.checked)} 
                   className="hidden" 
                 />
-                Modo Escala
+                Escala
               </label>
               
               {modoEscala && (
-                <div className="animate-fade-in flex items-center">
+                <div className="animate-fade-in flex flex-wrap items-center gap-2">
                   <select
                     value={selectedCorretorId}
                     onChange={(e) => setSelectedCorretorId(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border-2 border-primary/40 bg-white text-xs text-text-primary focus:outline-none focus:border-primary shadow-sm"
+                    className="px-3 py-1.5 rounded-lg border-2 border-primary/40 bg-white text-xs text-text-primary focus:outline-none focus:border-primary shadow-sm min-w-[180px]"
                   >
-                    <option value="">+ Selecionar corretor a pintar...</option>
+                    <option value="">+ Escolher corretor...</option>
                     {corretores.map((c) => (
                       <option key={c.id} value={c.id}>{c.nome}</option>
                     ))}
                   </select>
+                  <span className="hidden xl:inline text-[10px] font-black text-primary uppercase animate-pulse">
+                    ✨ Clique nos dias
+                  </span>
                 </div>
               )}
             </div>
           </div>
           
           {!modoEscala && (
-            <div className="flex gap-3 text-xs hidden md:flex">
+            <div className="flex flex-wrap gap-3 text-xs">
               {Object.entries(eventConfig).map(([key, conf]) => (
                 <div key={key} className="flex items-center gap-1.5">
                   <span className={`w-3 h-3 rounded-full ${conf.bg.split(' ')[0]} border ${conf.bg.split(' ')[1]}`}></span>
@@ -234,7 +244,8 @@ export default function AgendaPage() {
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 min-h-0 flex flex-col border border-border-light rounded-xl overflow-hidden bg-surface-alt/30">
+        <div className="flex-1 min-h-0 flex flex-col border border-border-light rounded-xl overflow-x-auto bg-surface-alt/30 overscroll-none scrollbar-thin">
+          <div className="min-w-[700px] flex-1 flex flex-col h-full">
           {/* Days Header */}
           <div className="grid grid-cols-7 border-b border-border-light bg-surface-alt shrink-0">
             {daysOfWeek.map((day, idx) => (
@@ -332,6 +343,7 @@ export default function AgendaPage() {
           </div>
         </div>
       </div>
+    </div>
 
       {/* Event Details Modal */}
       {selectedEvent && (

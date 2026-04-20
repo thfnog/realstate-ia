@@ -1,11 +1,31 @@
-/**
- * POST /api/eventos — Create a calendar event (Visit, Meeting, etc.)
- */
-
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import * as mock from '@/lib/mockDb';
-import type { Evento } from '@/lib/database.types';
+import type { Evento, EventoComDetalhes } from '@/lib/database.types';
+
+export async function GET() {
+  try {
+    if (mock.isMockMode()) {
+       mock.seedTestData();
+       const events = mock.getEventos();
+       return NextResponse.json(events);
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('eventos')
+      .select('*, lead:leads(*), corretor:corretores(*)')
+      .order('data_hora', { ascending: true });
+
+    if (error) {
+       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[API Eventos GET Error]:', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {

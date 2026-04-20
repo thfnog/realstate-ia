@@ -11,6 +11,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
   contrato: { label: 'Em Contrato', color: 'text-sky-700', bg: 'bg-sky-50 border-sky-200' },
   fechado: { label: 'Fechado 🎉', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
   sem_interesse: { label: 'Sem interesse', color: 'text-slate-600', bg: 'bg-slate-50 border-slate-200' },
+  descartado: { label: 'Descartado 🗑️', color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
 };
 
 export default function LeadsPage() {
@@ -96,6 +97,18 @@ export default function LeadsPage() {
       }
     } catch {
       alert('Erro ao atualizar consultor responsável');
+    }
+  }
+
+  async function deleteLead(id: string, nome: string) {
+    if (!confirm(`Tem certeza que deseja EXCLUIR PERMANENTEMENTE o lead ${nome}?`)) return;
+    try {
+      const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setLeads((prev) => prev.filter((l) => l.id !== id));
+      }
+    } catch {
+      alert('Erro ao excluir lead');
     }
   }
 
@@ -197,8 +210,8 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+    <div className="animate-fade-in pb-10 sm:pb-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Funil de Vendas</h1>
           <p className="text-text-secondary text-sm mt-1">
@@ -206,12 +219,12 @@ export default function LeadsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           {/* Toggle View Mode */}
-          <div className="flex bg-surface-alt p-1 rounded-xl border border-border-light shadow-inner">
+          <div className="flex bg-surface-alt p-1 rounded-xl border border-border-light shadow-inner w-full sm:w-auto">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === 'table' ? 'bg-white text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -219,7 +232,7 @@ export default function LeadsPage() {
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === 'kanban' ? 'bg-white text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -231,7 +244,7 @@ export default function LeadsPage() {
             <select
               value={origemFilter}
               onChange={(e) => setOrigemFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               <option value="">Todas origens</option>
               <option value="formulario">Formulário</option>
@@ -243,7 +256,7 @@ export default function LeadsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               <option value="">Todos os status</option>
               <option value="novo">Novos</option>
@@ -253,6 +266,7 @@ export default function LeadsPage() {
               <option value="contrato">Em Contrato</option>
               <option value="fechado">Fechados</option>
               <option value="sem_interesse">Sem interesse</option>
+              <option value="descartado">Descartados</option>
             </select>
           </div>
         </div>
@@ -276,9 +290,12 @@ export default function LeadsPage() {
       ) : viewMode === 'kanban' ? (
         /* ===== KANBAN VIEW (Funil de Vendas) ===== */
         <div className="flex gap-4 min-h-[600px] overflow-x-auto pb-8 scrollbar-hide">
-           {['novo', 'em_atendimento', 'visita_agendada', 'negociacao', 'contrato', 'fechado'].map((status) => {
+           {['novo', 'em_atendimento', 'visita_agendada', 'negociacao', 'contrato', 'fechado', ...(statusFilter === 'descartado' ? ['descartado'] : [])].map((status) => {
               const columnLeads = leads.filter(l => l.status === status);
-              const config = statusConfig[status];
+              // Hide discarded leads from normal funnel unless explicitly filtering for it
+              if (status !== 'descartado' && statusFilter === 'descartado') return null;
+              
+              const config = statusConfig[status] || statusConfig.novo;
               return (
                 <div key={status} className="flex flex-col gap-4 min-w-[300px] max-w-[300px]">
                    {/* Column Header */}
@@ -300,6 +317,15 @@ export default function LeadsPage() {
                           className="bg-white p-5 rounded-2xl border border-border-light shadow-sm hover:shadow-xl hover:border-primary/20 transition-all group cursor-pointer relative overflow-hidden"
                           onClick={() => openAgendaModal(lead)}
                         >
+                           {/* Quick Action Delete (Kanban) */}
+                           <button 
+                             onClick={(e) => { e.stopPropagation(); deleteLead(lead.id, lead.nome); }}
+                             className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all z-20"
+                             title="Excluir Permanentemente"
+                           >
+                             🗑️
+                           </button>
+
                            {/* Status line at top */}
                            <div className={`absolute top-0 left-0 right-0 h-1 ${config.bg.split(' ')[0]}`} />
 
@@ -478,6 +504,7 @@ export default function LeadsPage() {
                           <option value="visita_agendada">Visita agendada</option>
                           <option value="fechado">Fechado</option>
                           <option value="sem_interesse">Sem interesse</option>
+                          <option value="descartado">Descartado</option>
                         </select>
                       </td>
 
@@ -505,6 +532,14 @@ export default function LeadsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                               </svg>
                             )}
+                          </button>
+
+                          <button
+                            onClick={() => deleteLead(lead.id, lead.nome)}
+                            title="Excluir Permanentemente"
+                            className="p-1.5 rounded-lg text-text-muted hover:text-red-600 hover:bg-red-50 transition-all"
+                          >
+                            🗑️
                           </button>
                         </div>
                       </td>

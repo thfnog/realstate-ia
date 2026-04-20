@@ -223,6 +223,21 @@ export function updateLead(id: string, data: Partial<Lead>): (Lead & { corretore
   };
 }
 
+export function deleteLead(id: string): boolean {
+  const idx = leads.findIndex((l) => l.id === id);
+  if (idx === -1) return false;
+  
+  // Also delete associated events
+  const associatedEvents = eventos.filter(e => e.lead_id === id);
+  associatedEvents.forEach(evt => {
+    const eIdx = eventos.findIndex(e => e.id === evt.id);
+    if (eIdx !== -1) eventos.splice(eIdx, 1);
+  });
+
+  leads.splice(idx, 1);
+  return true;
+}
+
 // ===== Escala =====
 
 export function getEscala(start?: string, end?: string): (Escala & { corretores: Corretor | null })[] {
