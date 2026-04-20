@@ -33,9 +33,36 @@ export async function POST(request: Request) {
       const msgData = payload.data;
       remoteJid = msgData.key?.remoteJid || '';
       
-      // Ignore messages sent by the bot itself to prevent loops
+      // Outbound Message Detection: Move lead to 'Em Atendimento' if broker replies manually
       if (msgData.key?.fromMe) {
-        return NextResponse.json({ success: true, status: 'skipped_from_me' });
+        const phone = remoteJid.split('@')[0] || '';
+        if (!phone) return NextResponse.json({ success: true, status: 'skipped_no_phone' });
+
+        let lead;
+        if (mock.isMockMode()) {
+          lead = mock.getLeadByTelefone(phone);
+        } else {
+          const { data } = await supabaseAdmin.from('leads').select('*').eq('telefone', phone).single();
+          lead = data;
+        }
+
+        if (lead && lead.status === 'novo') {
+          // Check if this is the bot's auto-reply to avoid premature status move
+          const text = msgData.message?.conversation || msgData.message?.extendedTextMessage?.text || '';
+          const isBotAutoReply = text.includes('recebi seu interesse') || 
+                               text.includes('Recebi seu interesse') ||
+                               text.includes('Recebi o seu contacto');
+
+          if (!isBotAutoReply) {
+            console.log(`📈 Lead ${lead.nome} movido para 'em_atendimento' via resposta manual do corretor.`);
+            if (mock.isMockMode()) {
+              mock.updateLead(lead.id, { status: 'em_atendimento' });
+            } else {
+              await supabaseAdmin.from('leads').update({ status: 'em_atendimento' }).eq('id', lead.id);
+            }
+          }
+        }
+        return NextResponse.json({ success: true, status: 'processed_outbound' });
       }
 
       // NOISE FILTER: Ignore messages from groups (@g.us)
