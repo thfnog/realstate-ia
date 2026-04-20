@@ -114,6 +114,7 @@ export async function POST(request: Request) {
       orcamento: extracted.orcamento || null,
       quartos_interesse: extracted.quartos || null,
       bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],
+      descricao_interesse: text, // Salva a mensagem original para contexto
       status: 'novo',
       origem: 'whatsapp' as any,
       portal_origem: instanceName || 'WhatsApp Bot'
@@ -134,7 +135,10 @@ export async function POST(request: Request) {
     }
 
     // 3. Processamento Inteligente (Matching + Atribuição + Briefing)
-    const processResult = await processLead(newLead);
+    // Só envia resposta automática se a IA tiver certeza que é um lead (is_lead === true)
+    const processResult = await processLead(newLead, {
+      skipAutoReply: extracted.is_lead !== true
+    });
 
     return NextResponse.json({
       success: true,

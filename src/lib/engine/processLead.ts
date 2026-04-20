@@ -27,7 +27,11 @@ export interface ProcessResult {
   error?: string;
 }
 
-export async function processLead(lead: Lead): Promise<ProcessResult> {
+export interface ProcessOptions {
+  skipAutoReply?: boolean;
+}
+
+export async function processLead(lead: Lead, options: ProcessOptions = {}): Promise<ProcessResult> {
   console.log(`\n🚀 Processando lead: ${lead.nome} (${lead.telefone})`);
 
   try {
@@ -125,12 +129,16 @@ export async function processLead(lead: Lead): Promise<ProcessResult> {
     });
     
     // Step 5: Send auto-reply to Lead (First-person, personalized)
-    console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
-    await sendAutoReplyToLead({
-      lead,
-      corretor,
-      config,
-    });
+    if (!options?.skipAutoReply) {
+      console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
+      await sendAutoReplyToLead({
+        lead,
+        corretor,
+        config,
+      });
+    } else {
+      console.log('⏭️ Step 5: Auto-reply ignorado (não é lead confirmado ou solicitado pular)');
+    }
 
     console.log(`✅ Lead processado com sucesso! Corretor: ${corretor.nome}`);
 

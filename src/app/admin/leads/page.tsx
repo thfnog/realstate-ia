@@ -159,6 +159,7 @@ export default function LeadsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newEvent,
+          imobiliaria_id: selectedLead.imobiliaria_id,
           lead_id: selectedLead.id,
           corretor_id: selectedLead.corretor_id,
         }),
@@ -350,9 +351,45 @@ export default function LeadsPage() {
                            </div>
                            
                            <div className="bg-surface-alt/50 p-3 rounded-xl border border-border-light/50 mb-4">
-                              <p className="text-[10px] font-bold text-text-primary leading-tight">
+                              <p className="text-[10px] font-bold text-text-primary leading-tight mb-1.5">
                                  {getProfileSummary(lead)}
                               </p>
+                              {lead.descricao_interesse && (
+                                <p className="text-[10px] italic text-text-muted line-clamp-2 leading-snug">
+                                  "{lead.descricao_interesse}"
+                                </p>
+                              )}
+                           </div>
+
+                           {/* Quick Progress Buttons */}
+                           <div className="flex gap-1 mb-4">
+                              {['novo', 'em_atendimento', 'visita_agendada', 'negociacao', 'contrato'].indexOf(lead.status) < 4 && (
+                                <button 
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    const stages: StatusLead[] = ['novo', 'em_atendimento', 'visita_agendada', 'negociacao', 'contrato', 'fechado'];
+                                    const next = stages[stages.indexOf(lead.status) + 1];
+                                    if (next) updateStatus(lead.id, next);
+                                  }}
+                                  className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-indigo-50 text-indigo-600 border border-border-light text-[9px] font-bold uppercase transition-all"
+                                >
+                                  Avançar →
+                                </button>
+                              )}
+                              <select 
+                                value={lead.status}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => updateStatus(lead.id, e.target.value as StatusLead)}
+                                className="w-8 h-6 rounded-lg bg-slate-50 border border-border-light text-[10px] focus:outline-none"
+                              >
+                                <option value="novo">🆕</option>
+                                <option value="em_atendimento">💬</option>
+                                <option value="visita_agendada">📅</option>
+                                <option value="negociacao">🤝</option>
+                                <option value="contrato">✍️</option>
+                                <option value="fechado">🎉</option>
+                                <option value="descartado">🗑️</option>
+                              </select>
                            </div>
 
                            <div className="flex items-center justify-between pt-3 border-t border-border-light/50">
@@ -617,68 +654,130 @@ export default function LeadsPage() {
                 )}
               </div>
 
-              {/* Right col: New Event Form */}
-              <div className="md:w-80 p-6 bg-white shrink-0">
-                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <span>➕</span> Novo Agendamento
-                </h3>
+              {/* Right col: New Event Form & WhatsApp Chat */}
+              <div className="md:w-96 p-6 bg-white shrink-0 flex flex-col gap-8">
                 
-                <form onSubmit={handleCreateEvent} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Tipo de Evento</label>
-                    <select 
-                      value={newEvent.tipo} onChange={e => setNewEvent({...newEvent, tipo: e.target.value as TipoEvento})}
-                      className="w-full text-sm px-3 py-2.5 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                    >
-                      <option value="visita">🏠 Visita</option>
-                      <option value="reuniao">🤝 Reunião</option>
-                      <option value="vistoria">🔍 Vistoria</option>
-                      <option value="cartorio">🏛️ Cartório</option>
-                      <option value="assinatura">✍️ Assinatura</option>
-                      <option value="outro">📌 Outro</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Data e Hora</label>
-                    <input 
-                      type="datetime-local" required
-                      value={newEvent.data_hora} onChange={e => setNewEvent({...newEvent, data_hora: e.target.value})}
-                      className="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Título Breve</label>
-                    <input 
-                      type="text" required placeholder="Ex: Assinatura de Promessa"
-                      value={newEvent.titulo} onChange={e => setNewEvent({...newEvent, titulo: e.target.value})}
-                      className="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Local (opcional)</label>
-                    <input 
-                      type="text" placeholder="Endereço ou Link"
-                      value={newEvent.local} onChange={e => setNewEvent({...newEvent, local: e.target.value})}
-                      className="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 outline-none"
-                    />
-                  </div>
+                {/* 💬 WHATSAPP CHAT (ADMIN -> LEAD) */}
+                <div className="p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/50">
+                  <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2 text-sm uppercase tracking-tight">
+                    <span>💬</span> Conversar via WhatsApp
+                  </h3>
                   
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Observações</label>
+                  <div className="space-y-3">
                     <textarea 
-                      rows={2} placeholder="Detalhes extras..."
-                      value={newEvent.descricao} onChange={e => setNewEvent({...newEvent, descricao: e.target.value})}
-                      className="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 outline-none resize-none"
+                      id="manualMsg"
+                      placeholder="Sua mensagem para o lead..."
+                      rows={3}
+                      className="w-full text-sm px-3 py-2 rounded-xl border border-indigo-100 focus:ring-2 focus:ring-indigo-200 outline-none resize-none"
                     />
-                  </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                       {/* Quick Replies */}
+                       {[
+                         { label: 'Opa, podemos falar?', text: `Oi ${selectedLead.nome}, vi seu interesse no ImobIA. Podemos conversar rapidinho?` },
+                         { label: 'Agendar Visita', text: `Olá ${selectedLead.nome}, quando você teria disponibilidade para conhecer o imóvel pessoalmente?` },
+                         { label: 'Enviar Fotos', text: `Oi ${selectedLead.nome}, vou te mandar as fotos e a planta do imóvel que você gostou agora mesmo!` },
+                       ].map((q, i) => (
+                         <button 
+                           key={i}
+                           onClick={() => {
+                             const area = document.getElementById('manualMsg') as HTMLTextAreaElement;
+                             if (area) area.value = q.text;
+                           }}
+                           className="text-[10px] font-bold px-2 py-1 rounded-md bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                         >
+                           {q.label}
+                         </button>
+                       ))}
+                    </div>
 
-                  <button type="submit" className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-all">
-                    Agendar Evento
-                  </button>
-                </form>
+                    <button 
+                      onClick={async () => {
+                        const area = document.getElementById('manualMsg') as HTMLTextAreaElement;
+                        const msg = area?.value;
+                        if (!msg) return;
+                        
+                        try {
+                          const res = await fetch(`/api/leads/${selectedLead.id}/message`, {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ message: msg })
+                          });
+                          if (res.ok) {
+                            alert('Mensagem enviada com sucesso!');
+                            area.value = '';
+                          } else {
+                            alert('Erro ao enviar mensagem.');
+                          }
+                        } catch {
+                          alert('Erro de conexão.');
+                        }
+                      }}
+                      className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md shadow-indigo-100"
+                    >
+                      🚀 Enviar agora para o Lead
+                    </button>
+                  </div>
+                </div>
+
+                <div className="h-px bg-slate-100" />
+
+                {/* 📅 NEW EVENT FORM */}
+                <div>
+                  <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2 text-sm uppercase tracking-tight">
+                    <span>➕</span> Novo Agendamento
+                  </h3>
+                  
+                  <form onSubmit={handleCreateEvent} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Tipo de Evento</label>
+                      <select 
+                        value={newEvent.tipo} onChange={e => setNewEvent({...newEvent, tipo: e.target.value as TipoEvento})}
+                        className="w-full text-sm px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
+                      >
+                        <option value="visita">🏠 Visita</option>
+                        <option value="reuniao">🤝 Reunião</option>
+                        <option value="vistoria">🔍 Vistoria</option>
+                        <option value="cartorio">🏛️ Cartório</option>
+                        <option value="assinatura">✍️ Assinatura</option>
+                        <option value="outro">📌 Outro</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Data e Hora</label>
+                        <input 
+                          type="datetime-local" required
+                          value={newEvent.data_hora} onChange={e => setNewEvent({...newEvent, data_hora: e.target.value})}
+                          className="w-full text-sm px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Título</label>
+                        <input 
+                          type="text" required placeholder="Ex: Visita ao Swiss Park"
+                          value={newEvent.titulo} onChange={e => setNewEvent({...newEvent, titulo: e.target.value})}
+                          className="w-full text-sm px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Observações</label>
+                      <textarea 
+                        rows={2} placeholder="Detalhes extras..."
+                        value={newEvent.descricao} onChange={e => setNewEvent({...newEvent, descricao: e.target.value})}
+                        className="w-full text-sm px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 outline-none resize-none"
+                      />
+                    </div>
+
+                    <button type="submit" className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm transition-all shadow-lg shadow-primary/20">
+                      💾 Salvar e Agendar
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
