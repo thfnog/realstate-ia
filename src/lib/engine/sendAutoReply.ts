@@ -46,7 +46,7 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
   const instanceName = data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`;
   
   try {
-    const result = await sendWhatsAppMessage(lead.telefone, message, instanceName);
+    const result = await sendWhatsAppMessage(lead.telefone, message, instanceName, data.config?.code);
     return result;
   } catch (error) {
     console.error(`⚠️ Falha ao enviar WhatsApp para o lead ${lead.nome}. O corretor ${data.corretor.nome} pode estar desconectado.`);

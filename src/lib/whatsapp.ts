@@ -11,13 +11,21 @@ const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twil
 /**
  * Sanitizes phone number to ensure it has the country prefix (DDI)
  */
-function sanitizePhone(to: string): string {
+function sanitizePhone(to: string, countryCode?: string): string {
   const clean = to.replace(/\D/g, '');
-  const config = getConfig();
-  const prefix = config.phoneFormat.prefix.replace(/\D/g, ''); // e.g. '55' or '351'
   
+  // Heuristic detection based on length if no code provided
+  let prefix = countryCode === 'BR' ? '55' : '351';
+  
+  if (!countryCode) {
+    if (clean.length === 11) prefix = '55'; // BR (DDD + 9 digits)
+    if (clean.length === 9) prefix = '351'; // PT
+  }
+
   // If number doesn't start with prefix, prepend it
   if (!clean.startsWith(prefix)) {
+    // Special case: if it starts with 55 but has 13 digits, it's already prefixed
+    // If it starts with 351 but has 12 digits, it's already prefixed
     return `${prefix}${clean}`;
   }
   
@@ -69,9 +77,9 @@ export async function fetchInstanceStatus(instanceName: string): Promise<'open' 
 /**
  * Envia uma mensagem de WhatsApp usando o provedor configurado com contingência.
  */
-export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string): Promise<string> {
+export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string, countryCode?: string): Promise<string> {
   const instanceName = instanceOverride || process.env.WHATSAPP_DEFAULT_INSTANCE || '';
-  const cleanTo = sanitizePhone(to);
+  const cleanTo = sanitizePhone(to, countryCode);
 
   if (PROVIDER === 'mock') {
     console.log(`[MOCK] WhatsApp para ${cleanTo}: ${body.slice(0, 30)}...`);
