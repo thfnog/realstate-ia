@@ -27,10 +27,10 @@ export async function POST(request: Request) {
     let name = payload.name;
     let instanceName = payload.instance;
 
-    const event = payload.event?.toLowerCase();
-    let remoteJid = payload.data?.key?.remoteJid || '';
+    const event = payload.event?.toLowerCase() || '';
+    console.log(`📡 Evento recebido: "${payload.event}" (Convertido: "${event}")`);
 
-    if (event === 'messages.upsert' && payload.data) {
+    if ((event === 'messages.upsert' || event === 'messages_upsert') && payload.data) {
       const msgData = payload.data;
       remoteJid = msgData.key?.remoteJid || '';
       
