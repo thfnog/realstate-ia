@@ -38,7 +38,7 @@ export async function matchLeadsForProperty(property: Imovel) {
       // Critério 3: Localização (Bairro match)
       if (lead.bairros_interesse && lead.bairros_interesse.length > 0) {
         const bairroNorm = property.freguesia.toLowerCase().trim();
-        const hasBairro = lead.bairros_interesse.some(b => b.toLowerCase().trim() === bairroNorm);
+        const hasBairro = lead.bairros_interesse.some((b: string) => b.toLowerCase().trim() === bairroNorm);
         if (hasBairro) score += 3;
       }
 
