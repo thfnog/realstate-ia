@@ -11,9 +11,13 @@ import twilio from 'twilio';
 const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twilio' | 'evolution' | 'mock';
 
 // Evolution Config
-const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://35.172.170.210:8080';
-const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'ImobIA_Sec_2024_!';
-// Nota: Removida a instância global 'teste' para forçar conexões individuais por corretor.
+const EVOLUTION_URL = process.env.EVOLUTION_URL;
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+
+if (!EVOLUTION_URL || !EVOLUTION_API_KEY) {
+  // Nota: Em produção, estas variáveis devem ser configuradas no painel da Vercel.
+  console.warn('⚠️ WhatsApp (Evolution API) não configurado. Verifique EVOLUTION_URL e EVOLUTION_API_KEY.');
+}
 
 // Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;

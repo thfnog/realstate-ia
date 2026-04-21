@@ -2,7 +2,11 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { getUsuarioByEmail, seedTestData, isMockMode } from '@/lib/mockDb';
 
-const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'dev-secret');
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+if (!NEXTAUTH_SECRET) {
+  console.warn('⚠️ NEXTAUTH_SECRET não configurado. Sessões de login não funcionarão em produção.');
+}
+const secret = new TextEncoder().encode(NEXTAUTH_SECRET || 'fallback-dev-secret-only-for-local-mock');
 
 export interface SessionPayload {
   usuario_id: string;

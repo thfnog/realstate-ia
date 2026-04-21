@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://35.172.170.210:8080';
-const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'ImobIA_Sec_2024_!';
+const EVOLUTION_URL = process.env.EVOLUTION_URL;
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
 
 /**
  * Proxy para a Evolution API para evitar CORS e proteger a API Key.
