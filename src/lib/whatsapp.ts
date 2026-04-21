@@ -79,7 +79,6 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
   // --- EVOLUTION API ---
   if (PROVIDER === 'evolution' && EVOLUTION_URL && EVOLUTION_API_KEY) {
     try {
-      // First check if instance is open (optional but recommended for faster failover to queue)
       const res = await fetch(getUrl(`/message/sendText/${instanceName}`), {
         method: 'POST',
         headers: {
