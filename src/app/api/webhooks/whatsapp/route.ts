@@ -33,10 +33,14 @@ export async function POST(request: Request) {
 
     if ((event === 'messages.upsert' || event === 'messages_upsert') && payload.data) {
       const msgData = payload.data;
-      remoteJid = msgData.key?.remoteJid || '';
+      // Evolution v2 can send message directly in data or inside a messages array
+      const messageObj = msgData.message || (msgData.messages && msgData.messages[0]?.message);
+      const key = msgData.key || (msgData.messages && msgData.messages[0]?.key);
+      
+      remoteJid = key?.remoteJid || '';
       
       // Outbound Message Detection: Move lead to 'Em Atendimento' if broker replies manually
-      if (msgData.key?.fromMe) {
+      if (key?.fromMe) {
         const phone = remoteJid.split('@')[0] || '';
         if (!phone) return NextResponse.json({ success: true, status: 'skipped_no_phone' });
 
@@ -50,10 +54,9 @@ export async function POST(request: Request) {
 
         if (lead && lead.status === 'novo') {
           // Check if this is the bot's auto-reply to avoid premature status move
-          const text = msgData.message?.conversation || msgData.message?.extendedTextMessage?.text || '';
-          const isBotAutoReply = text.includes('recebi seu interesse') || 
-                               text.includes('Recebi seu interesse') ||
-                               text.includes('Recebi o seu contacto');
+          const msgText = messageObj?.conversation || messageObj?.extendedTextMessage?.text || messageObj?.text || '';
+          const isBotAutoReply = msgText.toLowerCase().includes('recebi seu interesse') || 
+                                 msgText.toLowerCase().includes('recebi o seu contacto');
 
           if (!isBotAutoReply) {
             console.log(`📈 Lead ${lead.nome} movido para 'em_atendimento' via resposta manual do corretor.`);
@@ -74,11 +77,13 @@ export async function POST(request: Request) {
       }
 
       sender = remoteJid.split('@')[0] || '';
-      text = msgData.message?.conversation || 
-             msgData.message?.extendedTextMessage?.text || 
-             msgData.message?.imageMessage?.caption || 
+      text = messageObj?.conversation || 
+             messageObj?.extendedTextMessage?.text || 
+             messageObj?.text ||
+             msgData.messageContent || // Some v2 versions
              '';
-      name = msgData.pushName || '';
+      
+      name = msgData.pushName || (msgData.messages && msgData.messages[0]?.pushName) || '';
     }
 
     if (!sender || !text) {
