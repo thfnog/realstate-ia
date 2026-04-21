@@ -11,8 +11,12 @@ import twilio from 'twilio';
 const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twilio' | 'evolution' | 'mock';
 
 // Evolution Config
-const EVOLUTION_URL = process.env.EVOLUTION_URL;
+const EVOLUTION_URL = process.env.EVOLUTION_URL?.replace(/\/$/, '');
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+
+function getUrl(path: string) {
+  return `${EVOLUTION_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
 
 if (!EVOLUTION_URL || !EVOLUTION_API_KEY) {
   // Nota: Em produção, estas variáveis devem ser configuradas no painel da Vercel.
@@ -46,7 +50,7 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
   // --- REGRAS EVOLUTION API ---
   if (PROVIDER === 'evolution' && EVOLUTION_API_KEY) {
     try {
-      const response = await fetch(`${EVOLUTION_URL}/message/sendText/${instance}`, {
+      const response = await fetch(getUrl(`/message/sendText/${instance}`), {
         method: 'POST',
         headers: {
           'apikey': EVOLUTION_API_KEY!,

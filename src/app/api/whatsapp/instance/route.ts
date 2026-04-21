@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const EVOLUTION_URL = process.env.EVOLUTION_URL;
+const EVOLUTION_URL = process.env.EVOLUTION_URL?.replace(/\/$/, '');
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+
+function getUrl(path: string) {
+  return `${EVOLUTION_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
 
 /**
  * Proxy para a Evolution API para evitar CORS e proteger a API Key.
@@ -16,7 +20,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(`${EVOLUTION_URL}/instance/connectionState/${instanceName}`, {
+    const response = await fetch(getUrl(`/instance/connectionState/${instanceName}`), {
       headers: { 'apikey': EVOLUTION_API_KEY! }
     });
     const data = await response.json();
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
       console.log(`🚀 Iniciando conexão para instância: ${instanceName}`);
       
       // 1. Garantir que a instância existe
-      const createRes = await fetch(`${EVOLUTION_URL}/instance/create`, {
+      const createRes = await fetch(getUrl('/instance/create'), {
         method: 'POST',
         headers: { 
           'apikey': EVOLUTION_API_KEY!,
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
       }
 
       // 2. Buscar o QR Code
-      const qrRes = await fetch(`${EVOLUTION_URL}/instance/connect/${instanceName}`, {
+      const qrRes = await fetch(getUrl(`/instance/connect/${instanceName}`), {
         headers: { 'apikey': EVOLUTION_API_KEY! }
       });
       
@@ -88,13 +92,13 @@ export async function DELETE(req: NextRequest) {
   if (!instanceName) return NextResponse.json({ error: 'Instance required' }, { status: 400 });
 
   try {
-    const response = await fetch(`${EVOLUTION_URL}/instance/logout/${instanceName}`, {
+    const response = await fetch(getUrl(`/instance/logout/${instanceName}`), {
       method: 'POST', // Evolution logout é POST
       headers: { 'apikey': EVOLUTION_API_KEY! }
     });
     
     // Deletar também para limpar a VPS
-    await fetch(`${EVOLUTION_URL}/instance/delete/${instanceName}`, {
+    await fetch(getUrl(`/instance/delete/${instanceName}`), {
       method: 'DELETE',
       headers: { 'apikey': EVOLUTION_API_KEY! }
     });
