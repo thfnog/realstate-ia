@@ -72,29 +72,39 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
       }
 
-      // 1.1 Configurar Webhook para esta instância
+      // 1.1 Configurar Webhook para esta instância (Evolution v2 syntax)
       const webhookUrl = `${req.nextUrl.origin}/api/webhooks/whatsapp`;
       console.log(`🔗 Configurando Webhook em: ${webhookUrl}`);
+      
       try {
-        await fetch(getUrl(`/webhook/set/${instanceName}`), {
+        const webhookRes = await fetch(getUrl(`/webhook/set/${instanceName}`), {
           method: 'POST',
           headers: { 
             'apikey': EVOLUTION_API_KEY!,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            url: webhookUrl,
-            enabled: true,
-            webhook_by_events: false,
-            events: [
-              "MESSAGES_UPSERT",
-              "SEND_MESSAGES"
-            ]
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              byEvents: false,
+              base64: false,
+              events: [
+                "messages.upsert",
+                "send.messages"
+              ]
+            }
           })
         });
-        console.log('✅ Webhook configurado com sucesso.');
+
+        if (webhookRes.ok) {
+          console.log('✅ Webhook configurado com sucesso na Evolution API.');
+        } else {
+          const webhookErrBody = await webhookRes.text();
+          console.error(`❌ Erro ao configurar Webhook (Status ${webhookRes.status}):`, webhookErrBody);
+        }
       } catch (webhookErr) {
-        console.error('⚠️ Falha ao configurar Webhook (não crítico para o QR Code):', webhookErr);
+        console.error('⚠️ Falha crítica ao disparar configuração de Webhook:', webhookErr);
       }
 
       // 2. Buscar o QR Code (com retry em caso de 404 temporário)

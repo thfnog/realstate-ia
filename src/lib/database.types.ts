@@ -33,6 +33,7 @@ export type Corretor = {
   ativo: boolean;
   whatsapp_instance?: string;
   whatsapp_status?: 'open' | 'close' | 'connecting';
+  whatsapp_number?: string;
   criado_em: string;
 };
 

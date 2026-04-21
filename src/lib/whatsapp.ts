@@ -98,3 +98,29 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
 
   return 'no-provider-configured';
 }
+
+/**
+ * Busca os detalhes da instância para obter o número do dono (ownerJid)
+ */
+export async function fetchInstanceOwner(instanceName: string): Promise<string | null> {
+  if (PROVIDER !== 'evolution' || !EVOLUTION_API_KEY) return null;
+
+  try {
+    const response = await fetch(getUrl('/instance/fetchInstances'), {
+      headers: { 'apikey': EVOLUTION_API_KEY! }
+    });
+
+    if (!response.ok) return null;
+
+    const instances = await response.json();
+    const instance = instances.find((i: any) => i.instanceName === instanceName);
+
+    if (!instance || !instance.owner) return null;
+
+    // Retorna algo como "5511999990000@s.whatsapp.net"
+    return instance.owner;
+  } catch (error) {
+    console.error('❌ Erro ao buscar dono da instância:', error);
+    return null;
+  }
+}

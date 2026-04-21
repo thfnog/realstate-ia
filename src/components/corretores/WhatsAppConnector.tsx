@@ -30,11 +30,24 @@ export default function WhatsAppConnector({ instanceName, brokerId, onStatusChan
       // PERSISTÊNCIA: Se o status mudou (ou é o primeiro check) e temos um ID de corretor, salvar no banco
       if (brokerId && state !== lastSavedStatus) {
         try {
-          await fetch(`/api/corretores/${brokerId}`, {
+          const dbRes = await fetch(`/api/corretores/${brokerId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ whatsapp_status: state })
           });
+          
+          if (!dbRes.ok) {
+            const errData = await dbRes.json();
+            if (dbRes.status === 400 && errData.error) {
+              // ERRO DE SEGURANÇA (Conflito de número 1:1)
+              alert(errData.error);
+              setQrCode(null);
+              setPolling(false);
+              setStatus('close');
+              return;
+            }
+          }
+
           setLastSavedStatus(state);
         } catch (dbErr) {
           console.error('Erro ao persistir status no banco:', dbErr);
