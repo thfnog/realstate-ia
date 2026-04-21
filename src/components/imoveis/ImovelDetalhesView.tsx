@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Imovel } from '@/lib/database.types';
 import { CountryConfig, formatCurrency } from '@/lib/countryConfig';
 import MercadoIndicador from './MercadoIndicador';
-import MapPicker from './MapPicker'; // MapPicker already has a ReadOnly style or can be adapted
+import MapPicker from './MapPicker';
+import ImovelGaleria from './ImovelGaleria';
 
 interface ImovelDetalhesViewProps {
   imovel: Imovel;
@@ -85,47 +86,7 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
         {/* Gallery & Description (Left/Wide Columns) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Photos Grid Style "Airbnb" */}
-          <div className="grid grid-cols-4 gap-4 h-[500px]">
-             <div className="col-span-2 row-span-2 rounded-3xl overflow-hidden bg-surface-alt border border-border-light shadow-sm group relative">
-                <img 
-                  src={imovel.fotos && imovel.fotos.length > 0 ? imovel.fotos[0].url_media : 'https://placehold.co/800x600?text=Sem+Foto'} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700" 
-                  alt="Principal"
-                />
-             </div>
-             <div className="col-span-1 rounded-3xl overflow-hidden bg-surface-alt border border-border-light shadow-sm group">
-                <img 
-                  src={imovel.fotos && imovel.fotos.length > 1 ? imovel.fotos[1].url_media : 'https://placehold.co/400x300?text=Ambiente+2'} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
-                  alt="Interiores"
-                />
-             </div>
-             <div className="col-span-1 rounded-3xl overflow-hidden bg-surface-alt border border-border-light shadow-sm group">
-                <img 
-                  src={imovel.fotos && imovel.fotos.length > 2 ? imovel.fotos[2].url_media : 'https://placehold.co/400x300?text=Ambiente+3'} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
-                  alt="Interiores"
-                />
-             </div>
-             <div className="col-span-1 rounded-3xl overflow-hidden bg-surface-alt border border-border-light shadow-sm group">
-                <img 
-                  src={imovel.fotos && imovel.fotos.length > 3 ? imovel.fotos[3].url_media : 'https://placehold.co/400x300?text=Ambiente+4'} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
-                  alt="Interiores"
-                />
-             </div>
-             <div className="col-span-1 rounded-3xl overflow-hidden bg-surface-alt border border-border-light shadow-sm group relative">
-                <img 
-                  src={imovel.fotos && imovel.fotos.length > 4 ? imovel.fotos[4].url_media : 'https://placehold.co/400x300?text=Ver+Mais'} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
-                  alt="Interiores"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                   <span className="text-white font-black text-sm uppercase tracking-widest">Ver Todas</span>
-                </div>
-             </div>
-          </div>
+          <ImovelGaleria fotos={imovel.fotos || []} />
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

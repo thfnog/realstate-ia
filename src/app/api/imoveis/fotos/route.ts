@@ -25,23 +25,17 @@ export async function POST(req: NextRequest) {
       .webp({ quality: 85 })
       .toBuffer();
 
-    const originalCompressed = await sharp(buffer)
-      .webp({ quality: 90 })
-      .toBuffer();
-
     const photoId = randomUUID();
     
-    // In a real scenario, we would upload to Supabase Storage here.
-    // Since we are in a mock environment, we'll return mock URLs.
-    // For local simulation, we'd save to public/uploads or similar.
-    
-    const mockUrl = `https://placehold.co/1200x900/4F46E5/FFF?text=Imovel+${imovelId}+${photoId}`;
+    // Convert to Base64 for immediate feedback in the UI without needing a bucket
+    const thumbBase64 = `data:image/webp;base64,${thumbBuffer.toString('base64')}`;
+    const mediaBase64 = `data:image/webp;base64,${mediaBuffer.toString('base64')}`;
 
     const newPhoto = {
       id: photoId,
-      url_thumb: mockUrl,
-      url_media: mockUrl,
-      url_original: mockUrl,
+      url_thumb: thumbBase64,
+      url_media: mediaBase64,
+      url_original: mediaBase64,
       ordem: 0,
       is_capa: false
     };

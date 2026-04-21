@@ -6,6 +6,8 @@ import { TipoImovel, StatusImovel, Moeda, NegocioImovel, Corretor, Imovel } from
 import { getConfigByCode } from '@/lib/countryConfig';
 import MapPicker from './MapPicker';
 import MercadoIndicador from './MercadoIndicador';
+import PhotoUploadZone from './PhotoUploadZone';
+import { IoTrash, IoStar, IoStarOutline } from 'react-icons/io5';
 
 interface ImovelFormProps {
   initialData?: Partial<Imovel>;
@@ -377,11 +379,73 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                     <p className="text-text-secondary text-sm">A primeira foto será a capa do imóvel.</p>
                  </div>
 
-                 <div className="border-2 border-dashed border-border p-12 rounded-3xl text-center bg-surface-alt/20 hover:bg-surface-alt/40 transition-all cursor-pointer">
-                    <span className="text-4xl mb-4 block">📸</span>
-                    <p className="text-text-primary font-bold">Arraste fotos ou clique para carregar</p>
-                    <p className="text-text-tertiary text-xs mt-1">Suporta JPG, PNG, WEBP e HEIC (máx 15MB)</p>
-                 </div>
+                 <PhotoUploadZone 
+                   imovelId={formData.id} 
+                   onPhotosUploaded={(newPhotos) => {
+                      const updatedPhotos = [...(formData.fotos || []), ...newPhotos];
+                      // Se for a primeira foto, marca como capa
+                      if (updatedPhotos.length === newPhotos.length) {
+                        updatedPhotos[0].is_capa = true;
+                      }
+                      setFormData({ ...formData, fotos: updatedPhotos });
+                   }} 
+                 />
+
+                 {/* Photo Grid */}
+                 {formData.fotos && formData.fotos.length > 0 && (
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                     {formData.fotos.map((foto, idx) => (
+                       <div key={foto.id} className="group relative aspect-square rounded-2xl overflow-hidden border border-border bg-surface-alt shadow-sm hover:shadow-md transition-all">
+                         <img 
+                           src={foto.url_thumb} 
+                           alt={`Foto ${idx + 1}`} 
+                           className="w-full h-full object-cover"
+                         />
+                         
+                         {/* Labels */}
+                         {foto.is_capa && (
+                           <div className="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-[8px] font-black uppercase rounded-md shadow-lg">
+                             Capa
+                           </div>
+                         )}
+
+                         {/* Actions Overlay */}
+                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                           <button
+                             type="button"
+                             onClick={() => {
+                               const updated = (formData.fotos || []).map(f => ({
+                                 ...f,
+                                 is_capa: f.id === foto.id
+                               }));
+                               setFormData({ ...formData, fotos: updated });
+                             }}
+                             className={`p-2 rounded-lg transition-all ${foto.is_capa ? 'bg-amber-400 text-white' : 'bg-white/20 text-white hover:bg-white/40'}`}
+                             title="Definir como capa"
+                           >
+                             {foto.is_capa ? <IoStar size={16} /> : <IoStarOutline size={16} />}
+                           </button>
+                           
+                           <button
+                             type="button"
+                             onClick={() => {
+                               const updated = (formData.fotos || []).filter(f => f.id !== foto.id);
+                               // Se removeu a capa, marca a primeira restante como capa
+                               if (foto.is_capa && updated.length > 0) {
+                                 updated[0].is_capa = true;
+                               }
+                               setFormData({ ...formData, fotos: updated });
+                             }}
+                             className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-lg"
+                             title="Excluir foto"
+                           >
+                             <IoTrash size={16} />
+                           </button>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
 
                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex gap-3 items-start">
                     <span className="text-lg">⚠️</span>
