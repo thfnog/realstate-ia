@@ -22,6 +22,8 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [origemFilter, setOrigemFilter] = useState<string>('');
+  const [corretorFilter, setCorretorFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [resending, setResending] = useState<string | null>(null);
   
   // Agenda Modal
@@ -46,7 +48,7 @@ export default function LeadsPage() {
         fetch('/api/corretores', { cache: 'no-store' }),
       ]);
       
-      let data = await resLeads.json();
+      const data = await resLeads.json();
       const corretoresData = await resCorretores.json();
 
       if (Array.isArray(corretoresData)) {
@@ -54,9 +56,6 @@ export default function LeadsPage() {
       }
 
       if (Array.isArray(data)) {
-        if (origemFilter) {
-          data = data.filter((l: LeadComCorretor) => l.origem === origemFilter);
-        }
         setLeads(data);
       }
     } catch (err) {
@@ -64,7 +63,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, origemFilter]);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchLeads();
@@ -231,6 +230,17 @@ export default function LeadsPage() {
     return `https://wa.me/${phone.replace(/\D/g, '')}`;
   }
 
+  // Computed Leads (Filtered)
+  const filteredLeads = leads.filter(l => {
+    if (origemFilter && l.origem !== origemFilter) return false;
+    if (corretorFilter && l.corretor_id !== corretorFilter) return false;
+    if (searchQuery) {
+      const s = searchQuery.toLowerCase();
+      return l.nome.toLowerCase().includes(s) || l.telefone.includes(s);
+    }
+    return true;
+  });
+
   return (
     <div className="animate-fade-in pb-10 sm:pb-0">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
@@ -241,7 +251,19 @@ export default function LeadsPage() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 sm:min-w-[200px]">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-xs">🔍</span>
+            <input 
+              type="text"
+              placeholder="Buscar por nome ou tel..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-white text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
+          </div>
+
           {/* Toggle View Mode */}
           <div className="flex bg-surface-alt p-1 rounded-xl border border-border-light shadow-inner w-full sm:w-auto">
             <button
@@ -264,21 +286,33 @@ export default function LeadsPage() {
 
           <div className="flex items-center gap-2">
             <select
+              value={corretorFilter}
+              onChange={(e) => setCorretorFilter(e.target.value)}
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="">Todos consultores</option>
+              {corretores.map(c => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
+
+            <select
               value={origemFilter}
               onChange={(e) => setOrigemFilter(e.target.value)}
-              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               <option value="">Todas origens</option>
               <option value="formulario">Formulário</option>
               <option value="email_ego">E-mail eGO</option>
               <option value="webhook_grupozap">Grupo OLX</option>
               <option value="whatsapp">WhatsApp</option>
+              <option value="manual">Manual</option>
             </select>
 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               <option value="">Todos os status</option>
               <option value="novo">Novos</option>
@@ -304,16 +338,16 @@ export default function LeadsPage() {
             </div>
           ))}
         </div>
-      ) : leads.length === 0 ? (
+      ) : filteredLeads.length === 0 ? (
         <div className="bg-white rounded-xl border border-border-light p-12 text-center">
           <p className="text-4xl mb-3">📭</p>
-          <p className="text-text-secondary">Nenhum lead encontrado</p>
+          <p className="text-text-secondary">Nenhum lead encontrado com estes filtros</p>
         </div>
       ) : viewMode === 'kanban' ? (
         /* ===== KANBAN VIEW (Funil de Vendas) ===== */
         <div className="flex gap-4 min-h-[600px] overflow-x-auto pb-8 scrollbar-hide">
            {['novo', 'em_atendimento', 'visita_agendada', 'negociacao', 'contrato', 'fechado', ...(statusFilter === 'descartado' ? ['descartado'] : [])].map((status) => {
-              const columnLeads = leads.filter(l => l.status === status);
+              const columnLeads = filteredLeads.filter(l => l.status === status);
               // Hide discarded leads from normal funnel unless explicitly filtering for it
               if (status !== 'descartado' && statusFilter === 'descartado') return null;
               
@@ -472,7 +506,7 @@ export default function LeadsPage() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => {
+                {filteredLeads.map((lead) => {
                   const status = statusConfig[lead.status] || statusConfig.novo;
                   const recent = isRecent(lead.criado_em);
                   return (

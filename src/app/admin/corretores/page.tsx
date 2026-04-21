@@ -121,7 +121,8 @@ export default function CorretoresPage() {
           {corretores.map((c) => (
             <div
               key={c.id}
-              className={`bg-white rounded-xl border p-5 transition-all duration-200 hover:shadow-md ${
+              onClick={() => openEdit(c)}
+              className={`bg-white rounded-xl border p-5 transition-all duration-200 hover:shadow-md hover:border-primary/40 cursor-pointer ${
                 c.ativo ? 'border-border-light' : 'border-border-light opacity-60'
               }`}
             >
@@ -141,7 +142,7 @@ export default function CorretoresPage() {
 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => toggleAtivo(c)}
+                    onClick={(e) => { e.stopPropagation(); toggleAtivo(c); }}
                     className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
                       c.ativo
                         ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
@@ -151,7 +152,7 @@ export default function CorretoresPage() {
                     {c.ativo ? 'Ativo' : 'Inativo'}
                   </button>
                   <button
-                    onClick={() => copyWebcalLink(c.id)}
+                    onClick={(e) => { e.stopPropagation(); copyWebcalLink(c.id); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                       copiedId === c.id 
                         ? 'bg-green-500 text-white border-green-600 shadow-inner' 
@@ -164,10 +165,7 @@ export default function CorretoresPage() {
                       {copiedId === c.id ? 'Copiado!' : 'WebCal'}
                     </span>
                   </button>
-                  <button onClick={() => openEdit(c)} className="text-primary hover:text-primary-hover text-xs font-medium shrink-0">
-                    Editar
-                  </button>
-                  <button onClick={() => handleDelete(c.id)} className="text-danger hover:text-red-700 text-xs font-medium shrink-0">
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="text-danger hover:text-red-700 text-xs font-medium shrink-0">
                     Excluir
                   </button>
                 </div>
