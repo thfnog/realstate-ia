@@ -188,12 +188,6 @@ export default function ImoveisPage() {
                       {im.status}
                    </span>
                 </div>
-                
-                <div className="absolute bottom-4 right-4">
-                   <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black text-text-primary shadow-sm border border-white">
-                      {im.referencia}
-                   </span>
-                </div>
               </div>
 
               {/* Card Content */}
