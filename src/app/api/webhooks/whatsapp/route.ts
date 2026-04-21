@@ -7,16 +7,15 @@ import * as mock from '@/lib/mockDb';
 
 /**
  * Webhook — WhatsApp Bot Entry Point
- * 
- * Simula o recebimento de uma mensagem do WhatsApp Business API.
- * 
- * Exemplo de Payload POST:
- * {
- *   "sender": "+5511999990000",
- *   "text": "Olá, sou o Thiago e procuro uma casa em Indaiatuba Swiss Park até 2 milhões",
- *   "name": "Thiago Nogueira"
- * }
  */
+
+const maskPhone = (p: string) => p ? p.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2") : '***';
+const maskName = (n: string) => {
+  if (!n) return '***';
+  const parts = n.split(' ');
+  if (parts.length === 1) return n;
+  return `${parts[0]} ${parts[1][0]}.`;
+};
 
 export async function POST(request: Request) {
   try {
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
                                  msgText.toLowerCase().includes('recebi o seu contacto');
 
           if (!isBotAutoReply) {
-            console.log(`📈 Lead ${lead.nome} movido para 'em_atendimento' via resposta manual do corretor.`);
+            console.log(`📈 Lead ${maskName(lead.nome)} movido para 'em_atendimento' via resposta manual do corretor.`);
             if (mock.isMockMode()) {
               mock.updateLead(lead.id, { status: 'em_atendimento' });
             } else {
@@ -91,14 +90,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payload incompleto' }, { status: 400 });
     }
 
-    console.log(`📩 Nova mensagem de ${name} (${sender}): "${text}"`);
+    console.log(`📩 Nova mensagem de ${maskName(name)} (${maskPhone(sender)}): "${text.slice(0, 15)}..."`);
 
     // 2. Extração e Classificação via IA (Groq)
     const extracted = await extractLeadWithAI(text);
 
     // AI TRIAGE: If not a lead intent, skip creation
     if (extracted.is_lead === false) {
-      console.log(`♻️ Ruído detectado e descartado: "${text}" (${extracted.resumo_ia})`);
+      console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia})`);
       return NextResponse.json({ 
         success: true, 
         status: 'discarded_noise',
@@ -169,7 +168,7 @@ export async function POST(request: Request) {
     }
 
     if (lead) {
-       console.log(`👤 Lead existente encontrado: ${lead.nome}. Processando Inteligência de Follow-up...`);
+       console.log(`👤 Lead existente encontrado: ${maskName(lead.nome)}. Processando Inteligência de Follow-up...`);
        
        const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
        

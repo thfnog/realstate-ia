@@ -39,11 +39,12 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
   
   // Limpeza básica do número (apenas dígitos)
   const cleanTo = to.replace(/\D/g, '');
+  const maskedTo = cleanTo.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2");
 
   // Envio via Evolution API ou Twilio seguindo a configuração do ambiente
 
   if (PROVIDER === 'mock' || (!EVOLUTION_API_KEY && !accountSid)) {
-    console.log('\n📱 [MOCK WHATSAPP] To:', to, '\nBody:', body);
+    console.log(`\n📱 [MOCK WHATSAPP] To: ${maskedTo} | Body: [PROTECTED - ${body.length} chars]`);
     return 'mock-sid';
   }
 
@@ -69,7 +70,7 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
         throw new Error(`Evolution API Error: ${response.status} - ${errorText}`);
       }
 
-      console.log(`✅ WhatsApp enviado via Evolution API para ${cleanTo}`);
+      console.log(`✅ WhatsApp enviado via Evolution API para ${maskedTo}`);
       return 'evolution-success';
     } catch (error) {
       console.error('❌ Erro Evolution API:', error);

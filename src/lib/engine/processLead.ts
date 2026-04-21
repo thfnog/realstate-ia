@@ -18,6 +18,14 @@ import { sendBriefing } from './sendBriefing';
 import { sendAutoReplyToLead } from './sendAutoReply';
 import { getConfigByCode } from '@/lib/countryConfig';
 
+const maskPhone = (p: string) => p ? p.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2") : '***';
+const maskName = (n: string) => {
+  if (!n) return '***';
+  const parts = n.split(' ');
+  if (parts.length === 1) return n;
+  return `${parts[0]} ${parts[1][0]}.`;
+};
+
 export interface ProcessResult {
   success: boolean;
   corretor: Corretor | null;
@@ -34,7 +42,7 @@ export interface ProcessOptions {
 }
 
 export async function processLead(lead: Lead, options: ProcessOptions = {}): Promise<ProcessResult> {
-  console.log(`\n🚀 Processando lead: ${lead.nome} (${lead.telefone})`);
+  console.log(`\n🚀 Processando lead: ${maskName(lead.nome)} (${maskPhone(lead.telefone)})`);
 
   try {
     // Step 0: Fetch Tenant Config (Regionalization)
@@ -175,7 +183,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       }
 
       if (currentStatus !== 'novo') {
-        console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${lead.nome}.`);
+        console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${maskName(lead.nome)}.`);
       } else {
         console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
         await sendAutoReplyToLead({
