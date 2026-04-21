@@ -4,8 +4,25 @@
 import twilio from 'twilio';
 import { supabaseAdmin } from './supabase';
 import * as mock from './mockDb';
+import { getConfig } from './countryConfig';
 
 const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twilio' | 'evolution' | 'mock';
+
+/**
+ * Sanitizes phone number to ensure it has the country prefix (DDI)
+ */
+function sanitizePhone(to: string): string {
+  const clean = to.replace(/\D/g, '');
+  const config = getConfig();
+  const prefix = config.phoneFormat.prefix.replace(/\D/g, ''); // e.g. '55' or '351'
+  
+  // If number doesn't start with prefix, prepend it
+  if (!clean.startsWith(prefix)) {
+    return `${prefix}${clean}`;
+  }
+  
+  return clean;
+}
 
 // Evolution Config
 const EVOLUTION_URL = process.env.EVOLUTION_URL?.replace(/\/$/, '');
@@ -54,7 +71,7 @@ export async function fetchInstanceStatus(instanceName: string): Promise<'open' 
  */
 export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string): Promise<string> {
   const instanceName = instanceOverride || process.env.WHATSAPP_DEFAULT_INSTANCE || '';
-  const cleanTo = to.replace(/\D/g, '');
+  const cleanTo = sanitizePhone(to);
 
   if (PROVIDER === 'mock') {
     console.log(`[MOCK] WhatsApp para ${cleanTo}: ${body.slice(0, 30)}...`);
