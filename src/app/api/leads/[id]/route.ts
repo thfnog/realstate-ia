@@ -21,10 +21,14 @@ export async function GET(
       .from('leads')
       .select('*, corretores(*)')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!lead) {
+      return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
     }
 
     return NextResponse.json(lead);
@@ -64,7 +68,7 @@ export async function PATCH(
       return NextResponse.json(updated);
     }
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Record<string, any> = {};
     if (body.status) updateData.status = body.status;
     if (body.corretor_id !== undefined) updateData.corretor_id = body.corretor_id;
 
@@ -73,10 +77,15 @@ export async function PATCH(
       .update(updateData)
       .eq('id', id)
       .select('*, corretores(*)')
-      .single();
+      .maybeSingle();
 
     if (error) {
+      console.error('Supabase update error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!updatedLead) {
+      return NextResponse.json({ error: 'Lead não encontrado' }, { status: 404 });
     }
 
     // Cascade to events in Supabase
@@ -88,10 +97,18 @@ export async function PATCH(
         .neq('status', 'cancelado');
     }
 
+    // 🚀 Handle Resend Briefing
+    if (body.resend_briefing) {
+       const { processLead } = await import('@/lib/engine/processLead');
+       // Trigger processing (re-run logic)
+       // We cast to any to avoid strict type mismatch during dynamic import if any
+       await processLead(updatedLead as any, { skipAutoReply: true });
+    }
+
     return NextResponse.json(updatedLead);
   } catch (err) {
     console.error('Erro ao atualizar lead:', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Erro interno' }, { status: 500 });
   }
 }
 

@@ -47,16 +47,26 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
   try {
     // Step 0: Fetch Tenant Config (Regionalization)
     let config_pais: 'PT' | 'BR' = 'PT';
+    
+    // UUID Validation regex
+    const isUUID = (uuid: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
+
     if (mock.isMockMode()) {
       const imob = mock.getImobiliariaById(lead.imobiliaria_id);
       config_pais = imob?.config_pais || 'PT';
     } else {
-      const { data: imob } = await supabaseAdmin
-        .from('imobiliarias')
-        .select('config_pais')
-        .eq('id', lead.imobiliaria_id)
-        .single();
-      config_pais = imob?.config_pais || 'PT';
+      // Safety: If imobiliaria_id is not a UUID (e.g. mock leftover), use a default or handle error
+      if (isUUID(lead.imobiliaria_id)) {
+        const { data: imob } = await supabaseAdmin
+          .from('imobiliarias')
+          .select('config_pais')
+          .eq('id', lead.imobiliaria_id)
+          .maybeSingle();
+        config_pais = imob?.config_pais || 'PT';
+      } else {
+        console.warn(`⚠️ ID de imobiliária inválido (${lead.imobiliaria_id}). Usando configuração padrão PT.`);
+        config_pais = 'PT';
+      }
     }
     
     const config = getConfigByCode(config_pais);
