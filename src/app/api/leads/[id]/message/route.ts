@@ -23,35 +23,37 @@ export async function POST(
         };
       }
     } else {
-      const { data, error } = await supabaseAdmin
+      // Fetch lead first
+      const { data: leadData, error: leadError } = await supabaseAdmin
         .from('leads')
-        .select(`
-          telefone,
-          corretor_id,
-          imobiliaria_id,
-          corretores (
-            id,
-            whatsapp_instance
-          )
-        `)
+        .select('telefone, corretor_id, imobiliaria_id')
         .eq('id', id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (leadError) throw leadError;
 
-      if (data) {
-        const c = data.corretores as any;
-        
+      if (leadData) {
+        // Fetch broker separately to avoid join/relationship issues (corretores_1 error)
+        let broker = null;
+        if (leadData.corretor_id) {
+          const { data: bData } = await supabaseAdmin
+            .from('corretores')
+            .select('id, whatsapp_instance')
+            .eq('id', leadData.corretor_id)
+            .maybeSingle();
+          broker = bData;
+        }
+
         // Identify country for prefix logic
         const { data: imob } = await supabaseAdmin
            .from('imobiliarias')
            .select('config_pais')
-           .eq('id', data.imobiliaria_id)
+           .eq('id', leadData.imobiliaria_id)
            .maybeSingle();
 
         lead = {
-          telefone: data.telefone,
-          instanceName: c?.whatsapp_instance || `realstate-iabroker-${c?.id || data.corretor_id}`,
+          telefone: leadData.telefone,
+          instanceName: broker?.whatsapp_instance || `realstate-iabroker-${broker?.id || leadData.corretor_id}`,
           countryCode: imob?.config_pais || 'BR'
         };
       }
