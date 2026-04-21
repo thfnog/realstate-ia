@@ -49,7 +49,7 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
       const response = await fetch(`${EVOLUTION_URL}/message/sendText/${instance}`, {
         method: 'POST',
         headers: {
-          'apikey': EVOLUTION_API_KEY,
+          'apikey': EVOLUTION_API_KEY!,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

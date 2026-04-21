@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const response = await fetch(`${EVOLUTION_URL}/instance/connectionState/${instanceName}`, {
-      headers: { 'apikey': EVOLUTION_API_KEY }
+      headers: { 'apikey': EVOLUTION_API_KEY! }
     });
     const data = await response.json();
     return NextResponse.json(data);
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       const createRes = await fetch(`${EVOLUTION_URL}/instance/create`, {
         method: 'POST',
         headers: { 
-          'apikey': EVOLUTION_API_KEY,
+          'apikey': EVOLUTION_API_KEY!,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
       // 2. Buscar o QR Code
       const qrRes = await fetch(`${EVOLUTION_URL}/instance/connect/${instanceName}`, {
-        headers: { 'apikey': EVOLUTION_API_KEY }
+        headers: { 'apikey': EVOLUTION_API_KEY! }
       });
       
       if (!qrRes.ok) {
@@ -90,13 +90,13 @@ export async function DELETE(req: NextRequest) {
   try {
     const response = await fetch(`${EVOLUTION_URL}/instance/logout/${instanceName}`, {
       method: 'POST', // Evolution logout é POST
-      headers: { 'apikey': EVOLUTION_API_KEY }
+      headers: { 'apikey': EVOLUTION_API_KEY! }
     });
     
     // Deletar também para limpar a VPS
     await fetch(`${EVOLUTION_URL}/instance/delete/${instanceName}`, {
       method: 'DELETE',
-      headers: { 'apikey': EVOLUTION_API_KEY }
+      headers: { 'apikey': EVOLUTION_API_KEY! }
     });
 
     return NextResponse.json({ success: true });
