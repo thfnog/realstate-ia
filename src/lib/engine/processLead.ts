@@ -147,15 +147,11 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       // 5.1 Buscar delay configurado (padrão 20s se não existir)
       let delaySec = 20;
       if (mock.isMockMode()) {
-        const imob = mock.getImobiliariaById(lead.imobiliaria_id);
-        if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
+        const imobData = mock.getImobiliariaById(lead.imobiliaria_id);
+        if (imobData?.delay_auto_reply_sec !== undefined) delaySec = imobData.delay_auto_reply_sec;
       } else {
-        // Temporariamente fixo em 20s para evitar erro de coluna inexistente no banco de produção
-        /*
         const { data: imob } = await supabaseAdmin.from('imobiliarias').select('delay_auto_reply_sec').eq('id', lead.imobiliaria_id).single();
         if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
-        */
-        delaySec = 20;
       }
 
       console.log(`⏳ Aguardando ${delaySec}s antes de enviar resposta automática (prioridade humana)...`);

@@ -151,12 +151,8 @@ export async function POST(request: Request) {
       const imob = mock.getImobiliariaById(imobiliaria_id);
       if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
     } else {
-      // Temporariamente desativado a busca pela coluna custom para evitar erro 500 no banco não migrado
-      /*
       const { data: imob } = await supabaseAdmin.from('imobiliarias').select('delay_auto_reply_sec').eq('id', imobiliaria_id).single();
       if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
-      */
-      delaySec = 20; // Default fixo para produção imediata
     }
 
     const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
@@ -221,7 +217,7 @@ export async function POST(request: Request) {
       quartos_interesse: extracted.quartos || null,
       bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],
       descricao_interesse: text, 
-      // imovel_id, // Temporariamente removido pois a coluna não existe no banco de produção
+      imovel_id,
       corretor_id: fallback_corretor_id, // Atribui ao corretor da instância
       status: 'novo',
       origem: 'whatsapp' as any,
@@ -236,7 +232,7 @@ export async function POST(request: Request) {
        const { data, error } = await supabaseAdmin
         .from('leads')
         .insert([leadData])
-        .select('id, imobiliaria_id, nome, telefone, status, corretor_id, moeda, origem, portal_origem, created_at')
+        .select('*, imoveis(titulo, referencia)') // Agora com vínculo real
         .single();
        
        if (error) throw error;
