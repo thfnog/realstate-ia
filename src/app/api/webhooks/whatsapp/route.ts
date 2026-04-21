@@ -30,15 +30,34 @@ export async function POST(request: Request) {
     let remoteJid = payload.data?.key?.remoteJid || '';
     console.log(`📡 Evento recebido: "${payload.event}" (Convertido: "${event}")`);
 
-    if ((event === 'messages.upsert' || event === 'messages_upsert') && payload.data) {
-      const msgData = payload.data;
-      // Evolution v2 can send message directly in data or inside a messages array
-      const messageObj = msgData.message || (msgData.messages && msgData.messages[0]?.message);
-      const key = msgData.key || (msgData.messages && msgData.messages[0]?.key);
-      
       remoteJid = key?.remoteJid || '';
+    }
+
+    // 1. WhatsApp Connection Status Synchronization
+    if (event.includes('connection.update') || event.includes('status.instance') || event.includes('qrcode.updated')) {
+      const state = payload.data?.state || payload.state;
+      if (state && instanceName) {
+        console.log(`🔌 Atualizando status da instância "${instanceName}" para: ${state}`);
+        
+        // Map Evolution states to our internal types
+        let internalStatus: 'open' | 'close' | 'connecting' = 'close';
+        if (state === 'open' || state === 'CONNECTED') internalStatus = 'open';
+        if (state === 'connecting' || state === 'CONNECTING') internalStatus = 'connecting';
+        
+        if (!mock.isMockMode()) {
+          // Identify broker by instance name
+          await supabaseAdmin
+            .from('corretores')
+            .update({ whatsapp_status: internalStatus })
+            .eq('whatsapp_instance', instanceName);
+        }
+      }
       
-      // Outbound Message Detection: Move lead to 'Em Atendimento' if broker replies manually
+      // If it's just a status update, we can stop here
+      if (!event.includes('messages')) {
+        return NextResponse.json({ success: true, status: 'connection_synced', state });
+      }
+    }
       if (key?.fromMe) {
         const phone = remoteJid.split('@')[0] || '';
         if (!phone) return NextResponse.json({ success: true, status: 'skipped_no_phone' });

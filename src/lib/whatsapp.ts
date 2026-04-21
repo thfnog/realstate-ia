@@ -29,6 +29,32 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
 
 /**
+ * Check if the instance is currently connected in Evolution API
+ */
+export async function fetchInstanceStatus(instanceName: string): Promise<'open' | 'close' | 'connecting'> {
+  if (PROVIDER === 'twilio') return 'open'; // Twilio doesn't have "instances" like Evolution
+
+  try {
+    const res = await fetch(getUrl(`/instance/connectionState/${instanceName}`), {
+      headers: {
+        'apikey': EVOLUTION_API_KEY || ''
+      }
+    });
+    
+    if (!res.ok) return 'close';
+    const data = await res.json();
+    const state = data.instance?.state || data.state;
+
+    if (state === 'open' || state === 'CONNECTED') return 'open';
+    if (state === 'connecting' || state === 'CONNECTING') return 'connecting';
+    return 'close';
+  } catch (error) {
+    console.error(`❌ Erro ao consultar status da instância ${instanceName}:`, error);
+    return 'close';
+  }
+}
+
+/**
  * Envia uma mensagem de WhatsApp usando o provedor configurado.
  */
 export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string): Promise<string> {
