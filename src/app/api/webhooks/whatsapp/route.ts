@@ -27,10 +27,9 @@ export async function POST(request: Request) {
     let name = payload.name;
     let instanceName = payload.instance;
 
-    // 1. Evolution API V2 — Extraction Logic
-    let remoteJid = payload.data?.key?.remoteJid || '';
+    const event = payload.event?.toLowerCase();
 
-    if (payload.event === 'messages.upsert' && payload.data) {
+    if (event === 'messages.upsert' && payload.data) {
       const msgData = payload.data;
       remoteJid = msgData.key?.remoteJid || '';
       
