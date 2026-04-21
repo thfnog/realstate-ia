@@ -150,8 +150,12 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
         const imob = mock.getImobiliariaById(lead.imobiliaria_id);
         if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
       } else {
+        // Temporariamente fixo em 20s para evitar erro de coluna inexistente no banco de produção
+        /*
         const { data: imob } = await supabaseAdmin.from('imobiliarias').select('delay_auto_reply_sec').eq('id', lead.imobiliaria_id).single();
         if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
+        */
+        delaySec = 20;
       }
 
       console.log(`⏳ Aguardando ${delaySec}s antes de enviar resposta automática (prioridade humana)...`);
@@ -166,7 +170,11 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
         const updatedLead = mock.getLeadById(lead.id);
         currentStatus = updatedLead?.status || 'novo';
       } else {
-        const { data: checkLead } = await supabaseAdmin.from('leads').select('status').eq('id', lead.id).single();
+        const { data: checkLead } = await supabaseAdmin
+          .from('leads')
+          .select('status')
+          .eq('id', lead.id)
+          .single();
         currentStatus = checkLead?.status || 'novo';
       }
 

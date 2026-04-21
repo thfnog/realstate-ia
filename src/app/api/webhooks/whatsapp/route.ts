@@ -146,6 +146,19 @@ export async function POST(request: Request) {
        config_pais = imobData?.config_pais || 'BR';
     }
 
+    let delaySec = 20;
+    if (mock.isMockMode()) {
+      const imob = mock.getImobiliariaById(imobiliaria_id);
+      if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
+    } else {
+      // Temporariamente desativado a busca pela coluna custom para evitar erro 500 no banco não migrado
+      /*
+      const { data: imob } = await supabaseAdmin.from('imobiliarias').select('delay_auto_reply_sec').eq('id', imobiliaria_id).single();
+      if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
+      */
+      delaySec = 20; // Default fixo para produção imediata
+    }
+
     const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
     
     // 4. Busca de Lead Existente ou Criação
@@ -219,7 +232,13 @@ export async function POST(request: Request) {
     if (mock.isMockMode()) {
        newLead = mock.createLead(leadData as any);
     } else {
-       const { data, error } = await supabaseAdmin.from('leads').insert([leadData]).select().single();
+       // Explicitly omit imovel_id from both insert and select to avoid production schema errors
+       const { data, error } = await supabaseAdmin
+        .from('leads')
+        .insert([leadData])
+        .select('id, imobiliaria_id, nome, telefone, status, corretor_id, moeda, origem, portal_origem, created_at')
+        .single();
+       
        if (error) throw error;
        newLead = data;
     }
