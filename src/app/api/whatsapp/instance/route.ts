@@ -87,18 +87,15 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            // Hybrid payload (v1/v2 support)
-            enabled: true,
-            url: webhookUrl,
-            byEvents: false,
-            base64: false,
-            events: ["messages.upsert", "send.messages"],
             webhook: {
               enabled: true,
               url: webhookUrl,
               byEvents: false,
               base64: false,
-              events: ["messages.upsert", "send.messages"]
+              events: [
+                "MESSAGES_UPSERT",
+                "SEND_MESSAGE"
+              ]
             }
           })
         });
