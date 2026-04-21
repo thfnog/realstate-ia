@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { LeadFormData, Finalidade } from '@/lib/database.types';
 import { CountryConfig, getConfigByCode } from '@/lib/countryConfig';
@@ -10,7 +10,7 @@ type InputMode = 'livre' | 'detalhado';
 
 const stepLabels = ['Seus dados', 'Seu interesse', 'Detalhes'];
 
-export default function FormularioPage() {
+function FormularioContent() {
   const searchParams = useSearchParams();
   const [config, setConfig] = useState<CountryConfig | null>(null);
 
@@ -609,5 +609,17 @@ export default function FormularioPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function FormularioPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <FormularioContent />
+    </Suspense>
   );
 }
