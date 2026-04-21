@@ -13,7 +13,7 @@ const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twil
 // Evolution Config
 const EVOLUTION_URL = process.env.EVOLUTION_URL || 'http://35.172.170.210:8080';
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'ImobIA_Sec_2024_!';
-const EVOLUTION_INSTANCE = 'teste'; // Forçado para garantir conexão com a VPS
+// Nota: Removida a instância global 'teste' para forçar conexões individuais por corretor.
 
 // Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -24,7 +24,10 @@ const fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
  * Envia uma mensagem de WhatsApp usando o provedor configurado.
  */
 export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string): Promise<string> {
-  const instance = instanceOverride || EVOLUTION_INSTANCE;
+  const instance = instanceOverride;
+  if (!instance && PROVIDER === 'evolution') {
+    throw new Error('Nenhuma instância de WhatsApp configurada para este envio.');
+  }
   
   // Limpeza básica do número (apenas dígitos)
   const cleanTo = to.replace(/\D/g, '');

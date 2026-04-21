@@ -44,7 +44,13 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
 
   // Enviar para o WhatsApp do Lead
   const instanceName = data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`;
-  const result = await sendWhatsAppMessage(lead.telefone, message, instanceName);
-
-  return result;
+  
+  try {
+    const result = await sendWhatsAppMessage(lead.telefone, message, instanceName);
+    return result;
+  } catch (error) {
+    console.error(`⚠️ Falha ao enviar WhatsApp para o lead ${lead.nome}. O corretor ${data.corretor.nome} pode estar desconectado.`);
+    // Opcional: Adicionar evento de falha no histórico do lead
+    throw error;
+  }
 }
