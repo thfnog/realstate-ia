@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Imovel, TipoImovel, StatusImovel, Moeda } from '@/lib/database.types';
 import { getConfigByCode, formatCurrency as formatCurrencyConfig, CountryConfig } from '@/lib/countryConfig';
 
 export default function ImoveisPage() {
+  const router = useRouter();
   const [config, setConfig] = useState<CountryConfig>(getConfigByCode('PT'));
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,7 +167,11 @@ export default function ImoveisPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((im) => (
-            <div key={im.id} className="group bg-white rounded-3xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div 
+              key={im.id} 
+              onClick={() => router.push(`/admin/imoveis/${im.id}`)}
+              className="group bg-white rounded-3xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            >
               {/* Image Preview */}
               <div className="relative h-48 bg-surface-alt overflow-hidden">
                 {im.fotos && im.fotos.length > 0 ? (
@@ -216,15 +222,8 @@ export default function ImoveisPage() {
                    </span>
                    
                    <div className="flex gap-2">
-                      <Link 
-                        href={`/admin/imoveis/${im.id}`}
-                        className="p-2 rounded-xl bg-surface-alt hover:bg-surface-hover text-text-secondary transition-all"
-                        title="Ver Detalhes"
-                      >
-                         👁️
-                      </Link>
                       <button 
-                        onClick={() => handleDelete(im.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(im.id); }}
                         className="p-2 rounded-xl bg-surface-alt hover:bg-rose-50 hover:text-rose-600 text-text-secondary transition-all"
                         title="Excluir"
                       >
