@@ -72,9 +72,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
       }
 
-      // 1.1 Configurar Webhook para esta instância (Evolution v2 syntax)
-      const webhookUrl = `${req.nextUrl.origin}/api/webhooks/whatsapp`;
-      console.log(`🔗 Configurando Webhook em: ${webhookUrl}`);
+      // 1.1 Configurar Webhook para esta instância (Robust URL detection)
+      const host = req.headers.get('host') || 'realstate-ia.vercel.app';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const webhookUrl = `${protocol}://${host}/api/webhooks/whatsapp`;
+      
+      console.log(`🔗 Configurando Webhook em: ${webhookUrl} (Host detectado: ${host})`);
       
       try {
         const webhookRes = await fetch(getUrl(`/webhook/set/${instanceName}`), {
@@ -84,15 +87,18 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
+            // Hybrid payload (v1/v2 support)
+            enabled: true,
+            url: webhookUrl,
+            byEvents: false,
+            base64: false,
+            events: ["messages.upsert", "send.messages"],
             webhook: {
               enabled: true,
               url: webhookUrl,
               byEvents: false,
               base64: false,
-              events: [
-                "messages.upsert",
-                "send.messages"
-              ]
+              events: ["messages.upsert", "send.messages"]
             }
           })
         });
