@@ -117,8 +117,8 @@ export async function PATCH(
     if (body.resend_briefing) {
        const { processLead } = await import('@/lib/engine/processLead');
        // Trigger processing (re-run logic)
-       // We cast to any to avoid strict type mismatch during dynamic import if any
-       await processLead(updatedLead as any, { skipAutoReply: true });
+       // We enable auto-reply check as well to ensure total flow for testing
+       await processLead(updatedLead as any, { forceAutoReply: body.resend_briefing });
     }
 
     return NextResponse.json(updatedLead);

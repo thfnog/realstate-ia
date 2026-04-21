@@ -108,9 +108,15 @@ export async function POST(request: Request) {
       name = msgData.pushName || (msgData.messages && msgData.messages[0]?.pushName) || '';
     }
 
+    const supportedEvents = ['messages.upsert', 'messages_upsert', 'messages_update', 'connection.update', 'status.instance', 'qrcode.updated'];
+    
+    if (!supportedEvents.some(se => event.includes(se.toLowerCase()))) {
+       return NextResponse.json({ success: true, status: 'event_ignored', event });
+    }
+
     if (!sender || !text) {
-      console.log('⚠️ Payload incompleto ou evento não suportado:', payload.event);
-      return NextResponse.json({ error: 'Payload incompleto' }, { status: 400 });
+      // If it's a known event but missing data (like a status check), return 200
+      return NextResponse.json({ success: true, status: 'metadata_ignored' });
     }
 
     console.log(`📩 Nova mensagem de ${maskName(name)} (${maskPhone(sender)}): "${text.slice(0, 15)}..."`);
