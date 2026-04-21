@@ -23,7 +23,9 @@ const fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
 /**
  * Envia uma mensagem de WhatsApp usando o provedor configurado.
  */
-export async function sendWhatsAppMessage(to: string, body: string): Promise<string> {
+export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string): Promise<string> {
+  const instance = instanceOverride || EVOLUTION_INSTANCE;
+  
   // Limpeza básica do número (apenas dígitos)
   const cleanTo = to.replace(/\D/g, '');
 
@@ -37,7 +39,7 @@ export async function sendWhatsAppMessage(to: string, body: string): Promise<str
   // --- REGRAS EVOLUTION API ---
   if (PROVIDER === 'evolution' && EVOLUTION_API_KEY) {
     try {
-      const response = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+      const response = await fetch(`${EVOLUTION_URL}/message/sendText/${instance}`, {
         method: 'POST',
         headers: {
           'apikey': EVOLUTION_API_KEY,

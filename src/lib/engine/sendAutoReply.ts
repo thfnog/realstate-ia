@@ -43,7 +43,8 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
   const message = customMessage || buildAutoReplyMessage(data);
 
   // Enviar para o WhatsApp do Lead
-  const result = await sendWhatsAppMessage(lead.telefone, message);
+  const instanceName = data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`;
+  const result = await sendWhatsAppMessage(lead.telefone, message, instanceName);
 
   return result;
 }

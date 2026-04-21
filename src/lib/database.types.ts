@@ -31,6 +31,8 @@ export type Corretor = {
   telefone: string;
   email: string | null;
   ativo: boolean;
+  whatsapp_instance?: string;
+  whatsapp_status?: 'open' | 'close' | 'connecting';
   criado_em: string;
 };
 

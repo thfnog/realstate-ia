@@ -422,8 +422,15 @@ export default function LeadsPage() {
                            <div className="flex items-center justify-between pt-3 border-t border-border-light/50">
                               <div className="flex items-center gap-2">
                                  {lead.corretores ? (
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-primary to-indigo-500 flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-sm" title={lead.corretores.nome}>
-                                       {lead.corretores.nome.charAt(0)}
+                                    <div className="relative group/avatar">
+                                      <div className={`w-6 h-6 rounded-full bg-gradient-to-tr ${lead.corretores.whatsapp_status === 'open' ? 'from-emerald-400 to-emerald-600' : 'from-rose-400 to-rose-600'} flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-sm`} title={lead.corretores.nome}>
+                                         {lead.corretores.nome.charAt(0)}
+                                      </div>
+                                      {lead.corretores.whatsapp_status !== 'open' && (
+                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-rose-200">
+                                          <span className="text-[8px] text-rose-500">⚠️</span>
+                                        </div>
+                                      )}
                                     </div>
                                  ) : (
                                     <div className="w-6 h-6 rounded-full bg-rose-50 flex items-center justify-center text-[10px] text-rose-500 font-black border-2 border-white shadow-sm" title="Sem corretor">
@@ -550,7 +557,7 @@ export default function LeadsPage() {
                           </option>
                           {corretores.map(c => (
                             <option key={c.id} value={c.id}>
-                              {c.nome}
+                              {c.whatsapp_status !== 'open' ? '⚠️ ' : ''}{c.nome}
                             </option>
                           ))}
                         </select>
