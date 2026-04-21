@@ -9,6 +9,7 @@ export type Imobiliaria = {
   numero_registro: string; // CRECI-PJ (BR) or Licença AMI (PT)
   plano: 'free' | 'pro';
   config_pais: 'PT' | 'BR';
+  delay_auto_reply_sec: number; // Padrão 20
   criado_em: string;
 };
 

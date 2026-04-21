@@ -142,15 +142,45 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       config, // Pass the regional config
     });
     
-    // Step 5: Send auto-reply to Lead (First-person, personalized)
+    // Step 5: Send auto-reply to Lead (First-person, personalized) with delay and status check
     if (options?.forceAutoReply || !options?.skipAutoReply) {
-      console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
-      await sendAutoReplyToLead({
-        lead,
-        corretor,
-        config,
-        customMessage: options?.customReply
-      });
+      // 5.1 Buscar delay configurado (padrão 20s se não existir)
+      let delaySec = 20;
+      if (mock.isMockMode()) {
+        const imob = mock.getImobiliariaById(lead.imobiliaria_id);
+        if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
+      } else {
+        const { data: imob } = await supabaseAdmin.from('imobiliarias').select('delay_auto_reply_sec').eq('id', lead.imobiliaria_id).single();
+        if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
+      }
+
+      console.log(`⏳ Aguardando ${delaySec}s antes de enviar resposta automática (prioridade humana)...`);
+      
+      // Delay simples (funciona bem em Pro plan ou local)
+      await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
+
+      // 5.2 VERIFICAÇÃO DE RESGATE: O corretor já respondeu?
+      // Se o status mudou de 'novo', significa que o corretor interagiu.
+      let currentStatus = 'novo';
+      if (mock.isMockMode()) {
+        const updatedLead = mock.getLeadById(lead.id);
+        currentStatus = updatedLead?.status || 'novo';
+      } else {
+        const { data: checkLead } = await supabaseAdmin.from('leads').select('status').eq('id', lead.id).single();
+        currentStatus = checkLead?.status || 'novo';
+      }
+
+      if (currentStatus !== 'novo') {
+        console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${lead.nome}.`);
+      } else {
+        console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
+        await sendAutoReplyToLead({
+          lead,
+          corretor,
+          config,
+          customMessage: options?.customReply
+        });
+      }
     } else {
       console.log('⏭️ Step 5: Auto-reply ignorado (não é lead confirmado ou solicitado pular)');
     }

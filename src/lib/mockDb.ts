@@ -610,6 +610,7 @@ export function seedTestData() {
       numero_registro: 'CRECI 12345-J',
       plano: 'premium',
       config_pais: 'BR', // Force BR for these tests
+      delay_auto_reply_sec: 20,
     } as any);
   }
 
