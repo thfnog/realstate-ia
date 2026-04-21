@@ -76,12 +76,15 @@ export default function ImovelMatchingLeads({ imovel }: ImovelMatchingLeadsProps
               </div>
             </div>
             <a 
-              href={`https://wa.me/${lead.telefone.replace(/\D/g, '')}`} 
+              href={`https://wa.me/${lead.telefone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                `Olá ${lead.nome}! Encontrei um imóvel que combina perfeitamente com o que você procura: *${imovel.referencia} - ${imovel.titulo}*.\n\nConfira os detalhes aqui:\n${typeof window !== 'undefined' ? window.location.origin : ''}/imoveis/${imovel.id}`
+              )}`} 
               target="_blank" 
-              className="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-border-light text-xs hover:bg-emerald-50 hover:text-emerald-600 transition-all"
-              title="Chamar no WhatsApp"
+              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-[10px] font-bold hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+              title="Enviar imóvel via WhatsApp"
             >
-              💬
+              <span className="text-xs">💬</span>
+              <span>Enviar Imóvel</span>
             </a>
           </div>
         ))}
