@@ -71,7 +71,22 @@ export async function POST(request: Request) {
     // In V2 SaaS, public form should append ?imob_id in the URL.
     // We default to the original mock ID to retain current landing behavior.
     const url = new URL(request.url);
-    const imobiliaria_id = url.searchParams.get('imob_id') || mock.DEFAULT_IMOBILIARIA_ID;
+    let imobId = url.searchParams.get('imob_id');
+
+    // v2.1: Robust UUID Fallback for Production
+    if (!mock.isMockMode() && (!imobId || imobId === mock.DEFAULT_IMOBILIARIA_ID)) {
+      const { data: firstImob } = await supabaseAdmin
+        .from('imobiliarias')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (firstImob) {
+        imobId = firstImob.id;
+      }
+    }
+
+    const imobiliaria_id = imobId || mock.DEFAULT_IMOBILIARIA_ID;
 
     if (mock.isMockMode()) {
       mock.seedTestData();
