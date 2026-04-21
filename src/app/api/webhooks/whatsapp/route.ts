@@ -1,3 +1,9 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+import { extractLeadWithAI } from '@/lib/engine/aiExtractor';
+import { processLead } from '@/lib/engine/processLead';
+import { processFollowUpIntelligence } from '@/lib/engine/aiScheduler';
+import * as mock from '@/lib/mockDb';
 import { waitUntil } from '@vercel/functions';
 
 export async function POST(request: Request) {
