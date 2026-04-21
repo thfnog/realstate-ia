@@ -155,7 +155,19 @@ function FormularioContent() {
     };
 
     try {
-      const res = await fetch('/api/leads', {
+      const imobId = searchParams.get('imob_id');
+      const imovelId = searchParams.get('imovel_id');
+      
+      let submissionUrl = '/api/leads';
+      const queryParams = new URLSearchParams();
+      if (imobId) queryParams.set('imob_id', imobId);
+      if (imovelId) queryParams.set('imovel_id', imovelId);
+      
+      if (queryParams.toString()) {
+        submissionUrl += `?${queryParams.toString()}`;
+      }
+
+      const res = await fetch(submissionUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -500,7 +512,7 @@ function FormularioContent() {
                         <option value="">Selecione...</option>
                         <option value="apartamento">Apartamento</option>
                         <option value="casa">Casa</option>
-                        <option value="terreno">Terreno</option>
+                        <option value="terreno">Terreno / Lote</option>
                       </select>
                     </div>
 
@@ -527,27 +539,29 @@ function FormularioContent() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label htmlFor="quartos" className="block text-sm font-medium text-text-primary mb-1.5">{config.terminology.quartosLabel}</label>
-                        <select id="quartos" value={quartos} onChange={(e) => setQuartos(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-                          <option value="">Qualquer</option>
-                          {config.terminology.quartosOptions.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
+                    {tipoInteresse !== 'terreno' && (
+                      <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                        <div>
+                          <label htmlFor="quartos" className="block text-sm font-medium text-text-primary mb-1.5">{config.terminology.quartosLabel}</label>
+                          <select id="quartos" value={quartos} onChange={(e) => setQuartos(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                            <option value="">Qualquer</option>
+                            {config.terminology.quartosOptions.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor="vagas" className="block text-sm font-medium text-text-primary mb-1.5">Vagas</label>
+                          <select id="vagas" value={vagas} onChange={(e) => setVagas(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                            <option value="">Qualquer</option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3+</option>
+                          </select>
+                        </div>
                       </div>
-                      <div>
-                        <label htmlFor="vagas" className="block text-sm font-medium text-text-primary mb-1.5">Vagas</label>
-                        <select id="vagas" value={vagas} onChange={(e) => setVagas(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-                          <option value="">Qualquer</option>
-                          <option value="0">0</option>
-                          <option value="1">1</option>
-                          <option value="2">2</option>
-                          <option value="3">3+</option>
-                        </select>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
