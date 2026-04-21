@@ -28,19 +28,31 @@ export async function POST(
         .select(`
           telefone,
           corretor_id,
+          imobiliaria_id,
           corretores (
             id,
             whatsapp_instance
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
+      if (error) throw error;
+
       if (data) {
         const c = data.corretores as any;
+        
+        // Identify country for prefix logic
+        const { data: imob } = await supabaseAdmin
+           .from('imobiliarias')
+           .select('config_pais')
+           .eq('id', data.imobiliaria_id)
+           .maybeSingle();
+
         lead = {
           telefone: data.telefone,
-          instanceName: c?.whatsapp_instance || `realstate-iabroker-${c?.id || data.corretor_id}`
+          instanceName: c?.whatsapp_instance || `realstate-iabroker-${c?.id || data.corretor_id}`,
+          countryCode: imob?.config_pais || 'BR'
         };
       }
     }
@@ -48,7 +60,7 @@ export async function POST(
     if (!lead) return NextResponse.json({ error: 'Lead não encontrado' }, { status: 404 });
 
     // 2. Send WhatsApp
-    await sendWhatsAppMessage(lead.telefone, message, lead.instanceName);
+    await sendWhatsAppMessage(lead.telefone, message, lead.instanceName, lead.countryCode);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
