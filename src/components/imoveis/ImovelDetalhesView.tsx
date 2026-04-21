@@ -7,6 +7,7 @@ import { CountryConfig, formatCurrency } from '@/lib/countryConfig';
 import MercadoIndicador from './MercadoIndicador';
 import MapPicker from './MapPicker';
 import ImovelGaleria from './ImovelGaleria';
+import { IoClose } from 'react-icons/io5';
 
 interface ImovelDetalhesViewProps {
   imovel: Imovel;
@@ -76,6 +77,13 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
             >
               <span>🗑️</span> Excluir
             </button>
+            <Link 
+              href="/admin/imoveis"
+              className="p-3 bg-white hover:bg-surface-alt text-text-secondary hover:text-text-primary rounded-2xl border border-border-light transition-all flex items-center justify-center"
+              title="Fechar e voltar à lista"
+            >
+              <IoClose size={24} />
+            </Link>
           </div>
         )}
       </div>
