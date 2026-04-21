@@ -1,12 +1,9 @@
 /**
  * WhatsApp Integration Provider
- * 
- * Suporta múltiplos provedores:
- * 1. Twilio (Oficial / Pago)
- * 2. Evolution API (Open Source / Grátis por mensagem)
  */
-
 import twilio from 'twilio';
+import { supabaseAdmin } from './supabase';
+import * as mock from './mockDb';
 
 const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twilio' | 'evolution' | 'mock';
 
@@ -14,25 +11,23 @@ const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twil
 const EVOLUTION_URL = process.env.EVOLUTION_URL?.replace(/\/$/, '');
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
 
-function getUrl(path: string) {
-  return `${EVOLUTION_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-}
-
-if (!EVOLUTION_URL || !EVOLUTION_API_KEY) {
-  // Nota: Em produção, estas variáveis devem ser configuradas no painel da Vercel.
-  console.warn('⚠️ WhatsApp (Evolution API) não configurado. Verifique EVOLUTION_URL e EVOLUTION_API_KEY.');
-}
-
 // Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
 
+const twilioClient = accountSid && authToken ? twilio(accountSid, authToken) : null;
+
+function getUrl(path: string) {
+  return `${EVOLUTION_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
 /**
  * Check if the instance is currently connected in Evolution API
  */
 export async function fetchInstanceStatus(instanceName: string): Promise<'open' | 'close' | 'connecting'> {
-  if (PROVIDER === 'twilio') return 'open'; // Twilio doesn't have "instances" like Evolution
+  if (PROVIDER === 'twilio') return 'open';
+  if (!EVOLUTION_URL || !EVOLUTION_API_KEY) return 'close';
 
   try {
     const res = await fetch(getUrl(`/instance/connectionState/${instanceName}`), {
@@ -55,33 +50,41 @@ export async function fetchInstanceStatus(instanceName: string): Promise<'open' 
 }
 
 /**
- * Envia uma mensagem de WhatsApp usando o provedor configurado.
+ * Envia uma mensagem de WhatsApp usando o provedor configurado com contingência.
  */
 export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string): Promise<string> {
-  const instance = instanceOverride;
-  if (!instance && PROVIDER === 'evolution') {
-    throw new Error('Nenhuma instância de WhatsApp configurada para este envio.');
-  }
-  
-  // Limpeza básica do número (apenas dígitos)
+  const instanceName = instanceOverride || process.env.WHATSAPP_DEFAULT_INSTANCE || '';
   const cleanTo = to.replace(/\D/g, '');
-  const maskedTo = cleanTo.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2");
 
-  // Envio via Evolution API ou Twilio seguindo a configuração do ambiente
-
-  if (PROVIDER === 'mock' || (!EVOLUTION_API_KEY && !accountSid)) {
-    console.log(`\n📱 [MOCK WHATSAPP] To: ${maskedTo} | Body: [PROTECTED - ${body.length} chars]`);
+  if (PROVIDER === 'mock') {
+    console.log(`[MOCK] WhatsApp para ${cleanTo}: ${body.slice(0, 30)}...`);
     return 'mock-sid';
   }
 
-  // --- REGRAS EVOLUTION API ---
-  if (PROVIDER === 'evolution' && EVOLUTION_API_KEY) {
+  // --- TWILIO ---
+  if (PROVIDER === 'twilio' && twilioClient) {
     try {
-      const response = await fetch(getUrl(`/message/sendText/${instance}`), {
+      const message = await twilioClient.messages.create({
+        body,
+        from: fromNumber,
+        to: `whatsapp:+${cleanTo}`,
+      });
+      return message.sid;
+    } catch (error: any) {
+      console.error('❌ Erro no Twilio:', error);
+      throw error;
+    }
+  }
+
+  // --- EVOLUTION API ---
+  if (PROVIDER === 'evolution' && EVOLUTION_URL && EVOLUTION_API_KEY) {
+    try {
+      // First check if instance is open (optional but recommended for faster failover to queue)
+      const res = await fetch(getUrl(`/message/sendText/${instanceName}`), {
         method: 'POST',
         headers: {
-          'apikey': EVOLUTION_API_KEY!,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY
         },
         body: JSON.stringify({
           number: cleanTo,
@@ -91,35 +94,41 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
         })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Evolution API Error: ${response.status} - ${errorText}`);
+      if (!res.ok) {
+        throw new Error(`Evolution API Error: ${res.status}`);
       }
 
-      console.log(`✅ WhatsApp enviado via Evolution API para ${maskedTo}`);
-      return 'evolution-success';
-    } catch (error) {
-      console.error('❌ Erro Evolution API:', error);
-      throw error;
-    }
-  }
+      const data = await res.json();
+      return data.key?.id || 'evolution-success';
+    } catch (error: any) {
+      console.error(`⚠️ Falha no envio WhatsApp para ${cleanTo}. Salvando na fila de contingência...`);
+      
+      // Save to pending queue
+      if (!mock.isMockMode() && instanceName) {
+        try {
+          const { data: broker } = await supabaseAdmin
+            .from('corretores')
+            .select('imobiliaria_id, id')
+            .eq('whatsapp_instance', instanceName)
+            .single();
 
-  // --- REGRAS TWILIO ---
-  if (PROVIDER === 'twilio' && accountSid && authToken) {
-    const client = twilio(accountSid, authToken);
-    const toFormatted = `whatsapp:+${cleanTo}`;
-    
-    try {
-      const message = await client.messages.create({
-        from: fromNumber,
-        to: toFormatted,
-        body,
-      });
-      console.log(`✅ WhatsApp enviado via Twilio. SID: ${message.sid}`);
-      return message.sid;
-    } catch (error) {
-      console.error('❌ Erro Twilio:', error);
-      throw error;
+          if (broker) {
+            await supabaseAdmin.from('mensagens_pendentes').insert([{
+              imobiliaria_id: broker.imobiliaria_id,
+              corretor_id: broker.id,
+              telefone_destino: cleanTo,
+              mensagem: body,
+              instance_name: instanceName,
+              status: 'pendente',
+              erro_log: error.message
+            }]);
+            console.log(`📥 Mensagem enfileirada para ${cleanTo} (Instância: ${instanceName})`);
+          }
+        } catch (dbError) {
+          console.error('❌ Falha ao salvar na fila:', dbError);
+        }
+      }
+      return 'queued';
     }
   }
 
@@ -143,8 +152,6 @@ export async function fetchInstanceOwner(instanceName: string): Promise<string |
     const instance = instances.find((i: any) => i.instanceName === instanceName);
 
     if (!instance || !instance.owner) return null;
-
-    // Retorna algo como "5511999990000@s.whatsapp.net"
     return instance.owner;
   } catch (error) {
     console.error('❌ Erro ao buscar dono da instância:', error);

@@ -108,6 +108,13 @@ export async function POST(request: Request) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Step 2: Trigger Reverse Matching (Async)
+    // No await here because we don't want to delay the API response
+    import('@/lib/engine/reverseMatching').then(({ matchLeadsForProperty }) => {
+      matchLeadsForProperty(data);
+    }).catch(e => console.error('Erro ao disparar match reverso:', e));
+
     return NextResponse.json(data, { status: 201 });
   } catch (err: any) {
     console.error('API Error:', err);

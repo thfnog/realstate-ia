@@ -10,7 +10,10 @@ import { supabaseAdmin } from '@/lib/supabase';
 import type { Corretor } from '@/lib/database.types';
 
 export async function assignCorretor(imobiliaria_id?: string): Promise<Corretor | null> {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  // Use Brasilia Timezone (GMT-3) for duty schedule
+  const now = new Date();
+  const brTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+  const today = brTime.toISOString().split('T')[0]; // YYYY-MM-DD
 
   // 1. Check duty schedule for today
   let escalaQuery = supabaseAdmin
