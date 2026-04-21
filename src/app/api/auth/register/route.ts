@@ -21,6 +21,7 @@ export async function POST(request: Request) {
           numero_registro: numeroRegistro,
           plano: 'free',
           config_pais: configPais === 'PT' ? 'PT' : 'BR',
+          delay_auto_reply_sec: 20,
         });
 
         // 2. Create Usuario
