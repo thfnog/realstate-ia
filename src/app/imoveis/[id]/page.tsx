@@ -75,7 +75,7 @@ export default function PublicImovelViewPage() {
           <span className="text-xl font-black text-text-primary tracking-tighter">ImobIA</span>
         </div>
         <a 
-          href={`https://wa.me/${onDutyBroker?.telefone?.replace(/\D/g, '') || ''}?text=Olá! Gostaria de mais informações sobre o imóvel: ${imovel.referencia || 'Deste anúncio'}`}
+          href={`https://wa.me/${onDutyBroker?.telefone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`Olá! Gostaria de mais informações sobre o imóvel: ${imovel.titulo || 'Deste anúncio'}${imovel.referencia ? ` (Ref: ${imovel.referencia})` : ''} - Link: ${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
           target="_blank"
           className="px-6 py-3 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
         >
