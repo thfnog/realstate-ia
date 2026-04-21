@@ -72,16 +72,32 @@ export async function PATCH(
     if (body.status) updateData.status = body.status;
     if (body.corretor_id !== undefined) updateData.corretor_id = body.corretor_id;
 
-    const { data: updatedLead, error } = await supabaseAdmin
-      .from('leads')
-      .update(updateData)
-      .eq('id', id)
-      .select('*, corretores(*)')
-      .maybeSingle();
+    let updatedLead;
+    let queryError;
 
-    if (error) {
-      console.error('Supabase update error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (Object.keys(updateData).length > 0) {
+      const { data, error } = await supabaseAdmin
+        .from('leads')
+        .update(updateData)
+        .eq('id', id)
+        .select('*, corretores(*)')
+        .maybeSingle();
+      updatedLead = data;
+      queryError = error;
+    } else {
+      // If no updates but possibly a trigger (like resend_briefing)
+      const { data, error } = await supabaseAdmin
+        .from('leads')
+        .select('*, corretores(*)')
+        .eq('id', id)
+        .maybeSingle();
+      updatedLead = data;
+      queryError = error;
+    }
+
+    if (queryError) {
+      console.error('Supabase query error:', queryError);
+      return NextResponse.json({ error: queryError.message }, { status: 500 });
     }
 
     if (!updatedLead) {
