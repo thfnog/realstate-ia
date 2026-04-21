@@ -6,6 +6,14 @@ import { processFollowUpIntelligence } from '@/lib/engine/aiScheduler';
 import * as mock from '@/lib/mockDb';
 import { waitUntil } from '@vercel/functions';
 
+const maskPhone = (p: string) => p ? p.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2") : '***';
+const maskName = (n: string) => {
+  if (!n) return '***';
+  const parts = n.split(' ');
+  if (parts.length === 1) return n;
+  return `${parts[0]} ${parts[1][0]}.`;
+};
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
