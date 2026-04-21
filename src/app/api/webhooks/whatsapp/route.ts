@@ -208,7 +208,7 @@ export async function POST(request: Request) {
       quartos_interesse: extracted.quartos || null,
       bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],
       descricao_interesse: text, 
-      imovel_id,
+      // imovel_id, // Temporariamente removido pois a coluna não existe no banco de produção
       corretor_id: fallback_corretor_id, // Atribui ao corretor da instância
       status: 'novo',
       origem: 'whatsapp' as any,
