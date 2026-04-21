@@ -72,6 +72,31 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
       }
 
+      // 1.1 Configurar Webhook para esta instância
+      const webhookUrl = `${req.nextUrl.origin}/api/webhooks/whatsapp`;
+      console.log(`🔗 Configurando Webhook em: ${webhookUrl}`);
+      try {
+        await fetch(getUrl(`/webhook/set/${instanceName}`), {
+          method: 'POST',
+          headers: { 
+            'apikey': EVOLUTION_API_KEY!,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: webhookUrl,
+            enabled: true,
+            webhook_by_events: false,
+            events: [
+              "MESSAGES_UPSERT",
+              "SEND_MESSAGES"
+            ]
+          })
+        });
+        console.log('✅ Webhook configurado com sucesso.');
+      } catch (webhookErr) {
+        console.error('⚠️ Falha ao configurar Webhook (não crítico para o QR Code):', webhookErr);
+      }
+
       // 2. Buscar o QR Code (com retry em caso de 404 temporário)
       let qrRes = await fetch(getUrl(`/instance/connect/${instanceName}`), {
         headers: { 'apikey': EVOLUTION_API_KEY! }

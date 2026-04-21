@@ -85,10 +85,22 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       }
     }
 
-    // Step 2: Assign broker (if not already assigned from portfolio)
+    // Step 2: Assign broker (if not already assigned from portfolio or lead data)
     if (!corretor) {
-      console.log('👤 Step 2: Definindo corretor...');
-      corretor = await assignCorretor();
+      if (lead.corretor_id) {
+        console.log(`👤 Step 2: Usando corretor pré-atribuído no Lead: ${lead.corretor_id}`);
+        if (mock.isMockMode()) {
+          corretor = mock.getCorretorById(lead.corretor_id) || null;
+        } else {
+          const { data } = await supabaseAdmin.from('corretores').select('*').eq('id', lead.corretor_id).single();
+          corretor = data as Corretor;
+        }
+      }
+      
+      if (!corretor) {
+        console.log('👤 Step 2: Definindo corretor via rodízio...');
+        corretor = await assignCorretor();
+      }
     } else {
       console.log(`👤 Step 2: Corretor mantido da carteira: ${corretor.nome}`);
     }

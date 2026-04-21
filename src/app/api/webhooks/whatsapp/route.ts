@@ -100,62 +100,67 @@ export async function POST(request: Request) {
       });
     }
 
-    // 3. Determinação da Imobiliária
+    // 3. Determinação da Imobiliária e Corretor via Instância
     let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
+    let fallback_corretor_id: string | null = null;
     
-    if (!mock.isMockMode()) {
-       // Lookup imobiliaria by instance name in production
-       // For now, using a fallback to the first imobiliaria if no mapping exists
-       const { data: imobs } = await supabaseAdmin
-         .from('imobiliarias')
-         .select('id, config_pais')
-         .limit(1);
-       
-       if (imobs && imobs.length > 0) {
-         imobiliaria_id = imobs[0].id;
-       }
+    // Tenta extrair corretor do nome da instância (realstate-iabroker-ID)
+    const instanceMatch = instanceName?.match(/realstate-iabroker-(.+)/);
+    if (instanceMatch) {
+      const brokerId = instanceMatch[1];
+      console.log(`🔍 Instância identificada como vinculada ao Corretor: ${brokerId}`);
+      
+      let broker;
+      if (mock.isMockMode()) {
+        broker = mock.getCorretorById(brokerId);
+      } else {
+        const { data } = await supabaseAdmin.from('corretores').select('id, imobiliaria_id').eq('id', brokerId).single();
+        broker = data;
+      }
+
+      if (broker) {
+        imobiliaria_id = broker.imobiliaria_id;
+        fallback_corretor_id = broker.id;
+        console.log(`✅ Atribuição direta: Imobiliária ${imobiliaria_id}, Corretor ${fallback_corretor_id}`);
+      }
+    }
+
+    if (!mock.isMockMode() && !instanceMatch) {
+       // Se não tem instância (ex: teste manual) e não é mock, busca a primeira imobiliária
+       const { data: imobs } = await supabaseAdmin.from('imobiliarias').select('id').limit(1);
+       if (imobs && imobs.length > 0) imobiliaria_id = imobs[0].id;
     }
      
-     let config_pais = 'BR';
-    
-     if (mock.isMockMode()) {
-        const imob = mock.getImobiliariaById(imobiliaria_id);
-        config_pais = imob?.config_pais || 'BR';
-     } else {
-        const { data: imobData } = await supabaseAdmin
-          .from('imobiliarias')
-          .select('config_pais')
-          .eq('id', imobiliaria_id)
-          .single();
-        config_pais = imobData?.config_pais || 'BR';
-     }
+    let config_pais = 'BR';
+    if (mock.isMockMode()) {
+       const imob = mock.getImobiliariaById(imobiliaria_id);
+       config_pais = imob?.config_pais || 'BR';
+    } else {
+       const { data: imobData } = await supabaseAdmin.from('imobiliarias').select('config_pais').eq('id', imobiliaria_id).single();
+       config_pais = imobData?.config_pais || 'BR';
+    }
 
-     const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
+    const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
     
-    // 3. Busca de Lead Existente ou Criação
+    // 4. Busca de Lead Existente ou Criação
     let lead;
     const phoneClean = sender.replace(/\D/g, '');
 
     if (mock.isMockMode()) {
        lead = mock.getLeadByTelefone(phoneClean);
     } else {
-       const { data } = await supabaseAdmin
-         .from('leads')
-         .select('*')
-         .eq('telefone', phoneClean)
-         .maybeSingle();
+       const { data } = await supabaseAdmin.from('leads').select('*').eq('telefone', phoneClean).maybeSingle();
        lead = data;
     }
 
     if (lead) {
        console.log(`👤 Lead existente encontrado: ${lead.nome}. Processando Inteligência de Follow-up...`);
        
-       // Handle existing lead scheduling intelligence
        const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
        
        if (aiResponse) {
           console.log('🤖 IA de Agendamento sugerindo horários...');
-          await processLead(lead.id, { 
+          await processLead(lead, { 
             forceAutoReply: true, 
             customReply: aiResponse 
           });
@@ -165,9 +170,9 @@ export async function POST(request: Request) {
        return NextResponse.json({ success: true, status: 'processed_existing_lead_no_action' });
     }
 
-    // 3. Detecção de Referência de Imóvel no Texto
+    // 5. Detecção de Referência de Imóvel no Texto
     let imovel_id: string | null = null;
-    const refMatch = text.match(/imóvel\s+([A-Z]{3,4}\d+)/i); // Captura padrões como APT2026001 ou CAS2026001
+    const refMatch = text.match(/imóvel\s+([A-Z]{3,4}\d+)/i);
     if (refMatch) {
       const referencia = refMatch[1];
       console.log(`🔍 Referência de imóvel detectada na mensagem: ${referencia}`);
@@ -197,7 +202,8 @@ export async function POST(request: Request) {
       quartos_interesse: extracted.quartos || null,
       bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],
       descricao_interesse: text, 
-      imovel_id, // Vincular automaticamente ao imóvel encontrado
+      imovel_id,
+      corretor_id: fallback_corretor_id, // Atribui ao corretor da instância
       status: 'novo',
       origem: 'whatsapp' as any,
       portal_origem: instanceName || 'WhatsApp Bot'
@@ -207,17 +213,13 @@ export async function POST(request: Request) {
     if (mock.isMockMode()) {
        newLead = mock.createLead(leadData as any);
     } else {
-       const { data, error } = await supabaseAdmin
-         .from('leads')
-         .insert([leadData])
-         .select()
-         .single();
+       const { data, error } = await supabaseAdmin.from('leads').insert([leadData]).select().single();
        if (error) throw error;
        newLead = data;
     }
 
-    // 4. Processamento Inteligente (Matching + Atribuição + Briefing)
-    const processResult = await processLead(newLead.id, {
+    // 6. Processamento Inteligente (Matching + Atribuição + Briefing)
+    const processResult = await processLead(newLead, {
       skipAutoReply: extracted.is_lead !== true
     });
 
