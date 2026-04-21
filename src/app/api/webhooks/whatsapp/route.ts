@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     let instanceName = payload.instance;
 
     const event = payload.event?.toLowerCase();
+    let remoteJid = payload.data?.key?.remoteJid || '';
 
     if (event === 'messages.upsert' && payload.data) {
       const msgData = payload.data;
