@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import Link from 'next/link';
-import type { LeadFormData, Finalidade } from '@/lib/database.types';
-import { getConfig } from '@/lib/countryConfig';
+import { LeadFormData, Finalidade } from '@/lib/database.types';
+import { CountryConfig, getConfigByCode } from '@/lib/countryConfig';
+import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 type InputMode = 'livre' | 'detalhado';
 
 const stepLabels = ['Seus dados', 'Seu interesse', 'Detalhes'];
 
 export default function FormularioPage() {
-  const config = getConfig();
+  const searchParams = useSearchParams();
+  const [config, setConfig] = useState<CountryConfig | null>(null);
 
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState<InputMode>('detalhado');
@@ -37,8 +38,37 @@ export default function FormularioPage() {
 
   const totalSteps = 3;
 
+  // ---- Fetch Config ----
+  useEffect(() => {
+    async function fetchConfig() {
+      const imobId = searchParams.get('imob_id');
+      const imovelId = searchParams.get('imovel_id');
+      
+      let url = '/api/public/config';
+      const params = new URLSearchParams();
+      if (imobId) params.set('imob_id', imobId);
+      if (imovelId) params.set('imovel_id', imovelId);
+      
+      if (params.toString()) url += `?${params.toString()}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.config) {
+          setConfig(getConfigByCode(data.config.config_pais));
+        }
+      } catch (err) {
+        console.error('Falha ao carregar config:', err);
+        // Fallback robusto
+        setConfig(getConfigByCode('PT'));
+      }
+    }
+    fetchConfig();
+  }, [searchParams]);
+
   // ---- Phone mask ----
   function formatPhone(value: string): string {
+    if (!config) return value;
     const digits = value.replace(/\D/g, '');
     
     if (config.code === 'PT') {
@@ -59,6 +89,7 @@ export default function FormularioPage() {
 
   // ---- Inline validation helpers ----
   function isPhoneValid(v: string): boolean {
+    if (!config) return false;
     if (config.code === 'PT') {
       const d = v.replace(/\D/g, '');
       // Expect 351 + 9 digits = 12, or just 9 digits if user typed without +351
@@ -74,7 +105,7 @@ export default function FormularioPage() {
   }
 
   const nomeError = touched.nome && !isNomeValid(nome) ? 'Nome deve ter pelo menos 3 caracteres' : '';
-  const phoneError = touched.telefone && !isPhoneValid(telefone) ? (config.code === 'PT' ? 'Informe um número de telefone válido (9 dígitos)' : 'Informe um número com DDD (10 ou 11 dígitos)') : '';
+  const phoneError = touched.telefone && !isPhoneValid(telefone) ? (config?.code === 'PT' ? 'Informe um número de telefone válido (9 dígitos)' : 'Informe um número com DDD (10 ou 11 dígitos)') : '';
 
   function handleBlur(field: string) {
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -192,6 +223,13 @@ export default function FormularioPage() {
       </div>
     );
   }
+
+  // Loading state
+  if (!config) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   const animationClass = direction === 'forward' ? 'animate-slide-right' : 'animate-slide-left';
 
