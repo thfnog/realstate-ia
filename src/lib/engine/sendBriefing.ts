@@ -125,7 +125,9 @@ export async function sendBriefing(data: BriefingData): Promise<string> {
 
   // Send to the broker's WhatsApp
   const to = data.corretor.telefone;
-  const result = await sendWhatsAppMessage(to, message);
+  const instanceName = data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`;
+  
+  const result = await sendWhatsAppMessage(to, message, instanceName);
 
   return result;
 }

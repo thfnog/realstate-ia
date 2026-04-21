@@ -12,22 +12,43 @@ export async function POST(
     const { message } = await request.json();
     let lead;
 
-    // 1. Get lead phone
+    // 1. Get lead phone and broker instance
     if (mock.isMockMode()) {
-      lead = mock.getLeads().find(l => l.id === id);
+      const l = mock.getLeads().find(l => l.id === id);
+      if (l) {
+        const c = mock.getCorretorById(l.corretor_id || '');
+        lead = { 
+          telefone: l.telefone, 
+          instanceName: c?.whatsapp_instance || `realstate-iabroker-${c?.id}` 
+        };
+      }
     } else {
-      const { data } = await supabaseAdmin
+      const { data, error } = await supabaseAdmin
         .from('leads')
-        .select('telefone')
+        .select(`
+          telefone,
+          corretor_id,
+          corretores (
+            id,
+            whatsapp_instance
+          )
+        `)
         .eq('id', id)
         .single();
-      lead = data;
+      
+      if (data) {
+        const c = data.corretores as any;
+        lead = {
+          telefone: data.telefone,
+          instanceName: c?.whatsapp_instance || `realstate-iabroker-${c?.id || data.corretor_id}`
+        };
+      }
     }
 
     if (!lead) return NextResponse.json({ error: 'Lead não encontrado' }, { status: 404 });
 
     // 2. Send WhatsApp
-    await sendWhatsAppMessage(lead.telefone, message);
+    await sendWhatsAppMessage(lead.telefone, message, lead.instanceName);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
