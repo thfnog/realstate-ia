@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { LeadFormData, Finalidade } from '@/lib/database.types';
 import { CountryConfig, getConfigByCode } from '@/lib/countryConfig';
 import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
 
 type InputMode = 'livre' | 'detalhado';
 
