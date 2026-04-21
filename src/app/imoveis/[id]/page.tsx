@@ -10,6 +10,7 @@ import Link from 'next/link';
 export default function PublicImovelViewPage() {
   const params = useParams();
   const [imovel, setImovel] = useState<Imovel | null>(null);
+  const [onDutyBroker, setOnDutyBroker] = useState<{ nome: string; telefone: string } | null>(null);
   const [config, setConfig] = useState<CountryConfig | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,14 +21,17 @@ export default function PublicImovelViewPage() {
       if (!res.ok) throw new Error('Não encontrado');
       const data = await res.json();
       setImovel(data);
+      const imobId = data.imobiliaria_id;
 
-      // Fetch Global Config (to ensure currency/terminology is correct)
-      const configRes = await fetch('/api/imobiliaria');
-      const configData = await configRes.json();
-      if (configData && configData.config_pais) {
-         setConfig(getConfigByCode(configData.config_pais));
+      // 2. Fetch Public Config & On-Duty Broker (No Auth required)
+      const configRes = await fetch(`/api/public/config/${imobId}`);
+      if (configRes.ok) {
+        const publicData = await configRes.json();
+        setConfig(getConfigByCode(publicData.config.config_pais));
+        setOnDutyBroker(publicData.onDutyBroker);
       } else {
-         setConfig(getConfigByCode(data.pais || 'PT'));
+        // Fallback for UI if public API fails
+        setConfig(getConfigByCode(data.pais || 'PT'));
       }
     } catch (err) {
       console.error(err);
@@ -71,11 +75,11 @@ export default function PublicImovelViewPage() {
           <span className="text-xl font-black text-text-primary tracking-tighter">ImobIA</span>
         </div>
         <a 
-          href={`https://wa.me/?text=Olá! Gostaria de mais informações sobre o imóvel ${imovel.referencia}`}
+          href={`https://wa.me/${onDutyBroker?.telefone?.replace(/\D/g, '') || ''}?text=Olá! Gostaria de mais informações sobre o imóvel: ${imovel.referencia || 'Deste anúncio'}`}
           target="_blank"
           className="px-6 py-3 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
         >
-          <span>💬</span> Falar com Consultor
+          <span>💬</span> Falar com {onDutyBroker?.nome || 'Consultor'}
         </a>
       </div>
 

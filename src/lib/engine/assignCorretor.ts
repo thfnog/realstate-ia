@@ -9,15 +9,20 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Corretor } from '@/lib/database.types';
 
-export async function assignCorretor(): Promise<Corretor | null> {
+export async function assignCorretor(imobiliaria_id?: string): Promise<Corretor | null> {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
   // 1. Check duty schedule for today
-  const { data: escalaHoje, error: escalaError } = await supabaseAdmin
+  let escalaQuery = supabaseAdmin
     .from('escala')
     .select('corretor_id, corretores(*)')
-    .eq('data', today)
-    .limit(1);
+    .eq('data', today);
+  
+  if (imobiliaria_id) {
+    escalaQuery = escalaQuery.eq('imobiliaria_id', imobiliaria_id);
+  }
+
+  const { data: escalaHoje, error: escalaError } = await escalaQuery.limit(1);
 
   if (escalaError) {
     console.error('Erro ao consultar escala:', escalaError);
@@ -32,10 +37,16 @@ export async function assignCorretor(): Promise<Corretor | null> {
   }
 
   // 2. Fallback: first active broker by creation order
-  const { data: corretores, error: corretorError } = await supabaseAdmin
+  let corretorQuery = supabaseAdmin
     .from('corretores')
     .select('*')
-    .eq('ativo', true)
+    .eq('ativo', true);
+  
+  if (imobiliaria_id) {
+    corretorQuery = corretorQuery.eq('imobiliaria_id', imobiliaria_id);
+  }
+
+  const { data: corretores, error: corretorError } = await corretorQuery
     .order('criado_em', { ascending: true })
     .limit(1);
 

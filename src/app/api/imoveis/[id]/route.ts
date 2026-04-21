@@ -40,6 +40,7 @@ export async function PUT(
     const body = await request.json();
 
     const imovelData = {
+      referencia: body.referencia, // Garante que a referência não seja perdida
       titulo: body.titulo,
       tipo: body.tipo,
       pais: body.pais,
