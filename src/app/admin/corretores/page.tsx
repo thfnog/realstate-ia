@@ -214,10 +214,7 @@ export default function CorretoresPage() {
                 <div className="pt-2 border-t border-border-light mt-4">
                   <WhatsAppConnector 
                     instanceName={`realstate-iabroker-${editingId}`} 
-                    onStatusChange={async (status) => {
-                      // Opcional: Atualizar status do corretor no banco para feedback visual na lista
-                      // fetch(`/api/corretores/${editingId}`, { method: 'PATCH', body: JSON.stringify({ whatsapp_status: status }) });
-                    }}
+                    brokerId={editingId}
                   />
                 </div>
               )}

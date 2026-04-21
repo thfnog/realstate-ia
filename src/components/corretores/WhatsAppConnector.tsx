@@ -5,11 +5,13 @@ import { IoLogoWhatsapp, IoSync, IoCloseCircle, IoCheckmarkCircle, IoQrCodeOutli
 
 interface WhatsAppConnectorProps {
   instanceName: string;
+  brokerId?: string; // ID do corretor no banco de dados
   onStatusChange?: (status: string) => void;
 }
 
-export default function WhatsAppConnector({ instanceName, onStatusChange }: WhatsAppConnectorProps) {
+export default function WhatsAppConnector({ instanceName, brokerId, onStatusChange }: WhatsAppConnectorProps) {
   const [status, setStatus] = useState<string>('checking');
+  const [lastSavedStatus, setLastSavedStatus] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [polling, setPolling] = useState(false);
@@ -20,11 +22,25 @@ export default function WhatsAppConnector({ instanceName, onStatusChange }: What
       const data = await res.json();
       
       // Evolution API v2 structure: instance.state
-      const state = data.instance?.state || data.state;
+      const state = data.instance?.state || data.state || 'close';
       
-      setStatus(state || 'close');
-      if (onStatusChange) onStatusChange(state || 'close');
+      setStatus(state);
+      if (onStatusChange) onStatusChange(state);
       
+      // PERSISTÊNCIA: Se o status mudou (ou é o primeiro check) e temos um ID de corretor, salvar no banco
+      if (brokerId && state !== lastSavedStatus) {
+        try {
+          await fetch(`/api/corretores/${brokerId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ whatsapp_status: state })
+          });
+          setLastSavedStatus(state);
+        } catch (dbErr) {
+          console.error('Erro ao persistir status no banco:', dbErr);
+        }
+      }
+
       if (state === 'open') {
         setQrCode(null);
         setPolling(false);
@@ -32,7 +48,7 @@ export default function WhatsAppConnector({ instanceName, onStatusChange }: What
     } catch (err) {
       console.error('Erro ao checar status:', err);
     }
-  }, [instanceName, onStatusChange]);
+  }, [instanceName, brokerId, onStatusChange, lastSavedStatus]);
 
   // Efeito para checar status inicial
   useEffect(() => {
