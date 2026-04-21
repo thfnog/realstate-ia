@@ -614,11 +614,11 @@ export function seedTestData() {
   }
 
   // 2. Create Default User (Admin - BR) if missing
-  if (!usuarios.some(u => u.email === 'admin@jetagency.br')) {
+  if (!usuarios.some(u => u.email === 'admin@imobiliaria.com')) {
     createUsuario({
       imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
-      email: 'admin@jetagency.br',
-      hash_senha: 'admin123',
+      email: 'admin@imobiliaria.com',
+      hash_senha: 'senha_segura_aqui',
       role: 'admin',
       corretor_id: null,
     });

@@ -55,21 +55,36 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           instanceName,
           token: instanceName, 
+          integration: 'WHATSAPP-BAILEYS',
           qrcode: true
         })
       });
 
-      if (!createRes.ok && createRes.status !== 400) { // 400 usually means already exists
-         const err = await createRes.text();
-         console.error('❌ Erro ao criar instância:', err);
-         return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
+      if (createRes.ok) {
+        console.log(`✅ Instância ${instanceName} criada com sucesso. Aguardando provisionamento...`);
+        // Aguarda 1.5s para o servidor processar a nova instância
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      } else if (createRes.status === 400) {
+        console.log(`ℹ️ Instância ${instanceName} já existe. Seguindo para conexão.`);
+      } else {
+        const err = await createRes.text();
+        console.error('❌ Erro ao criar instância:', err);
+        return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
       }
 
-      // 2. Buscar o QR Code
-      const qrRes = await fetch(getUrl(`/instance/connect/${instanceName}`), {
+      // 2. Buscar o QR Code (com retry em caso de 404 temporário)
+      let qrRes = await fetch(getUrl(`/instance/connect/${instanceName}`), {
         headers: { 'apikey': EVOLUTION_API_KEY! }
       });
       
+      if (qrRes.status === 404) {
+        console.warn(`⚠️ Instância não encontrada no primeiro connect. Tentando novamente em 2s...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        qrRes = await fetch(getUrl(`/instance/connect/${instanceName}`), {
+          headers: { 'apikey': EVOLUTION_API_KEY! }
+        });
+      }
+
       if (!qrRes.ok) {
         const err = await qrRes.text();
         console.error('❌ Erro ao buscar QR Code:', err);
