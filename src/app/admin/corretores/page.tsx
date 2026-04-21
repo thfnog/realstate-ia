@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import type { Corretor } from '@/lib/database.types';
 import WhatsAppConnector from '@/components/corretores/WhatsAppConnector';
 
