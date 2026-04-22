@@ -119,7 +119,60 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
     }
 
-    // Insert the lead
+    // De-duplication Logic: Check if lead already exists for this imobiliaria
+    const { data: existingLead } = await supabaseAdmin
+      .from('leads')
+      .select('*')
+      .eq('imobiliaria_id', imobiliaria_id)
+      .eq('telefone', body.telefone)
+      .maybeSingle();
+
+    if (existingLead && !['vendido', 'descartado', 'finalizado'].includes(existingLead.status)) {
+      console.log(`♻️ Lead duplicado detectado (${body.telefone}). Atualizando lead ${existingLead.id} em vez de criar novo.`);
+      
+      // Merge logic for specific fields
+      const newBairros = [...(existingLead.bairros_interesse || []), ...(body.bairros_interesse || [])];
+      const uniqueBairros = Array.from(new Set(newBairros));
+
+      const { data: updatedLead, error: updateError } = await supabaseAdmin
+        .from('leads')
+        .update({
+          nome: body.nome || existingLead.nome,
+          bairros_interesse: uniqueBairros,
+          tipo_interesse: body.tipo_interesse || existingLead.tipo_interesse,
+          orcamento: body.orcamento || existingLead.orcamento,
+          prazo: body.prazo || existingLead.prazo,
+          pagamento: body.pagamento || existingLead.pagamento,
+          descricao_interesse: body.descricao_interesse 
+            ? `${existingLead.descricao_interesse ? existingLead.descricao_interesse + '\n--- Novo Interesse ---\n' : ''}${body.descricao_interesse}`
+            : existingLead.descricao_interesse,
+        })
+        .eq('id', existingLead.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Erro ao atualizar lead duplicado:', updateError);
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+
+      // Add timeline event
+      await supabaseAdmin.from('eventos').insert({
+        imobiliaria_id,
+        lead_id: existingLead.id,
+        tipo: 'outro',
+        titulo: `🔄 Novo contato via ${origem}`,
+        descricao: `O lead manifestou novo interesse através do formulário/lead.`,
+        data_hora: new Date().toISOString(),
+        status: 'realizado'
+      });
+
+      // No need to re-run the full processLead if it's already in service, 
+      // but maybe re-run it if requested. For now, let's just return success.
+      return NextResponse.json({ success: true, leadId: existingLead.id, note: 'Lead atualizado' }, { status: 200 });
+    }
+
+    // Insert the lead (Original logic)
     const { data: lead, error } = await supabaseAdmin
       .from('leads')
       .insert({

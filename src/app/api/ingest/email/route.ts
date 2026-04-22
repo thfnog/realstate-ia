@@ -85,6 +85,43 @@ export async function POST(request: Request) {
         } else {
           // Production: insert into Supabase
           const { supabaseAdmin } = await import('@/lib/supabase');
+
+          // De-duplication check
+          const { data: existing } = await supabaseAdmin
+            .from('leads')
+            .select('*')
+            .eq('imobiliaria_id', activeImobId)
+            .eq('telefone', leadData.telefone)
+            .maybeSingle();
+
+          if (existing && !['vendido', 'descartado', 'finalizado'].includes(existing.status)) {
+            console.log(`♻️ Ingest E-mail: Lead duplicado detectado (${leadData.telefone}). Atualizando lead ${existing.id}.`);
+            
+            const { data: updated } = await supabaseAdmin
+              .from('leads')
+              .update({
+                descricao_interesse: `${existing.descricao_interesse || ''}\n--- Novo Interesse E-mail ---\n${leadData.descricao_interesse || ''}`,
+                finalidade: leadData.finalidade || existing.finalidade,
+              })
+              .eq('id', existing.id)
+              .select()
+              .single();
+
+            // Add timeline event
+            await supabaseAdmin.from('eventos').insert({
+              imobiliaria_id: activeImobId,
+              lead_id: existing.id,
+              tipo: 'outro',
+              titulo: `📧 Novo interesse via E-mail`,
+              descricao: `O lead demonstrou interesse em um imóvel via notificação de e-mail do portal.`,
+              data_hora: new Date().toISOString(),
+              status: 'realizado'
+            });
+
+            processed.push(`${existing.nome} (Atualizado)`);
+            continue;
+          }
+
           const { data: lead, error } = await supabaseAdmin
             .from('leads')
             .insert(leadData)

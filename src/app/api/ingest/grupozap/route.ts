@@ -137,8 +137,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
     }
 
-    // Production: insert into Supabase
+    // Production: insert into Supabase (with de-duplication check)
     const { supabaseAdmin } = await import('@/lib/supabase');
+
+    const { data: existing } = await supabaseAdmin
+      .from('leads')
+      .select('*')
+      .eq('imobiliaria_id', imobId)
+      .eq('telefone', leadData.telefone)
+      .maybeSingle();
+
+    if (existing && !['vendido', 'descartado', 'finalizado'].includes(existing.status)) {
+      console.log(`♻️ Webhook Zap: Lead duplicado detectado (${leadData.telefone}). Atualizando lead ${existing.id}.`);
+      
+      const { data: updated } = await supabaseAdmin
+        .from('leads')
+        .update({
+          descricao_interesse: `${existing.descricao_interesse || ''}\n--- Novo Interesse ${source} ---\n${leadData.descricao_interesse || ''}`,
+          finalidade: leadData.finalidade || existing.finalidade,
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      // Add timeline event
+      await supabaseAdmin.from('eventos').insert({
+        imobiliaria_id: imobId,
+        lead_id: existing.id,
+        tipo: 'outro',
+        titulo: `🌐 Novo interesse via ${portalLabel(source)}`,
+        descricao: `O lead demonstrou interesse em um imóvel anunciado no portal.`,
+        data_hora: new Date().toISOString(),
+        status: 'realizado'
+      });
+
+      return NextResponse.json({ success: true, leadId: existing.id, updated: true }, { status: 200 });
+    }
+
     const { data: lead, error } = await supabaseAdmin
       .from('leads')
       .insert(leadData)

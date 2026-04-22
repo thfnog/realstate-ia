@@ -227,8 +227,51 @@ export async function POST(request: Request) {
       if (mock.isMockMode()) {
          newLead = mock.createLead(leadData as any);
       } else {
+         // De-duplication: Check if active lead exists
+         const { data: existing } = await supabaseAdmin
+           .from('leads')
+           .select('*')
+           .eq('imobiliaria_id', imobiliaria_id)
+           .eq('telefone', phoneClean)
+           .maybeSingle();
+
+         if (existing && !['vendido', 'descartado', 'finalizado'].includes(existing.status)) {
+           console.log(`♻️ WhatsApp: Lead duplicado detectado (${phoneClean}). Atualizando lead ${existing.id}.`);
+           
+           // Merge fields
+           const newBairros = Array.from(new Set([...(existing.bairros_interesse || []), ...(leadData.bairros_interesse || [])]));
+           
+           const { data: updated } = await supabaseAdmin
+             .from('leads')
+             .update({
+               bairros_interesse: newBairros,
+               descricao_interesse: `${existing.descricao_interesse || ''}\n--- Novo Contato WhatsApp ---\n${text}`,
+               tipo_interesse: leadData.tipo_interesse || existing.tipo_interesse,
+               orcamento: leadData.orcamento || existing.orcamento,
+             })
+             .eq('id', existing.id)
+             .select()
+             .single();
+
+           // Add timeline event
+           await supabaseAdmin.from('eventos').insert({
+             imobiliaria_id,
+             lead_id: existing.id,
+             tipo: 'outro',
+             titulo: `💬 Novo contato via WhatsApp`,
+             descricao: `O lead enviou uma nova mensagem manifestando interesse.`,
+             data_hora: new Date().toISOString(),
+             status: 'realizado'
+           });
+
+           return NextResponse.json({ success: true, lead: updated, updated: true });
+         }
+
          const { data, error } = await supabaseAdmin.from('leads').insert([leadData]).select('*, imoveis(titulo, referencia)').single();
-         if (error) throw error;
+         if (error) {
+           console.error('Error inserting lead:', error);
+           return NextResponse.json({ error: error.message }, { status: 500 });
+         }
          newLead = data;
       }
 
