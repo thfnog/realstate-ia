@@ -195,13 +195,30 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       if (currentStatus !== 'novo') {
         console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${maskName(lead.nome)}.`);
       } else {
-        console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
-        await sendAutoReplyToLead({
-          lead,
-          corretor,
-          config,
-          customMessage: options?.customReply
-        });
+        // 5.3 Check if name is pending — ask for it instead of standard reply
+        const isNamePending = lead.nome?.startsWith('Lead #');
+        
+        if (isNamePending && !options?.customReply) {
+          console.log('📱 Step 5: Nome pendente — enviando pergunta de nome ao Lead...');
+          const nameAskMsg = config.code === 'BR'
+            ? `Olá! 😊 Sou o ${corretor.nome}, da nossa equipe. Recebi sua mensagem e quero te ajudar da melhor forma!\n\nPra começar, poderia me dizer seu nome?`
+            : `Olá! 😊 Sou o ${corretor.nome}, da nossa equipa. Recebi a sua mensagem e quero ajudá-lo da melhor forma!\n\nPara começar, pode dizer-me o seu nome?`;
+          
+          await sendAutoReplyToLead({
+            lead,
+            corretor,
+            config,
+            customMessage: nameAskMsg,
+          });
+        } else {
+          console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
+          await sendAutoReplyToLead({
+            lead,
+            corretor,
+            config,
+            customMessage: options?.customReply
+          });
+        }
       }
     } else {
       console.log('⏭️ Step 5: Auto-reply ignorado (não é lead confirmado ou solicitado pular)');

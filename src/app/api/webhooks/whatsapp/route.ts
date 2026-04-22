@@ -169,6 +169,21 @@ export async function POST(request: Request) {
       }
 
       if (lead) {
+         // Check if lead name needs capture (starts with 'Lead #')
+         if (lead.nome?.startsWith('Lead #')) {
+           // Try to extract name from this new message
+           const nameExtraction = await extractLeadWithAI(text);
+           if (nameExtraction.nome && nameExtraction.nome.length > 1) {
+             console.log(`✅ Nome capturado de lead pendente: "${nameExtraction.nome}"`);
+             if (mock.isMockMode()) {
+               mock.updateLead(lead.id, { nome: nameExtraction.nome });
+             } else {
+               await supabaseAdmin.from('leads').update({ nome: nameExtraction.nome }).eq('id', lead.id);
+             }
+             lead = { ...lead, nome: nameExtraction.nome };
+           }
+         }
+
          const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
          if (aiResponse) {
             await processLead(lead, { forceAutoReply: true, customReply: aiResponse });
@@ -192,7 +207,7 @@ export async function POST(request: Request) {
 
       const leadData = {
         imobiliaria_id,
-        nome: name || extracted.nome || 'Lead WhatsApp',
+        nome: name || extracted.nome || `Lead #${phoneClean.slice(-4)}`,
         telefone: phoneClean,
         email: null,
         moeda,

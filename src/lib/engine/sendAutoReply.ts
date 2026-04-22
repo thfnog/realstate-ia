@@ -22,16 +22,21 @@ export function buildAutoReplyMessage(data: AutoReplyData): string {
   const { lead, corretor, config } = data;
   const isBR = config.code === 'BR';
 
+  // Protect against pending/null names
+  const isNamePending = !lead.nome || lead.nome.startsWith('Lead #');
+  const greeting = isNamePending ? 'Olá' : `Oi ${lead.nome}`;
+  const greetingPT = isNamePending ? 'Olá' : `Olá ${lead.nome}`;
+
   // Extrair local de interesse (bairro ou região)
   const local = lead.bairros_interesse && lead.bairros_interesse.length > 0 
     ? lead.bairros_interesse[0] 
     : (lead.tipo_interesse || 'imóvel');
 
   if (isBR) {
-    return `Oi ${lead.nome}, aqui é o ${corretor.nome}! Recebi seu interesse no ${local} e já comecei a olhar aqui. Te chamo em breve para conversarmos melhor, combinado? Um abraço!`;
+    return `${greeting}, aqui é o ${corretor.nome}! Recebi seu interesse no ${local} e já comecei a olhar aqui. Te chamo em breve para conversarmos melhor, combinado? Um abraço!`;
   } else {
     // Portugal Style
-    return `Olá ${lead.nome}, fala o ${corretor.nome}! Recebi o seu contacto sobre o imóvel em ${local}. Vou analisar os detalhes e ligo-lhe já de seguida. Até já!`;
+    return `${greetingPT}, fala o ${corretor.nome}! Recebi o seu contacto sobre o imóvel em ${local}. Vou analisar os detalhes e ligo-lhe já de seguida. Até já!`;
   }
 }
 

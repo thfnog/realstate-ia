@@ -38,9 +38,16 @@ MENSAGEM DO CLIENTE:
 REGRAS DE CLASSIFICAÇÃO (is_lead):
 - Marque "is_lead": true se o cliente demonstrar interesse em imóveis, pedir preços, agendamentos, ou der informações de perfil.
 - Marque "is_lead": false se for apenas saudação ("bom dia", "tudo bem?"), conversa social, spam, ou assunto totalmente irrelevante para a imobiliária.
+- EXCEÇÃO: Se a mensagem contém APENAS um nome (ex: "Pedro", "Maria Silva", "Sou o Carlos"), marque "is_lead": true e extraia o nome.
 
 REGRAS DE EXTRAÇÃO:
-1. Extraia o nome se mencionado.
+1. Extraia o nome se mencionado — mesmo que seja a ÚNICA informação na mensagem.
+   Exemplos de mensagens que contêm nome:
+   - "Pedro" → nome: "Pedro"
+   - "Sou o Carlos" → nome: "Carlos"
+   - "Me chamo Ana" → nome: "Ana"
+   - "Meu nome é Roberto Silva" → nome: "Roberto Silva"
+   - "É Maria" → nome: "Maria"
 2. Identifique o tipo: 'apartamento', 'casa' ou 'terreno'.
 3. Identifique o bairro (freguesia) e cidade (concelho).
 4. Converta valores monetários para números puros (ex: 1.5 milhão = 1500000).
@@ -56,6 +63,13 @@ EXEMPLO DE SAÍDA (LEAD):
   "freguesia": "Swiss Park",
   "orcamento": 1800000,
   "resumo_ia": "Cliente busca casa de alto padrão."
+}
+
+EXEMPLO DE SAÍDA (APENAS NOME):
+{
+  "is_lead": true,
+  "nome": "Carlos",
+  "resumo_ia": "Cliente informou seu nome."
 }
 
 EXEMPLO DE SAÍDA (RUÍDO):

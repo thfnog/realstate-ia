@@ -95,13 +95,13 @@ export async function POST(request: Request) {
           
           const dateObj = new Date(data.data_hora);
           const dateStr = format(dateObj, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-          const leadName = lead.nome.split(' ')[0];
+          const leadName = (!lead.nome || lead.nome.startsWith('Lead #')) ? '' : lead.nome.split(' ')[0];
           const countryCode = imob?.config_pais || 'BR';
 
           const msgBody = 
 `*Novo Agendamento Confirmado!* 📅
 
-Olá ${leadName}, ${corretor ? `o ${corretor.nome}` : 'agendamos'} um encontro com você:
+Olá${leadName ? ` ${leadName}` : ''}, ${corretor ? `o ${corretor.nome}` : 'agendamos'} um encontro com você:
 
 📍 *Tipo:* ${data.tipo === 'visita' ? '🏠 Visita' : '🤝 Reunião'}
 ⏰ *Hora:* ${dateStr}
