@@ -164,7 +164,7 @@ export default function LeadsPage() {
           if (imob.valor >= lead.orcamento * 0.85 && imob.valor <= lead.orcamento * 1.15) score += 4;
         }
         // Bairro match (+3) — case-insensitive partial match
-        if (lead.bairros_interesse?.length > 0 && imob.freguesia) {
+        if (lead.bairros_interesse && lead.bairros_interesse.length > 0 && imob.freguesia) {
           const bairroNorm = imob.freguesia.toLowerCase().trim();
           if (lead.bairros_interesse.some((b: string) => 
             bairroNorm.includes(b.toLowerCase().trim()) || b.toLowerCase().trim().includes(bairroNorm)
