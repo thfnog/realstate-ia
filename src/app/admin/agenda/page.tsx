@@ -30,6 +30,39 @@ export default function AgendaPage() {
   
   // Edit State
   const [updating, setUpdating] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState<Partial<EventoComDetalhes>>({});
+
+  useEffect(() => {
+    if (selectedEvent) {
+      setEditData(selectedEvent);
+      setEditMode(false);
+    }
+  }, [selectedEvent]);
+
+  async function saveEventChanges() {
+    if (!selectedEvent) return;
+    try {
+      setUpdating(true);
+      const res = await fetch(`/api/eventos/${selectedEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editData),
+      });
+      const updated = await res.json();
+      if (res.ok) {
+        setEventos(eventos.map(e => e.id === updated.id ? { ...e, ...updated } : e));
+        setSelectedEvent({ ...selectedEvent, ...updated });
+        setEditMode(false);
+      } else {
+        alert('Erro ao salvar: ' + (updated.error || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      alert('Erro ao salvar alterações');
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   async function fetchData() {
     try {
@@ -367,9 +400,18 @@ export default function AgendaPage() {
               <div className="flex gap-4">
                 <div className="flex-1">
                   <p className="text-xs font-medium text-slate-500 mb-0.5">Data e Hora</p>
-                  <p className="font-semibold text-slate-800">
-                    {new Date(selectedEvent.data_hora).toLocaleDateString('pt-BR')} às {formatTime(selectedEvent.data_hora)}
-                  </p>
+                  {editMode ? (
+                    <input 
+                      type="datetime-local"
+                      value={editData.data_hora ? editData.data_hora.substring(0, 16) : ''}
+                      onChange={(e) => setEditData({ ...editData, data_hora: e.target.value })}
+                      className="w-full px-2 py-1 text-sm border border-primary rounded"
+                    />
+                  ) : (
+                    <p className="font-semibold text-slate-800">
+                      {new Date(selectedEvent.data_hora).toLocaleDateString('pt-BR')} às {formatTime(selectedEvent.data_hora)}
+                    </p>
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-medium text-slate-500 mb-0.5">Status</p>
@@ -377,6 +419,38 @@ export default function AgendaPage() {
                     <span className={`w-2 h-2 rounded-full ${selectedEvent.status === 'agendado' ? 'bg-blue-500' : selectedEvent.status === 'realizado' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
                     <span className="font-semibold text-slate-800 capitalize">{selectedEvent.status}</span>
                   </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-slate-500 mb-0.5">Assunto</p>
+                  {editMode ? (
+                    <input 
+                      type="text"
+                      value={editData.titulo || ''}
+                      onChange={(e) => setEditData({ ...editData, titulo: e.target.value })}
+                      className="w-full px-2 py-1 text-sm border border-primary rounded"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{selectedEvent.titulo}</p>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-slate-500 mb-0.5">Tipo</p>
+                  {editMode ? (
+                    <select
+                      value={editData.tipo || 'outro'}
+                      onChange={(e) => setEditData({ ...editData, tipo: e.target.value as TipoEvento })}
+                      className="w-full px-2 py-1 text-sm border border-primary rounded"
+                    >
+                      {Object.entries(eventConfig).map(([key, conf]) => (
+                        <option key={key} value={key}>{conf.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{eventConfig[selectedEvent.tipo]?.label}</p>
+                  )}
                 </div>
               </div>
 
@@ -395,23 +469,53 @@ export default function AgendaPage() {
                 </div>
               )}
 
-              {selectedEvent.local && (
-                <div className="pt-3 border-t border-slate-100">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Local</p>
-                  <p className="text-sm text-slate-700 flex items-start gap-1">
-                    📍 {selectedEvent.local}
-                  </p>
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-xs font-medium text-slate-500 mb-1">Corretor Responsável</p>
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                    💼
+                  </span>
+                  <div>
+                    <p className="font-semibold text-slate-800">
+                      {selectedEvent.corretor?.nome || 'Não atribuído'}
+                    </p>
+                    {selectedEvent.corretor?.telefone && (
+                      <p className="text-xs text-slate-500">{selectedEvent.corretor.telefone}</p>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
 
-              {selectedEvent.descricao && (
-                <div className="pt-3 border-t border-slate-100">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Observações</p>
-                  <p className="text-sm text-slate-700 italic border-l-2 border-slate-200 pl-3">
-                    {selectedEvent.descricao}
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-xs font-medium text-slate-500 mb-0.5">Local</p>
+                {editMode ? (
+                  <input 
+                    type="text"
+                    value={editData.local || ''}
+                    onChange={(e) => setEditData({ ...editData, local: e.target.value })}
+                    className="w-full px-2 py-1 text-sm border border-primary rounded"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-700 flex items-start gap-1">
+                    📍 {selectedEvent.local || 'A combinar'}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-xs font-medium text-slate-500 mb-0.5">Observações</p>
+                {editMode ? (
+                  <textarea 
+                    value={editData.descricao || ''}
+                    onChange={(e) => setEditData({ ...editData, descricao: e.target.value })}
+                    className="w-full px-2 py-1 text-sm border border-primary rounded h-20"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-700 italic border-l-2 border-slate-200 pl-3">
+                    {selectedEvent.descricao || 'Sem observações'}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
@@ -424,23 +528,45 @@ export default function AgendaPage() {
               </button>
               
               <div className="flex gap-2">
-                {selectedEvent.status !== 'cancelado' && (
+                {!editMode && (
                   <button 
-                    onClick={() => updateEventStatus(selectedEvent.id, 'cancelado')}
+                    onClick={() => setEditMode(true)}
                     disabled={updating}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-lg border border-primary text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
                   >
-                    Marcar Cancelado
+                    Editar
                   </button>
                 )}
-                {selectedEvent.status === 'agendado' && (
+                
+                {editMode ? (
                   <button 
-                    onClick={() => updateEventStatus(selectedEvent.id, 'realizado')}
+                    onClick={saveEventChanges}
                     disabled={updating}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-hover disabled:opacity-50"
                   >
-                    Marcar Realizado
+                    {updating ? 'Salvando...' : 'Salvar Alterações'}
                   </button>
+                ) : (
+                  <>
+                    {selectedEvent.status !== 'cancelado' && (
+                      <button 
+                        onClick={() => updateEventStatus(selectedEvent.id, 'cancelado')}
+                        disabled={updating}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                      >
+                        Marcar Cancelado
+                      </button>
+                    )}
+                    {selectedEvent.status === 'agendado' && (
+                      <button 
+                        onClick={() => updateEventStatus(selectedEvent.id, 'realizado')}
+                        disabled={updating}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        Marcar Realizado
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import * as mock from '@/lib/mockDb';
-import type { Evento, EventoComDetalhes } from '@/lib/database.types';
+import type { Evento } from '@/lib/database.types';
+import { waitUntil } from '@vercel/functions';
 
 export async function GET() {
   try {
@@ -77,31 +78,31 @@ export async function POST(request: Request) {
        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // 2. WhatsApp Notification to Lead
-    // We do this in a separate try/catch to not block the event creation response
-    try {
-      const { data: fullDetails } = await supabaseAdmin
-        .from('eventos')
-        .select(`
-          *,
-          lead:leads(nome, telefone),
-          corretor:corretores(nome, whatsapp_instance),
-          imobiliaria:imobiliarias(config_pais)
-        `)
-        .eq('id', data.id)
-        .single();
-      
-      if (fullDetails?.lead?.telefone && fullDetails?.corretor) {
-        const { sendWhatsAppMessage } = await import('@/lib/whatsapp');
-        const { format } = await import('date-fns');
-        const { ptBR } = await import('date-fns/locale');
+    // 2. WhatsApp Notification to Lead (via waitUntil for reliability)
+    waitUntil((async () => {
+      try {
+        const { data: fullDetails } = await supabaseAdmin
+          .from('eventos')
+          .select(`
+            *,
+            lead:leads(nome, telefone),
+            corretor:corretores(nome, whatsapp_instance),
+            imobiliaria:imobiliarias(config_pais)
+          `)
+          .eq('id', data.id)
+          .single();
         
-        const dateObj = new Date(data.data_hora);
-        const dateStr = format(dateObj, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-        const leadName = fullDetails.lead.nome.split(' ')[0];
-        const countryCode = (fullDetails.imobiliaria as any)?.config_pais || 'BR';
+        if (fullDetails?.lead?.telefone && fullDetails?.corretor) {
+          const { sendWhatsAppMessage } = await import('@/lib/whatsapp');
+          const { format } = await import('date-fns');
+          const { ptBR } = await import('date-fns/locale');
+          
+          const dateObj = new Date(data.data_hora);
+          const dateStr = format(dateObj, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+          const leadName = fullDetails.lead.nome.split(' ')[0];
+          const countryCode = (fullDetails.imobiliaria as any)?.config_pais || 'BR';
 
-        const message = 
+          const message = 
 `*Novo Agendamento Confirmado!* 📅
 
 Olá ${leadName}, o ${fullDetails.corretor.nome} agendou um encontro com você:
@@ -114,17 +115,18 @@ ${data.descricao ? `💡 *Obs:* ${data.descricao}` : ''}
 
 Ficamos à disposição!`;
 
-        await sendWhatsAppMessage(
-          fullDetails.lead.telefone, 
-          message, 
-          fullDetails.corretor.whatsapp_instance || undefined,
-          countryCode
-        );
-        console.log(`✅ Notificação de agendamento enviada para ${fullDetails.lead.nome}`);
+          await sendWhatsAppMessage(
+            fullDetails.lead.telefone, 
+            message, 
+            fullDetails.corretor.whatsapp_instance || undefined,
+            countryCode
+          );
+          console.log(`✅ Notificação de agendamento enviada para ${fullDetails.lead.nome}`);
+        }
+      } catch (notifyError) {
+        console.error('⚠️ Falha ao enviar notificação de agendamento:', notifyError);
       }
-    } catch (notifyError) {
-      console.error('⚠️ Falha ao enviar notificação de agendamento:', notifyError);
-    }
+    })());
 
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
