@@ -78,11 +78,11 @@ export async function recommendImoveis(lead: Lead, configIn?: any): Promise<Scor
       }
     }
 
-    // 5. Bairro match (+3)
+    // 5. Bairro match (+3) — partial/fuzzy matching
     if (lead.bairros_interesse && lead.bairros_interesse.length > 0) {
       const bairroNorm = imovel.freguesia.toLowerCase().trim();
       const match = lead.bairros_interesse.some(
-        (b) => b.toLowerCase().trim() === bairroNorm
+        (b) => bairroNorm.includes(b.toLowerCase().trim()) || b.toLowerCase().trim().includes(bairroNorm)
       );
       if (match) {
         score += 3;

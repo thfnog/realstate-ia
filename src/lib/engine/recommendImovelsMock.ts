@@ -55,7 +55,9 @@ export function recommendImovelsMock(lead: Lead, configIn?: any): ScoredImovel[]
 
     if (lead.bairros_interesse && lead.bairros_interesse.length > 0) {
       const bairroNorm = imovel.freguesia.toLowerCase().trim();
-      const match = lead.bairros_interesse.some((b) => b.toLowerCase().trim() === bairroNorm);
+      const match = lead.bairros_interesse.some(
+        (b) => bairroNorm.includes(b.toLowerCase().trim()) || b.toLowerCase().trim().includes(bairroNorm)
+      );
       if (match) {
         score += 3;
         breakdown.push(`Bairro ${imovel.freguesia}: +3`);
