@@ -31,7 +31,7 @@ export default function LeadsPage() {
   const [leadEventos, setLeadEventos] = useState<Evento[]>([]);
   const [loadingEventos, setLoadingEventos] = useState(false);
   const [newEvent, setNewEvent] = useState({
-    tipo: 'visita' as TipoEvento, titulo: '', descricao: '', data_hora: '', local: ''
+    tipo: 'visita' as TipoEvento, titulo: '', descricao: '', data_hora: '', local: '', corretor_id: ''
   });
   const [matchingImoveis, setMatchingImoveis] = useState<any[]>([]);
   const [loadingMatching, setLoadingMatching] = useState(false);
@@ -140,7 +140,7 @@ export default function LeadsPage() {
   async function openAgendaModal(lead: LeadComCorretor) {
     setSelectedLead(lead);
     setLoadingEventos(true);
-    setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '' });
+    setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '', corretor_id: '' });
     setMsgStatus('idle'); // Reset messaging status
     
     try {
