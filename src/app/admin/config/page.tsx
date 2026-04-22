@@ -310,6 +310,58 @@ export default function ConfigPage() {
         </div>
       )}
 
+      {/* WhatsApp Diagnostic (Pragmatic Fix) */}
+      {!isPT && (
+         <div className="bg-indigo-50/50 rounded-xl border border-indigo-200 p-6 mb-6">
+           <div className="flex items-center gap-3 mb-4">
+             <span className="text-2xl text-indigo-600">🛠️</span>
+             <div>
+               <h2 className="text-lg font-bold text-indigo-900">Diagnóstico WhatsApp</h2>
+               <p className="text-xs text-indigo-700">Teste o envio e veja a resposta bruta da API</p>
+             </div>
+           </div>
+
+           <div className="flex flex-col sm:flex-row gap-4 mb-4">
+             <input 
+               type="text" 
+               placeholder="Número (Ex: 55119...)"
+               id="testPhone"
+               className="flex-1 px-4 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
+             />
+             <button 
+               onClick={async () => {
+                 const phone = (document.getElementById('testPhone') as HTMLInputElement).value;
+                 const logArea = document.getElementById('debugLog');
+                 if (!phone) return alert('Digite um número');
+                 if (logArea) logArea.innerText = '⏳ Enviando teste...';
+                 
+                 try {
+                   const res = await fetch('/api/leads/debug-wa', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ phone })
+                   });
+                   const data = await res.json();
+                   if (logArea) logArea.innerText = JSON.stringify(data, null, 2);
+                 } catch (err: any) {
+                   if (logArea) logArea.innerText = '❌ Erro na requisição: ' + err.message;
+                 }
+               }}
+               className="px-6 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all shadow-md active:scale-95"
+             >
+               🚀 Testar Agora
+             </button>
+           </div>
+
+           <div className="bg-slate-900 rounded-lg p-4">
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Log da Resposta:</span>
+             <pre id="debugLog" className="text-[11px] font-mono text-emerald-400 overflow-x-auto whitespace-pre-wrap min-h-[40px]">
+               Aguardando teste...
+             </pre>
+           </div>
+         </div>
+      )}
+
       {/* Webhook URL (BR only) */}
       {!isPT && (
         <div className="bg-white rounded-xl border border-border-light p-6 mb-6">

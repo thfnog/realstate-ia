@@ -104,6 +104,8 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
   // --- EVOLUTION API ---
   if (PROVIDER === 'evolution' && EVOLUTION_URL && EVOLUTION_API_KEY) {
     try {
+      console.log(`[Evolution] Enviando mensagem via instância: ${instanceName} para ${cleanTo}`);
+      
       const res = await fetch(getUrl(`/message/sendText/${instanceName}`), {
         method: 'POST',
         headers: {
@@ -111,21 +113,36 @@ export async function sendWhatsAppMessage(to: string, body: string, instanceOver
           'apikey': EVOLUTION_API_KEY
         },
         body: JSON.stringify({
-          number: cleanTo,
-          text: body,
-          delay: 1200,
-          linkPreview: true
+          number: cleanTo.includes('@') ? cleanTo : `${cleanTo}@s.whatsapp.net`,
+          text: body, // Legacy v1
+          textMessage: { text: body }, // Evolution v2
+          options: {
+            delay: 1200,
+            presence: "composing",
+            linkPreview: true
+          }
         })
       });
 
       if (!res.ok) {
-        throw new Error(`Evolution API Error: ${res.status}`);
+        const errText = await res.text();
+        console.error(`[Evolution] Erro da API (${res.status}): ${errText}`);
+        
+        // Fallback: If instance-specific failed and it's not the default, try default
+        const defaultInstance = process.env.WHATSAPP_DEFAULT_INSTANCE;
+        if (instanceName !== defaultInstance && defaultInstance) {
+           console.log(`[Evolution] Tentando fallback para instância padrão: ${defaultInstance}`);
+           return sendWhatsAppMessage(cleanTo, body, defaultInstance, countryCode);
+        }
+
+        throw new Error(`Evolution API Error: ${res.status} - ${errText}`);
       }
 
       const data = await res.json();
+      console.log(`[Evolution] Sucesso ao enviar para ${cleanTo}. ID: ${data.key?.id || '?'}`);
       return data.key?.id || 'evolution-success';
     } catch (error: any) {
-      console.error(`⚠️ Falha no envio WhatsApp para ${cleanTo}. Salvando na fila de contingência...`);
+      console.error(`⚠️ Falha no envio WhatsApp para ${cleanTo}: ${error.message}`);
       
       // Save to pending queue
       if (!mock.isMockMode() && instanceName) {

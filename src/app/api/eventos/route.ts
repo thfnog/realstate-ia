@@ -81,31 +81,27 @@ export async function POST(request: Request) {
     // 2. WhatsApp Notification to Lead (via waitUntil for reliability)
     waitUntil((async () => {
       try {
-        const { data: fullDetails } = await supabaseAdmin
-          .from('eventos')
-          .select(`
-            *,
-            lead:leads(nome, telefone),
-            corretor:corretores(nome, whatsapp_instance),
-            imobiliaria:imobiliarias(config_pais)
-          `)
-          .eq('id', data.id)
-          .single();
-        
-        if (fullDetails?.lead?.telefone && fullDetails?.corretor) {
+        console.log(`[Agendamento] Iniciando processo de notificação para Evento ID: ${data.id}`);
+
+        // Sequential fetches for maximum robustness (avoid relationship ambiguity)
+        const { data: lead } = await supabaseAdmin.from('leads').select('nome, telefone').eq('id', lead_id).single();
+        const { data: corretor } = corretor_id ? await supabaseAdmin.from('corretores').select('nome, whatsapp_instance').eq('id', corretor_id).single() : { data: null };
+        const { data: imob } = await supabaseAdmin.from('imobiliarias').select('config_pais').eq('id', imobiliaria_id).single();
+
+        if (lead?.telefone) {
           const { sendWhatsAppMessage } = await import('@/lib/whatsapp');
           const { format } = await import('date-fns');
           const { ptBR } = await import('date-fns/locale');
           
           const dateObj = new Date(data.data_hora);
           const dateStr = format(dateObj, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-          const leadName = fullDetails.lead.nome.split(' ')[0];
-          const countryCode = (fullDetails.imobiliaria as any)?.config_pais || 'BR';
+          const leadName = lead.nome.split(' ')[0];
+          const countryCode = imob?.config_pais || 'BR';
 
-          const message = 
+          const msgBody = 
 `*Novo Agendamento Confirmado!* 📅
 
-Olá ${leadName}, o ${fullDetails.corretor.nome} agendou um encontro com você:
+Olá ${leadName}, ${corretor ? `o ${corretor.nome}` : 'agendamos'} um encontro com você:
 
 📍 *Tipo:* ${data.tipo === 'visita' ? '🏠 Visita' : '🤝 Reunião'}
 ⏰ *Hora:* ${dateStr}
@@ -115,16 +111,19 @@ ${data.descricao ? `💡 *Obs:* ${data.descricao}` : ''}
 
 Ficamos à disposição!`;
 
-          await sendWhatsAppMessage(
-            fullDetails.lead.telefone, 
-            message, 
-            fullDetails.corretor.whatsapp_instance || undefined,
+          const sid = await sendWhatsAppMessage(
+            lead.telefone, 
+            msgBody, 
+            corretor?.whatsapp_instance || undefined,
             countryCode
           );
-          console.log(`✅ Notificação de agendamento enviada para ${fullDetails.lead.nome}`);
+          
+          console.log(`✅ Notificação enviada! SID: ${sid} para ${lead.nome} (${lead.telefone})`);
+        } else {
+          console.warn(`⚠️ Lead sem telefone ou não encontrado. Notificação pulada.`);
         }
       } catch (notifyError) {
-        console.error('⚠️ Falha ao enviar notificação de agendamento:', notifyError);
+        console.error('❌ Falha CRÍTICA ao enviar notificação de agendamento:', notifyError);
       }
     })());
 

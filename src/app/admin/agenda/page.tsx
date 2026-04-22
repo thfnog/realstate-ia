@@ -253,7 +253,10 @@ export default function AgendaPage() {
                   >
                     <option value="">+ Escolher corretor...</option>
                     {corretores.map((c) => (
-                      <option key={c.id} value={c.id}>{c.nome}</option>
+                      <option key={c.id} value={c.id}>
+                        {c.whatsapp_status === 'close' ? '⚠️ ' : ''}
+                        {c.nome}
+                      </option>
                     ))}
                   </select>
                   <span className="hidden xl:inline text-[10px] font-black text-primary uppercase animate-pulse">

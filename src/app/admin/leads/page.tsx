@@ -457,10 +457,10 @@ export default function LeadsPage() {
                               <div className="flex items-center gap-2">
                                  {lead.corretores ? (
                                     <div className="relative group/avatar">
-                                      <div className={`w-6 h-6 rounded-full bg-gradient-to-tr ${lead.corretores.whatsapp_status === 'open' ? 'from-emerald-400 to-emerald-600' : 'from-rose-400 to-rose-600'} flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-sm`} title={lead.corretores.nome}>
+                                      <div className={`w-6 h-6 rounded-full bg-gradient-to-tr ${lead.corretores.whatsapp_status === 'open' ? 'from-emerald-400 to-emerald-600' : lead.corretores.whatsapp_status === 'close' ? 'from-rose-400 to-rose-600' : 'from-slate-400 to-slate-500'} flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-sm`} title={lead.corretores.nome}>
                                          {lead.corretores.nome.charAt(0)}
                                       </div>
-                                      {lead.corretores.whatsapp_status !== 'open' && (
+                                      {lead.corretores.whatsapp_status === 'close' && (
                                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center border border-rose-200">
                                           <span className="text-[8px] text-rose-500">⚠️</span>
                                         </div>
@@ -591,7 +591,7 @@ export default function LeadsPage() {
                           </option>
                           {corretores.map(c => (
                             <option key={c.id} value={c.id}>
-                              {c.whatsapp_status !== 'open' ? '⚠️ ' : ''}{c.nome}
+                              {c.whatsapp_status === 'close' ? '⚠️ ' : ''}{c.nome}
                             </option>
                           ))}
                         </select>
@@ -935,6 +935,27 @@ export default function LeadsPage() {
                         onChange={e => setNewEvent({...newEvent, local: e.target.value})}
                         className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none"
                       />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Corretor Responsável</label>
+                      <select 
+                        value={newEvent.corretor_id || ''} 
+                        onChange={e => setNewEvent({...newEvent, corretor_id: e.target.value})}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-slate-50 focus:ring-2 focus:ring-primary/20 outline-none"
+                      >
+                        <option value="">+ Herdar do Lead</option>
+                        {corretores.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.whatsapp_status !== 'open' ? '⚠️ ' : ''}{c.nome}
+                          </option>
+                        ))}
+                      </select>
+                      {(corretores.find(c => c.id === newEvent.corretor_id)?.whatsapp_status !== 'open' && newEvent.corretor_id) && (
+                        <p className="text-[9px] text-rose-500 font-bold mt-1">
+                          ⚠️ Broker desconectado. A mensagem pode ser enviada pela instância padrão.
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-1">
