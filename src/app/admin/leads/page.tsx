@@ -187,7 +187,7 @@ export default function LeadsPage() {
       if (res.ok) {
         const created = await res.json();
         setLeadEventos(prev => [...prev, created].sort((a,b) => a.data_hora.localeCompare(b.data_hora)));
-        setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '' });
+        setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '', corretor_id: '' });
         
         // Auto-update lead status locally if it changed
         if (newEvent.tipo === 'visita' && (selectedLead.status === 'novo' || selectedLead.status === 'em_atendimento')) {
