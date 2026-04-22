@@ -947,11 +947,11 @@ export default function LeadsPage() {
                         <option value="">+ Herdar do Lead</option>
                         {corretores.map(c => (
                           <option key={c.id} value={c.id}>
-                            {c.whatsapp_status !== 'open' ? '⚠️ ' : ''}{c.nome}
+                            {c.whatsapp_status === 'close' ? '⚠️ ' : ''}{c.nome}
                           </option>
                         ))}
                       </select>
-                      {(corretores.find(c => c.id === newEvent.corretor_id)?.whatsapp_status !== 'open' && newEvent.corretor_id) && (
+                      {(corretores.find(c => c.id === newEvent.corretor_id)?.whatsapp_status === 'close' && newEvent.corretor_id) && (
                         <p className="text-[9px] text-rose-500 font-bold mt-1">
                           ⚠️ Broker desconectado. A mensagem pode ser enviada pela instância padrão.
                         </p>
