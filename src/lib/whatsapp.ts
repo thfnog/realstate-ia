@@ -6,7 +6,7 @@ import { supabaseAdmin } from './supabase';
 import * as mock from './mockDb';
 import { getConfig } from './countryConfig';
 
-const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim() || 'evolution') as 'twilio' | 'evolution' | 'mock';
+const PROVIDER = (process.env.WHATSAPP_PROVIDER?.trim().replace(/\r?\n/g, '') || 'evolution') as 'twilio' | 'evolution' | 'mock';
 
 /**
  * Sanitizes phone number to ensure it has the country prefix (DDI)
@@ -33,8 +33,8 @@ function sanitizePhone(to: string, countryCode?: string): string {
 }
 
 // Evolution Config
-const EVOLUTION_URL = process.env.EVOLUTION_URL?.replace(/\/$/, '');
-const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+const EVOLUTION_URL = process.env.EVOLUTION_URL?.trim().replace(/[\r\n]/g, '').replace(/\/$/, '');
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY?.trim().replace(/[\r\n]/g, '');
 
 // Twilio Config
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -78,7 +78,7 @@ export async function fetchInstanceStatus(instanceName: string): Promise<'open' 
  * Envia uma mensagem de WhatsApp usando o provedor configurado com contingência.
  */
 export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string, countryCode?: string): Promise<string> {
-  const instanceName = instanceOverride || process.env.WHATSAPP_DEFAULT_INSTANCE || '';
+  const instanceName = (instanceOverride || process.env.WHATSAPP_DEFAULT_INSTANCE || '').trim().replace(/[\r\n]/g, '');
   const cleanTo = sanitizePhone(to, countryCode);
 
   if (PROVIDER === 'mock') {
