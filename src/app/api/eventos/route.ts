@@ -4,18 +4,29 @@ import * as mock from '@/lib/mockDb';
 import type { Evento } from '@/lib/database.types';
 import { waitUntil } from '@vercel/functions';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const leadId = url.searchParams.get('lead_id');
+
     if (mock.isMockMode()) {
        mock.seedTestData();
        const events = mock.getEventos();
-       return NextResponse.json(events);
+       // Filter by lead_id if provided
+       const filtered = leadId ? events.filter((e: any) => e.lead_id === leadId) : events;
+       return NextResponse.json(filtered);
     }
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('eventos')
       .select('*, lead:leads(*), corretor:corretores(*)')
       .order('data_hora', { ascending: true });
+
+    if (leadId) {
+      query = query.eq('lead_id', leadId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
        return NextResponse.json({ error: error.message }, { status: 500 });

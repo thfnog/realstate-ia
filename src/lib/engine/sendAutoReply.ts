@@ -13,6 +13,7 @@ interface AutoReplyData {
   corretor: Corretor;
   config: any;
   customMessage?: string;
+  useDefaultInstance?: boolean;
 }
 
 /**
@@ -47,8 +48,10 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
   const { lead, customMessage } = data;
   const message = customMessage || buildAutoReplyMessage(data);
 
-  // Enviar para o WhatsApp do Lead
-  const instanceName = data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`;
+  // Choose instance: default (company) or broker's personal
+  const instanceName = data.useDefaultInstance
+    ? (process.env.WHATSAPP_DEFAULT_INSTANCE || '').trim().replace(/[\r\n]/g, '')
+    : (data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`);
   
   try {
     const result = await sendWhatsAppMessage(lead.telefone, message, instanceName, data.config?.code);

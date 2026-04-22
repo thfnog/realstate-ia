@@ -149,16 +149,29 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
     console.log('🏠 Step 3: Buscando imóveis similares...');
     const imoveis = await recommendImoveis(lead);
 
-    // Step 4: Send briefing
-    console.log('📱 Step 4: Enviando briefing regionalizado...');
-    const whatsappResult = await sendBriefing({
-      lead,
-      corretor,
-      imoveis,
-      isExistingClient: carteira.isExisting,
-      corretorAnteriorNome,
-      config, // Pass the regional config
-    });
+    // Step 4: Send briefing to broker
+    // Detect solo broker: if default instance is the broker's own instance, skip self-briefing for form leads
+    const defaultInstance = (process.env.WHATSAPP_DEFAULT_INSTANCE || '').trim().replace(/[\r\n]/g, '');
+    const brokerInstance = corretor.whatsapp_instance || `realstate-iabroker-${corretor.id}`;
+    const isSoloBroker = defaultInstance === brokerInstance;
+    const isFormLead = lead.origem === 'formulario';
+
+    let whatsappResult: string | null = null;
+
+    if (isFormLead && isSoloBroker) {
+      console.log('📱 Step 4: Corretor solo — briefing via painel (não envia WA pra si mesmo).');
+      // Don't send WhatsApp briefing to yourself, it's your own number
+    } else {
+      console.log('📱 Step 4: Enviando briefing regionalizado...');
+      whatsappResult = await sendBriefing({
+        lead,
+        corretor,
+        imoveis,
+        isExistingClient: carteira.isExisting,
+        corretorAnteriorNome,
+        config,
+      });
+    }
     
     // Step 5: Send auto-reply to Lead (First-person, personalized) with delay and status check
     if (options?.forceAutoReply || !options?.skipAutoReply) {
@@ -171,6 +184,9 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
         const { data: imob } = await supabaseAdmin.from('imobiliarias').select('delay_auto_reply_sec').eq('id', lead.imobiliaria_id).single();
         if (imob?.delay_auto_reply_sec !== undefined) delaySec = imob.delay_auto_reply_sec;
       }
+
+      // For form leads, use shorter delay (lead is waiting on the form page)
+      if (isFormLead) delaySec = Math.min(delaySec, 5);
 
       console.log(`⏳ Aguardando ${delaySec}s antes de enviar resposta automática (prioridade humana)...`);
       
@@ -209,14 +225,24 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             corretor,
             config,
             customMessage: nameAskMsg,
+            useDefaultInstance: isFormLead && !isSoloBroker,
           });
         } else {
-          console.log('📱 Step 5: Enviando resposta automática pessoal ao Lead...');
+          // 5.4 For form leads from a company, send corporate-style confirmation from default instance
+          let replyMsg = options?.customReply;
+          if (isFormLead && !isSoloBroker && !replyMsg) {
+            replyMsg = config.code === 'BR'
+              ? `Olá${lead.nome && !lead.nome.startsWith('Lead #') ? ` ${lead.nome.split(' ')[0]}` : ''}! 😊 Recebemos sua solicitação e o corretor ${corretor.nome} entrará em contato em breve. Obrigado pelo interesse!`
+              : `Olá${lead.nome && !lead.nome.startsWith('Lead #') ? ` ${lead.nome.split(' ')[0]}` : ''}! 😊 Recebemos a sua solicitação e o consultor ${corretor.nome} irá contactá-lo brevemente. Obrigado pelo seu interesse!`;
+          }
+
+          console.log(`📱 Step 5: Enviando resposta automática ao Lead...${isFormLead ? ' (via formulário)' : ''}`);
           await sendAutoReplyToLead({
             lead,
             corretor,
             config,
-            customMessage: options?.customReply
+            customMessage: replyMsg,
+            useDefaultInstance: isFormLead && !isSoloBroker,
           });
         }
       }
