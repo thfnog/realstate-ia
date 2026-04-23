@@ -71,9 +71,14 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Filter loopbacks
+    // 3. Filter loopbacks and junk
     if (isFromMe) {
       return NextResponse.json({ status: 'ignored', reason: 'fromMe' });
+    }
+
+    const { shouldIgnoreMessage } = await import('@/lib/messageFilter');
+    if (shouldIgnoreMessage(messageText)) {
+      return NextResponse.json({ status: 'ignored', reason: 'content_filter' });
     }
 
     // 4. Handle Transcription (OpenAI Whisper)

@@ -116,6 +116,12 @@ export async function POST(request: Request) {
 
       console.log(`📩 Nova mensagem de ${maskName(name)} (${maskPhone(sender)}): "${text.slice(0, 15)}..."`);
 
+      const { shouldIgnoreMessage } = await import('@/lib/messageFilter');
+      if (shouldIgnoreMessage(text)) {
+        console.log(`♻️ Filtro Manual: Lixo detectado e descartado antes da IA.`);
+        return;
+      }
+
       const extracted = await extractLeadWithAI(text);
 
       if (extracted.is_lead === false) {
