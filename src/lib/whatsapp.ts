@@ -199,3 +199,45 @@ export async function fetchInstanceOwner(instanceName: string): Promise<string |
     return null;
   }
 }
+
+/**
+ * Persiste uma mensagem no histórico do banco de dados
+ */
+export async function saveMessageToHistory({
+  imobiliaria_id,
+  lead_id,
+  corretor_id,
+  direction,
+  message_text,
+  status = 'sent',
+  provider_id
+}: {
+  imobiliaria_id: string;
+  lead_id: string;
+  corretor_id?: string | null;
+  direction: 'inbound' | 'outbound';
+  message_text: string;
+  status?: 'sent' | 'delivered' | 'read' | 'error';
+  provider_id?: string | null;
+}) {
+  if (mock.isMockMode()) return;
+
+  try {
+    const { error } = await supabaseAdmin.from('mensagens_historico').insert([{
+      imobiliaria_id,
+      lead_id,
+      corretor_id: corretor_id || null,
+      direction,
+      message_text,
+      status,
+      provider_id: provider_id || null
+    }]);
+
+    if (error) {
+      console.error('❌ Erro ao salvar histórico de mensagem:', error);
+    }
+  } catch (err) {
+    console.error('❌ Falha catastrófica ao salvar histórico:', err);
+  }
+}
+

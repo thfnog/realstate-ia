@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { fetchInstanceStatus } from '@/lib/whatsapp';
+import { sendSlackNotification } from '@/lib/slack';
 
 export const maxDuration = 60; // 60s limit
 export const dynamic = 'force-dynamic';
@@ -53,22 +54,7 @@ export async function GET(request: Request) {
 
     // 3. Send Slack Alerts
     if (slackAlerts.length > 0) {
-      const slackUrl = process.env.SLACK_WEBHOOK_URL;
-      if (slackUrl) {
-        try {
-          await fetch(slackUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: "⚠️ *Alerta Crítico ImobIA* ⚠️\n\n" + slackAlerts.join('\n\n')
-            })
-          });
-        } catch (slackErr) {
-          console.error('Falha ao enviar alerta para o Slack:', slackErr);
-        }
-      } else {
-        console.warn('SLACK_WEBHOOK_URL não configurado. Alertas não enviados.');
-      }
+      await sendSlackNotification(slackAlerts.join('\n\n'), 'health');
     }
 
     return NextResponse.json({ 

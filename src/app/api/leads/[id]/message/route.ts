@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage, saveMessageToHistory } from '@/lib/whatsapp';
 import * as mock from '@/lib/mockDb';
 
 export async function POST(
@@ -11,6 +11,7 @@ export async function POST(
     const { id } = await params;
     const { message } = await request.json();
     let lead;
+    let fullLeadData: any;
 
     // 1. Get lead phone and broker instance
     if (mock.isMockMode()) {
@@ -26,13 +27,14 @@ export async function POST(
       // Fetch lead first
       const { data: leadData, error: leadError } = await supabaseAdmin
         .from('leads')
-        .select('telefone, corretor_id, imobiliaria_id')
+        .select('id, telefone, corretor_id, imobiliaria_id')
         .eq('id', id)
         .maybeSingle();
       
       if (leadError) throw leadError;
 
       if (leadData) {
+        fullLeadData = leadData;
         // Fetch broker separately to avoid join/relationship issues (corretores_1 error)
         let broker = null;
         if (leadData.corretor_id) {
@@ -62,7 +64,20 @@ export async function POST(
     if (!lead) return NextResponse.json({ error: 'Lead não encontrado' }, { status: 404 });
 
     // 2. Send WhatsApp
-    await sendWhatsAppMessage(lead.telefone, message, lead.instanceName, lead.countryCode);
+    const resultId = await sendWhatsAppMessage(lead.telefone, message, lead.instanceName, lead.countryCode);
+
+    // 3. Persist to history
+    if (!mock.isMockMode() && fullLeadData) {
+      await saveMessageToHistory({
+        imobiliaria_id: fullLeadData.imobiliaria_id,
+        lead_id: fullLeadData.id,
+        corretor_id: fullLeadData.corretor_id,
+        direction: 'outbound',
+        message_text: message,
+        status: 'sent',
+        provider_id: resultId
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

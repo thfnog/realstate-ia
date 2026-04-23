@@ -611,6 +611,8 @@ export function seedTestData() {
       plano: 'premium',
       config_pais: 'BR', // Force BR for these tests
       delay_auto_reply_sec: 20,
+      config_lembrete_1_horas: 24,
+      config_lembrete_2_horas: 48,
     } as any);
   }
 

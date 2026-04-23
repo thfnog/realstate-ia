@@ -10,6 +10,8 @@ export type Imobiliaria = {
   plano: 'free' | 'pro';
   config_pais: 'PT' | 'BR';
   delay_auto_reply_sec: number; // Padrão 20
+  config_lembrete_1_horas: number; // Padrão 24
+  config_lembrete_2_horas: number; // Padrão 2
   criado_em: string;
 };
 
@@ -145,6 +147,8 @@ export type Lead = {
   corretor_id: string | null;
   imovel_id?: string | null;
   status: StatusLead;
+  lembrete_1_enviado_em?: string | null;
+  lembrete_2_enviado_em?: string | null;
   criado_em: string;
 };
 
@@ -177,6 +181,22 @@ export type Evento = {
 export type EventoComDetalhes = Evento & {
   lead: Lead | null;
   corretor: Corretor | null;
+};
+
+// =============================================
+// Histórico de Mensagens
+// =============================================
+
+export type MensagemHistorico = {
+  id: string;
+  imobiliaria_id: string;
+  lead_id: string;
+  corretor_id: string | null;
+  direction: 'inbound' | 'outbound';
+  message_text: string;
+  status: 'sent' | 'delivered' | 'read' | 'error';
+  provider_id: string | null;
+  criado_em: string;
 };
 
 // Form submission type (what comes from the public form)

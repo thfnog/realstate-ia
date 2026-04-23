@@ -5,7 +5,7 @@
  * logo após o lead ser processado.
  */
 
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage, saveMessageToHistory } from '@/lib/whatsapp';
 import type { Lead, Corretor } from '@/lib/database.types';
 
 interface AutoReplyData {
@@ -55,10 +55,21 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
   
   try {
     const result = await sendWhatsAppMessage(lead.telefone, message, instanceName, data.config?.code);
+    
+    // Persist outbound bot message
+    await saveMessageToHistory({
+      imobiliaria_id: lead.imobiliaria_id,
+      lead_id: lead.id,
+      corretor_id: data.corretor.id,
+      direction: 'outbound',
+      message_text: message,
+      status: 'sent',
+      provider_id: result
+    });
+
     return result;
   } catch (error) {
     console.error(`⚠️ Falha ao enviar WhatsApp para o lead ${lead.nome}. O corretor ${data.corretor.nome} pode estar desconectado.`);
-    // Opcional: Adicionar evento de falha no histórico do lead
     throw error;
   }
 }

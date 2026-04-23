@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { extractLeadWithAI } from '@/lib/engine/aiExtractor';
 import { processLead } from '@/lib/engine/processLead';
 import { processFollowUpIntelligence } from '@/lib/engine/aiScheduler';
+import { saveMessageToHistory } from '@/lib/whatsapp';
 import * as mock from '@/lib/mockDb';
 import { waitUntil } from '@vercel/functions';
 
@@ -86,6 +87,17 @@ export async function POST(request: Request) {
                 await supabaseAdmin.from('leads').update({ status: 'em_atendimento' }).eq('id', lead.id);
               }
             }
+
+            // Persistence for outbound broker message
+            await saveMessageToHistory({
+              imobiliaria_id: lead.imobiliaria_id,
+              lead_id: lead.id,
+              corretor_id: lead.corretor_id,
+              direction: 'outbound',
+              message_text: msgText,
+              status: 'sent',
+              provider_id: key?.id
+            });
           }
           return;
         }
@@ -190,6 +202,16 @@ export async function POST(request: Request) {
            }
          }
 
+         // Persist inbound message for existing lead
+         await saveMessageToHistory({
+           imobiliaria_id: lead.imobiliaria_id,
+           lead_id: lead.id,
+           corretor_id: lead.corretor_id,
+           direction: 'inbound',
+           message_text: text,
+           provider_id: payload.data?.key?.id
+         });
+
          const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
          if (aiResponse) {
             await processLead(lead, { forceAutoReply: true, customReply: aiResponse });
@@ -280,6 +302,16 @@ export async function POST(request: Request) {
          }
          newLead = data;
       }
+
+      // Persist inbound message for new lead
+      await saveMessageToHistory({
+        imobiliaria_id: newLead.imobiliaria_id,
+        lead_id: newLead.id,
+        corretor_id: newLead.corretor_id,
+        direction: 'inbound',
+        message_text: text,
+        provider_id: payload.data?.key?.id
+      });
 
       await processLead(newLead, { skipAutoReply: extracted.is_lead !== true });
     })();

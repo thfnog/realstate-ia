@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Toaster } from 'sonner';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
@@ -129,6 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Scrollable Main Content */}
         <main className="flex-1 overflow-y-auto scroll-smooth">
           <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            <Toaster position="top-right" richColors closeButton />
             {children}
           </div>
         </main>

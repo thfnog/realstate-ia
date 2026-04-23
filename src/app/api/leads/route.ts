@@ -23,16 +23,27 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '50');
 
   if (mock.isMockMode()) {
     mock.seedTestData();
     const leads = mock.getLeads(status || undefined);
-    return NextResponse.json(leads.filter(l => l.imobiliaria_id === session.imobiliaria_id));
+    const filtered = leads.filter(l => l.imobiliaria_id === session.imobiliaria_id);
+    const from = (page - 1) * limit;
+    const paginated = filtered.slice(from, from + limit);
+    
+    return NextResponse.json({
+      data: paginated,
+      count: filtered.length,
+      page,
+      limit
+    });
   }
 
   let query = supabaseAdmin
     .from('leads')
-    .select('*, corretores(*)')
+    .select('*, corretores(*)', { count: 'exact' })
     .eq('imobiliaria_id', session.imobiliaria_id)
     .order('criado_em', { ascending: false });
 
@@ -40,13 +51,22 @@ export async function GET(request: Request) {
     query = query.eq('status', status);
   }
 
-  const { data, error } = await query;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  query = query.range(from, to);
+
+  const { data, count, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({
+    data,
+    count,
+    page,
+    limit
+  });
 }
 
 // POST: Create a new lead (public) and trigger processing engine

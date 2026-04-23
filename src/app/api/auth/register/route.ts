@@ -22,6 +22,8 @@ export async function POST(request: Request) {
           plano: 'free',
           config_pais: configPais === 'PT' ? 'PT' : 'BR',
           delay_auto_reply_sec: 20,
+          config_lembrete_1_horas: 24,
+          config_lembrete_2_horas: 48,
         });
 
         // 2. Create Usuario
