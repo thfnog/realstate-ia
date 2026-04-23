@@ -1,12 +1,13 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { getUsuarioByEmail, seedTestData, isMockMode } from '@/lib/mockDb';
+import bcrypt from 'bcryptjs';
 
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-if (!NEXTAUTH_SECRET) {
-  console.warn('⚠️ NEXTAUTH_SECRET não configurado. Sessões de login não funcionarão em produção.');
+if (!NEXTAUTH_SECRET && !isMockMode()) {
+  throw new Error('❌ NEXTAUTH_SECRET não configurado. Defina essa variável em produção para proteger os tokens JWT.');
 }
-const secret = new TextEncoder().encode(NEXTAUTH_SECRET || 'fallback-dev-secret-only-for-local-mock');
+const secret = new TextEncoder().encode(NEXTAUTH_SECRET || (isMockMode() ? 'fallback-dev-secret-only-for-local-mock' : ''));
 
 export interface SessionPayload {
   usuario_id: string;
@@ -50,10 +51,10 @@ export async function signIn(email: string, password: string): Promise<string | 
     user = data;
   }
 
-  if (!user) return null;
+  if (!user || !user.hash_senha) return null;
   
-  // Note: we just compare string passwords for mock tests.
-  if (user.hash_senha !== password) return null;
+  const isValid = await bcrypt.compare(password, user.hash_senha);
+  if (!isValid) return null;
 
   const payload: SessionPayload = {
     usuario_id: user.id,
