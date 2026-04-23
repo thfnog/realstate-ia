@@ -36,8 +36,8 @@ MENSAGEM DO CLIENTE:
 "${text}"
 
 REGRAS DE CLASSIFICAÇÃO (is_lead):
-- Marque "is_lead": true APENAS se houver intenção explícita no mercado imobiliário: busca por imóveis, perguntas sobre aluguel/venda, dúvidas de localização imobiliária ou agendamentos de visita.
-- Marque "is_lead": false para recados do dia a dia ("estava atendendo o cliente", "já te ligo", "tô no trânsito"), conversas pessoais com familiares/esposa, saudações isoladas ("bom dia"), ou assuntos de trabalho não imobiliários. A presença de palavras como "cliente" ou "reunião" NÃO torna a mensagem um lead se não houver contexto claro de imóveis.
+- Marque "is_lead": true se houver intenção clara de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, ou pedidos de agendamento: "quero marcar uma reunião para ver a casa", "preciso de atendimento sobre o terreno").
+- Marque "is_lead": false para RELATOS DE STATUS ou conversas sociais (ex: "estava atendendo o cliente", "estou em reunião agora", "já te ligo", "tô no trânsito"). A palavra "reunião" ou "atendimento" sozinha NÃO torna a mensagem um lead se não houver um contexto de interesse imobiliário acompanhando.
 - EXCEÇÃO: Se a mensagem contém APENAS um nome (ex: "Pedro", "Maria Silva", "Sou o Carlos"), marque "is_lead": true e extraia o nome.
 
 REGRAS DE EXTRAÇÃO:
