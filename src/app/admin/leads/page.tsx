@@ -67,8 +67,38 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchLeads();
-    const interval = setInterval(fetchLeads, 30000);
-    return () => clearInterval(interval);
+    
+    let channel: any = null;
+    try {
+      const { supabase } = require('@/lib/supabase');
+      // Subscribe to real-time changes on the 'leads' table
+      channel = supabase
+        .channel('leads-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'leads' },
+          (payload: any) => {
+            console.log('🔄 Atualização recebida em tempo real (Leads):', payload);
+            fetchLeads();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn('⚠️ Supabase Realtime não configurado ou falhou, mantendo polling.', err);
+    }
+
+    // Polling de fallback (mais lento agora que temos realtime)
+    const interval = setInterval(fetchLeads, 120000); 
+
+    return () => {
+      clearInterval(interval);
+      if (channel) {
+        try {
+          const { supabase } = require('@/lib/supabase');
+          supabase.removeChannel(channel);
+        } catch (e) {}
+      }
+    };
   }, [fetchLeads]);
 
   async function updateStatus(id: string, status: StatusLead) {
