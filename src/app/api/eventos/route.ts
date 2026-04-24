@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
         // We need admin client here because we might need to bypass RLS to fetch complete data if needed, 
         // but since we already have the data, we just need Lead and Corretor details.
-        const { getLeadRepository, getCorretorRepository, getImobiliariaRepository } = await import('@/lib/repositories/factory');
+        const { getLeadRepository, getCorretorRepository } = await import('@/lib/repositories/factory');
         const leadRepo = getLeadRepository(client);
         const corretorRepo = getCorretorRepository(client);
         

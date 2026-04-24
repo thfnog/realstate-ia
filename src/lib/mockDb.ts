@@ -327,9 +327,9 @@ export function getEventos(leadId?: string, start?: string, end?: string, corret
     .sort((a, b) => a.data_hora.localeCompare(b.data_hora))
     .map(e => ({
       ...e,
-      lead: getLeadById(e.lead_id) || null,
+      lead: getLeads().find(l => l.id === e.lead_id) || null,
       corretor: e.corretor_id ? getCorretorById(e.corretor_id) || null : null,
-    }));
+    })) as EventoComDetalhes[];
 }
 
 export function createEvento(data: Omit<Evento, 'id' | 'criado_em'>): Evento {

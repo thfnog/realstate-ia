@@ -8,7 +8,7 @@ export class SupabaseEventoRepository implements IEventoRepository {
   async findAll(filters: { imobiliaria_id: string; corretor_id?: string; lead_id?: string }): Promise<EventoComDetalhes[]> {
     let query = this.client
       .from('eventos')
-      .select('*, lead:leads(*), corretor:corretores(*)')
+      .select('*, lead:leads(*, imoveis(*)), corretor:corretores(*)')
       .eq('imobiliaria_id', filters.imobiliaria_id);
 
     if (filters.corretor_id) {
@@ -30,7 +30,7 @@ export class SupabaseEventoRepository implements IEventoRepository {
   async findById(id: string, imobiliaria_id: string): Promise<EventoComDetalhes | null> {
     const { data, error } = await this.client
       .from('eventos')
-      .select('*, lead:leads(*), corretor:corretores(*)')
+      .select('*, lead:leads(*, imoveis(*)), corretor:corretores(*)')
       .eq('id', id)
       .eq('imobiliaria_id', imobiliaria_id)
       .single();

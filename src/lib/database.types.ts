@@ -183,7 +183,7 @@ export type Evento = {
 };
 
 export type EventoComDetalhes = Evento & {
-  lead: Lead | null;
+  lead: LeadComCorretor | null;
   corretor: Corretor | null;
 };
 
