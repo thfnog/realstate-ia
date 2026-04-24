@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
   { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
   { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
+  { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
   { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
 ];
 
@@ -55,8 +56,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const filteredNavItems = navItems.filter(item => {
     if (user?.role === 'admin') return true;
     
-    // Brokers don't see Configurações or Carteira
-    const restricted = ['/admin/config', '/admin/carteira'];
+    // Brokers don't see Configurações, Carteira or Webhook Logs
+    const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs'];
     return !restricted.includes(item.href);
   });
 

@@ -7,7 +7,6 @@
 
 import { NextResponse } from 'next/server';
 import * as mock from '@/lib/mockDb';
-import type { Lead, LeadSource, Moeda } from '@/lib/database.types';
 
 export async function POST(request: Request) {
   try {
@@ -28,133 +27,76 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    console.log(`\n💬 Webhook WhatsApp Recebido — Instance: ${body.instance || 'N/A'}`);
+    console.log(`\n💬 Webhook WhatsApp Recebido — imobId: ${imobId}`);
 
-    // 2. Normalize Data (Evolution vs Z-API)
-    let senderName = '';
-    let phone = '';
-    let messageText = '';
-    let isFromMe = false;
-    let isAudio = false;
-    let audioUrl = '';
-
-    // -- Evolution API Detection --
-    if (body.event === 'messages.upsert' || body.data?.key) {
-      const data = body.data;
-      senderName = data.pushName || 'Contato WhatsApp';
-      phone = data.key.remoteJid?.split('@')[0] || '';
-      isFromMe = data.key.fromMe || false;
-      
-      // Extract text content
-      messageText = data.message?.conversation || 
-                    data.message?.extendedTextMessage?.text || 
-                    '';
-      
-      // Audio check
-      if (data.message?.audioMessage) {
-        isAudio = true;
-        // Evolution API usually requires fetching the media via an instance endpoint
-        // audioUrl = `${body.server_url}/instance/fetchMedia/...`
-        messageText = '[Mensagem de Áudio]';
-      }
-    } 
-    // -- Z-API Detection --
-    else if (body.callbackType === 'received_message') {
-      senderName = body.data.chatName || 'Contato WhatsApp';
-      phone = body.data.sender || '';
-      isFromMe = body.data.message.fromMe || false;
-      messageText = body.data.message.text || '';
-      
-      if (body.data.message.type === 'audio') {
-        isAudio = true;
-        messageText = '[Mensagem de Áudio]';
-      }
-    }
-
-    // 3. Filter loopbacks and junk
-    if (isFromMe) {
-      return NextResponse.json({ status: 'ignored', reason: 'fromMe' });
-    }
-
-    const { shouldIgnoreMessage } = await import('@/lib/messageFilter');
-    if (shouldIgnoreMessage(messageText)) {
-      return NextResponse.json({ status: 'ignored', reason: 'content_filter' });
-    }
-
-    // 4. Handle Transcription (OpenAI Whisper)
-    if (isAudio) {
-      console.log('  🎙️ Áudio detectado. Iniciando transcrição...');
-      try {
-        // Here we would call Whisper. For MVP/Demo, we simulate it if no key is present.
-        if (process.env.OPENAI_API_KEY) {
-          // Logic to download audio and send to Whisper
-          // messageText = await transcribeAudio(audioData);
-          messageText = '[Transcrição IA]: Gostaria de ver o apartamento no Morumbi amanhã.'; 
-        } else {
-          messageText = '[Áudio não transcrito - OpenAI Key ausente]';
-        }
-      } catch (err) {
-        console.error('Erro na transcrição:', err);
-      }
-    }
-
-    if (!phone) {
-       return NextResponse.json({ error: 'Telefone não identificado' }, { status: 400 });
-    }
-
-    // 5. Create Lead
-    const leadData: Omit<Lead, 'id' | 'criado_em'> = {
-      imobiliaria_id: imobId,
-      nome: senderName,
-      telefone: phone.startsWith('+') ? phone : `+${phone}`,
-      origem: 'whatsapp' as LeadSource,
-      portal_origem: 'WhatsApp',
-      moeda: 'BRL' as Moeda, // WhatsApp ingress usually defaults to local (BR) for now
-      finalidade: 'comprar',
-      prazo: null,
-      pagamento: null,
-      descricao_interesse: messageText,
-      tipo_interesse: null,
-      orcamento: null,
-      area_interesse: null,
-      quartos_interesse: null,
-      vagas_interesse: null,
-      bairros_interesse: null,
-      corretor_id: null,
-      status: 'novo',
-    };
-
+    // 3. Queue the webhook for async processing
     if (mock.isMockMode()) {
-      mock.seedTestData();
-      const lead = mock.createLead(leadData);
-      
-      // 6. Process Lead
-      const { processLeadMockMode } = await import('@/lib/engine/processLeadMock');
-      processLeadMockMode(lead).catch(err => console.error(err));
-
-      console.log(`✅ Lead WhatsApp criado (MOCK): ${lead.nome}\n`);
-      return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
+      // In mock mode, we keep the synchronous processing for simplicity in dev
+      console.log('  🧪 Mock Mode: Processing synchronously...');
+      return await handleSynchronousMockIngest(body, imobId);
     }
 
-    // Production Supabase
+    // Production: INSERT INTO QUEUE
     const { supabaseAdmin } = await import('@/lib/supabase');
-    const { data: lead, error } = await supabaseAdmin
-      .from('leads')
-      .insert(leadData)
-      .select()
-      .single();
+    const { error: queueError } = await supabaseAdmin
+      .from('webhook_ingestion_queue')
+      .insert({
+        imobiliaria_id: imobId,
+        source: 'whatsapp',
+        payload: body,
+        status: 'pendente'
+      });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (queueError) {
+      console.error('❌ Erro ao enfileirar webhook:', queueError);
+      return NextResponse.json({ error: 'Erro ao salvar na fila' }, { status: 500 });
     }
 
-    const { processLead } = await import('@/lib/engine/processLead');
-    processLead(lead as Lead).catch(err => console.error(err));
-
-    return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
+    console.log(`✅ Webhook enfileirado para processamento assíncrono.`);
+    return NextResponse.json({ success: true, queued: true }, { status: 202 });
 
   } catch (err) {
     console.error('Erro no webhook de WhatsApp:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+/**
+ * Legacy synchronous processing for Mock Mode
+ */
+async function handleSynchronousMockIngest(body: any, imobId: string) {
+  // Normalize (simplified for mock)
+  let senderName = 'Contato Mock';
+  let phone = '';
+  let messageText = '';
+  let isFromMe = false;
+
+  if (body.event === 'messages.upsert') {
+    const data = body.data;
+    senderName = data.pushName || senderName;
+    phone = data.key.remoteJid?.split('@')[0] || '';
+    isFromMe = data.key.fromMe || false;
+    messageText = data.message?.conversation || data.message?.extendedTextMessage?.text || '';
+  }
+
+  if (isFromMe) return NextResponse.json({ status: 'ignored' });
+
+  const leadData: any = {
+    imobiliaria_id: imobId,
+    nome: senderName,
+    telefone: phone.startsWith('+') ? phone : `+${phone}`,
+    origem: 'whatsapp',
+    portal_origem: 'WhatsApp',
+    moeda: 'BRL',
+    descricao_interest: messageText,
+    status: 'novo',
+  };
+
+  mock.seedTestData();
+  const lead = mock.createLead(leadData);
+  
+  const { processLeadMockMode } = await import('@/lib/engine/processLeadMock');
+  processLeadMockMode(lead).catch(err => console.error(err));
+
+  return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
 }

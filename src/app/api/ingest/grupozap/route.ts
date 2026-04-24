@@ -1,57 +1,5 @@
-/**
- * POST /api/ingest/grupozap — Webhook endpoint for Grupo OLX (Brasil)
- *
- * Receives lead webhooks from ZAP Imóveis, OLX, and VivaReal.
- * Validates the webhook secret, normalizes the payload, and triggers
- * the processing pipeline.
- *
- * Expected payload (Grupo OLX / Canal Pro format):
- * {
- *   lead: { name, email, phone, message? },
- *   listing: { id, title, address? },
- *   source: 'ZAP' | 'VivaReal' | 'OLX'
- * }
- */
-
 import { NextResponse } from 'next/server';
 import * as mock from '@/lib/mockDb';
-import type { Lead, LeadSource, Moeda } from '@/lib/database.types';
-
-interface GrupoZapPayload {
-  lead: {
-    name: string;
-    email?: string;
-    phone: string;
-    message?: string;
-  };
-  listing: {
-    id: string;
-    title?: string;
-    address?: string;
-  };
-  source: 'ZAP' | 'VivaReal' | 'OLX';
-}
-
-function normalizePhone(phone: string): string {
-  // Remove non-digits, ensure Brazilian format
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  }
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return phone;
-}
-
-function portalLabel(source: string): string {
-  const map: Record<string, string> = {
-    ZAP: 'ZAP Imóveis',
-    VivaReal: 'VivaReal',
-    OLX: 'OLX',
-  };
-  return map[source] || source;
-}
 
 export async function POST(request: Request) {
   try {
@@ -59,10 +7,10 @@ export async function POST(request: Request) {
     const imobId = searchParams.get('imob_id');
 
     if (!imobId) {
-      return NextResponse.json({ error: 'Faltando imob_id na URL do webhook' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltando imob_id na URL' }, { status: 400 });
     }
 
-    // Validate webhook secret
+    // 1. Security Validation
     const secret = process.env.GRUPOZAP_WEBHOOK_SECRET;
     if (secret) {
       const authHeader = request.headers.get('x-webhook-secret') || request.headers.get('authorization');
@@ -72,131 +20,33 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    console.log(`\n🌐 Webhook Grupo Zap Recebido — imobId: ${imobId}`);
 
-    // Standardize fields from Canal Pro / Grupo OLX unified payload
-    // Note: They sometimes wrap fields in 'lead' or 'contact' or send them flat.
-    const name = body.name || body.lead?.name || body.contact?.name;
-    const phone = body.phone || body.lead?.phone || body.contact?.phone;
-    const email = body.email || body.lead?.email || body.contact?.email;
-    const ddd = body.ddd || body.lead?.ddd || '';
-    const message = body.message || body.lead?.message || body.contact?.message;
-    const listingId = body.clientListingId || body.originListingId || body.listing?.id;
-    const source = body.leadOrigin || body.source || 'ZAP';
-    const type = body.extraData?.leadType || 'CONTACT_FORM';
-    const finalidade = body.transactionType === 'RENT' ? 'alugar' : 'comprar';
-
-    // Validate required fields
-    if (!name || (!phone && !email)) {
-      return NextResponse.json(
-        { error: 'Dados insuficientes (nome e contato necessários)' },
-        { status: 400 }
-      );
-    }
-
-    const fullPhone = ddd ? `${ddd}${phone}` : phone;
-
-    console.log(`\n🌐 Webhook Grupo OLX — ${source} — ${name}`);
-
-    const leadData: Omit<Lead, 'id' | 'criado_em'> = {
-      imobiliaria_id: imobId,
-      nome: name,
-      telefone: normalizePhone(fullPhone),
-      origem: 'webhook_grupozap' as LeadSource,
-      portal_origem: source,
-      moeda: 'BRL' as Moeda,
-      finalidade: finalidade as any,
-      prazo: null,
-      pagamento: null,
-      descricao_interesse: message || (listingId ? `Referência Imóvel: ${listingId} (${type})` : null),
-      tipo_interesse: null,
-      orcamento: null,
-      area_interesse: null,
-      quartos_interesse: null,
-      vagas_interesse: null,
-      bairros_interesse: null,
-      corretor_id: null,
-      status: 'novo',
-    };
-
+    // 2. Queue or Process
     if (mock.isMockMode()) {
-      mock.seedTestData();
-      // Ensure imob exists in mock
-      const imob = mock.getImobiliariaById(imobId);
-      if (!imob) {
-        return NextResponse.json({ error: 'Imobiliária não encontrada no Mock' }, { status: 404 });
-      }
-
-      const lead = mock.createLead(leadData);
-
-      const { processLeadMockMode } = await import('@/lib/engine/processLeadMock');
-      processLeadMockMode(lead).catch((err) => {
-        console.error(`Erro ao processar lead webhook ${lead.nome}:`, err);
-      });
-
-      console.log(`✅ Lead criado via webhook (MOCK): ${lead.nome} (${source})\n`);
-      return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
+       // Mock processing (simplified)
+       return NextResponse.json({ success: true, mock: true });
     }
 
-    // Production: insert into Supabase (with de-duplication check)
     const { supabaseAdmin } = await import('@/lib/supabase');
-
-    const { data: existing } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('imobiliaria_id', imobId)
-      .eq('telefone', leadData.telefone)
-      .maybeSingle();
-
-    if (existing && !['vendido', 'descartado', 'finalizado'].includes(existing.status)) {
-      console.log(`♻️ Webhook Zap: Lead duplicado detectado (${leadData.telefone}). Atualizando lead ${existing.id}.`);
-      
-      const { data: updated } = await supabaseAdmin
-        .from('leads')
-        .update({
-          descricao_interesse: `${existing.descricao_interesse || ''}\n--- Novo Interesse ${source} ---\n${leadData.descricao_interesse || ''}`,
-          finalidade: leadData.finalidade || existing.finalidade,
-        })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      // Add timeline event
-      await supabaseAdmin.from('eventos').insert({
+    const { error } = await supabaseAdmin
+      .from('webhook_ingestion_queue')
+      .insert({
         imobiliaria_id: imobId,
-        lead_id: existing.id,
-        tipo: 'outro',
-        titulo: `🌐 Novo interesse via ${portalLabel(source)}`,
-        descricao: `O lead demonstrou interesse em um imóvel anunciado no portal.`,
-        data_hora: new Date().toISOString(),
-        status: 'realizado'
+        source: 'grupozap',
+        payload: body,
+        status: 'pendente'
       });
-
-      return NextResponse.json({ success: true, leadId: existing.id, updated: true }, { status: 200 });
-    }
-
-    const { data: lead, error } = await supabaseAdmin
-      .from('leads')
-      .insert(leadData)
-      .select()
-      .single();
 
     if (error) {
-      console.error('Erro ao inserir lead webhook:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('❌ Erro ao enfileirar webhook Zap:', error);
+      return NextResponse.json({ error: 'Erro ao salvar na fila' }, { status: 500 });
     }
 
-    const { processLead } = await import('@/lib/engine/processLead');
-    processLead(lead as Lead).catch((err) => {
-      console.error(`Erro ao processar lead webhook ${lead.nome}:`, err);
-    });
+    return NextResponse.json({ success: true, queued: true }, { status: 202 });
 
-    console.log(`✅ Lead webhook processado: ${lead.nome} (${source})\n`);
-    return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
   } catch (err) {
-    console.error('Erro grave no webhook:', err);
-    return NextResponse.json(
-      { error: 'Erro interno ao processar webhook' },
-      { status: 500 }
-    );
+    console.error('Erro no webhook Grupo Zap:', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
