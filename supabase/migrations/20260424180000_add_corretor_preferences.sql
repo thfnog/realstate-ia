@@ -5,3 +5,7 @@ ALTER TABLE public.corretores ADD COLUMN IF NOT EXISTS pref_notif_push BOOLEAN D
 ALTER TABLE public.corretores ADD COLUMN IF NOT EXISTS whatsapp_status TEXT DEFAULT 'disconnected';
 ALTER TABLE public.corretores ADD COLUMN IF NOT EXISTS whatsapp_instance TEXT;
 ALTER TABLE public.corretores ADD COLUMN IF NOT EXISTS whatsapp_number TEXT;
+
+-- Adiciona colunas de horário de atendimento em imobiliarias
+ALTER TABLE public.imobiliarias ADD COLUMN IF NOT EXISTS horario_inicio TEXT DEFAULT '09:00';
+ALTER TABLE public.imobiliarias ADD COLUMN IF NOT EXISTS horario_fim TEXT DEFAULT '18:00';

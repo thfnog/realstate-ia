@@ -63,7 +63,7 @@ export default function ImoveisPage() {
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      const refMatch = im.referencia.toLowerCase().includes(term);
+      const refMatch = im.referencia?.toLowerCase().includes(term);
       const titleMatch = im.titulo?.toLowerCase().includes(term);
       const concelhoMatch = im.concelho?.toLowerCase().includes(term);
       if (!refMatch && !titleMatch && !concelhoMatch) return false;
