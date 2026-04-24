@@ -13,22 +13,27 @@ export default function AuthConfirmPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if we are already authenticated via the hash/recovery link
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
+    // Listen for authentication state changes (handles the hash/code exchange automatically)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth Event:', event, !!session);
+      
+      if (session) {
         setVerifying(false);
-      } else {
-        // If no session, maybe it's an expired link or just wrong page access
-        setTimeout(() => {
+      } else if (event === 'SIGNED_OUT' && verifying) {
+        // If we are signed out and still verifying after some time, it might be an invalid link
+        const timer = setTimeout(() => {
           if (verifying) {
-            toast.error('Sessão de ativação não encontrada ou expirada.');
+            toast.error('Sessão de ativação não encontrada ou expirada. Tente solicitar um novo convite.');
             router.push('/login');
           }
-        }, 3000);
+        }, 5000);
+        return () => clearTimeout(timer);
       }
+    });
+
+    return () => {
+      subscription.unsubscribe();
     };
-    checkSession();
   }, [router, verifying]);
 
   async function handleUpdatePassword(e: React.FormEvent) {
