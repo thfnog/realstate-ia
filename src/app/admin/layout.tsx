@@ -148,6 +148,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mock Mode Banner */}
+        {process.env.NEXT_PUBLIC_MOCK_MODE === 'true' && (
+          <div className="bg-amber-500 text-amber-950 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-center shadow-inner flex items-center justify-center gap-2">
+            <span>⚠️ MOCK MODE ATIVO</span>
+            <span className="opacity-60 font-medium">Dados não persistentes • Apenas para testes locais</span>
+          </div>
+        )}
+
         {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-sidebar-bg border-b border-white/10 shrink-0">
           <Link href="/admin" className="flex items-center gap-2">

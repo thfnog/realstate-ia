@@ -9,6 +9,7 @@ export class SupabaseCorretorRepository implements ICorretorRepository {
     const { data, error } = await this.client
       .from('corretores')
       .select('*')
+      .eq('imobiliaria_id', imobiliaria_id)
       .order('nome');
 
     if (error) throw error;
@@ -20,6 +21,7 @@ export class SupabaseCorretorRepository implements ICorretorRepository {
       .from('corretores')
       .select('*')
       .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id)
       .maybeSingle();
 
     if (error) return null;
@@ -42,6 +44,7 @@ export class SupabaseCorretorRepository implements ICorretorRepository {
       .from('corretores')
       .update(data)
       .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id)
       .select()
       .single();
 
@@ -53,7 +56,8 @@ export class SupabaseCorretorRepository implements ICorretorRepository {
     const { error } = await this.client
       .from('corretores')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id);
 
     if (error) throw error;
   }

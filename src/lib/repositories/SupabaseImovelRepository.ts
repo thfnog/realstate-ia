@@ -10,12 +10,7 @@ export class SupabaseImovelRepository implements IImovelRepository {
       .from('imoveis')
       .select('*', { count: 'exact' });
 
-    // RLS handles imobiliaria_id if using user client
-    // For service key, we add it explicitly
-    const isServiceKey = (this.client as any).supabaseKey?.length > 100;
-    if (isServiceKey) {
-      query = query.eq('imobiliaria_id', filters.imobiliaria_id);
-    }
+    query = query.eq('imobiliaria_id', filters.imobiliaria_id);
 
     query = query.order('criado_em', { ascending: false });
 
@@ -39,6 +34,7 @@ export class SupabaseImovelRepository implements IImovelRepository {
       .from('imoveis')
       .select('*')
       .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id)
       .maybeSingle();
 
     if (error) return null;
@@ -61,6 +57,7 @@ export class SupabaseImovelRepository implements IImovelRepository {
       .from('imoveis')
       .update(data)
       .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id)
       .select()
       .single();
 
@@ -72,7 +69,8 @@ export class SupabaseImovelRepository implements IImovelRepository {
     const { error } = await this.client
       .from('imoveis')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id);
 
     if (error) throw error;
   }

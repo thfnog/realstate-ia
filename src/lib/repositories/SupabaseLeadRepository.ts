@@ -13,13 +13,7 @@ export class SupabaseLeadRepository implements ILeadRepository {
     if (filters.status) query = query.eq('status', filters.status);
     if (filters.corretor_id) query = query.eq('corretor_id', filters.corretor_id);
     
-    // Note: imobiliaria_id filter is handled by RLS if using getUserSupabaseClient
-    // If using supabaseAdmin, it might need explicit .eq('imobiliaria_id', filters.imobiliaria_id)
-    // For safety and compatibility, we check if we should add it
-    const isServiceKey = (this.client as any).supabaseKey?.length > 100; // rough check for service role
-    if (isServiceKey) {
-        query = query.eq('imobiliaria_id', filters.imobiliaria_id);
-    }
+    query = query.eq('imobiliaria_id', filters.imobiliaria_id);
 
     query = query.order('criado_em', { ascending: false });
 
@@ -43,6 +37,7 @@ export class SupabaseLeadRepository implements ILeadRepository {
       .from('leads')
       .select('*, corretores(*), imoveis(*)')
       .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id)
       .single();
 
     if (error) return null;
@@ -65,6 +60,7 @@ export class SupabaseLeadRepository implements ILeadRepository {
       .from('leads')
       .update(data)
       .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id)
       .select()
       .single();
 
@@ -76,7 +72,8 @@ export class SupabaseLeadRepository implements ILeadRepository {
     const { error } = await this.client
       .from('leads')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('imobiliaria_id', imobiliaria_id);
 
     if (error) throw error;
   }
