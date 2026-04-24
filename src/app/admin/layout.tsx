@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [countryMode, setCountryMode] = useState<string>('PT');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
+  const [user, setUser] = useState<{ email: string; app_role: string } | null>(null);
 
   useEffect(() => {
     // Fetch imobiliaria info

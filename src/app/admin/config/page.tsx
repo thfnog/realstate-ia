@@ -11,7 +11,7 @@ interface ChannelConfig {
 }
 
 export default function ConfigPage() {
-  const [user, setUser] = useState<{ role: string; corretor_id: string | null } | null>(null);
+  const [user, setUser] = useState<{ app_role: string; corretor_id: string | null } | null>(null);
   const [countryMode, setCountryMode] = useState<'PT' | 'BR'>('PT');
   const [imobId, setImobId] = useState<string>('');
   const [nome, setNome] = useState<string>('');
