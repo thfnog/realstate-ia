@@ -86,7 +86,7 @@ export default function UsuariosPage() {
               <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Usuário</th>
               <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Nível de Acesso</th>
               <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Vínculo</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Criado em</th>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-light">
@@ -121,8 +121,45 @@ export default function UsuariosPage() {
                       {u.corretores?.nome || '—'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-text-secondary">
-                    {new Date(u.criado_em).toLocaleDateString()}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          if (confirm('Reenviar convite para este usuário?')) {
+                            try {
+                              const res = await fetch('/api/admin/users', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: u.id, action: 'resend_invite' }),
+                              });
+                              if (res.ok) toast.success('Convite reenviado!');
+                              else toast.error('Erro ao reenviar');
+                            } catch { toast.error('Erro de conexão'); }
+                          }
+                        }}
+                        className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                        title="Reenviar Convite"
+                      >
+                        ✉️
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
+                            try {
+                              const res = await fetch(`/api/admin/users?id=${u.id}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                toast.success('Usuário excluído');
+                                fetchUsuarios();
+                              } else toast.error('Erro ao excluir');
+                            } catch { toast.error('Erro de conexão'); }
+                          }
+                        }}
+                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                        title="Excluir Usuário"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

@@ -41,3 +41,95 @@ export async function GET() {
     return NextResponse.json({ error: 'Erro ao carregar usuários' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getAuthFromCookies();
+    if (!session || session.app_role !== 'admin') {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'ID do usuário é obrigatório' }, { status: 400 });
+    }
+
+    if (isMockMode()) {
+      // Logic for Mock mode
+      return NextResponse.json({ success: true });
+    }
+
+    // REAL MODE: 
+    // 1. Get the user to find the auth_id
+    const { data: user, error: getError } = await supabaseAdmin
+      .from('usuarios')
+      .select('auth_id')
+      .eq('id', userId)
+      .single();
+
+    if (getError) throw getError;
+
+    // 2. Delete from auth.users (this will cascade delete from public.usuarios via our REFERENCES)
+    if (user?.auth_id) {
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user.auth_id);
+      if (authError) throw authError;
+    } else {
+      // If no auth_id, just delete from public.usuarios
+      const { error: dbError } = await supabaseAdmin
+        .from('usuarios')
+        .delete()
+        .eq('id', userId);
+      if (dbError) throw dbError;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('[USERS DELETE] Erro:', err);
+    return NextResponse.json({ error: err.message || 'Erro ao deletar usuário' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const session = await getAuthFromCookies();
+    if (!session || session.app_role !== 'admin') {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+    }
+
+    const { userId, action } = await request.json();
+
+    if (action === 'resend_invite') {
+      const { data: user, error: getError } = await supabaseAdmin
+        .from('usuarios')
+        .select('email, role, imobiliaria_id, corretor_id')
+        .eq('id', userId)
+        .single();
+
+      if (getError) throw getError;
+
+      if (isMockMode()) {
+        return NextResponse.json({ success: true });
+      }
+
+      // Re-send invite via Supabase
+      const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(user.email, {
+        data: {
+          role: user.role,
+          imobiliaria_id: user.imobiliaria_id,
+          corretor_id: user.corretor_id
+        },
+        redirectTo: `${new URL(request.url).origin}/auth/confirm`,
+      });
+
+      if (inviteError) throw inviteError;
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
+  } catch (err: any) {
+    console.error('[USERS PUT] Erro:', err);
+    return NextResponse.json({ error: err.message || 'Erro ao processar ação' }, { status: 500 });
+  }
+}
