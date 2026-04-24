@@ -1,76 +1,67 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import * as mock from '@/lib/mockDb';
-import type { Evento } from '@/lib/database.types';
+import { getUserSupabaseClient } from '@/lib/supabase';
+import { getEventoRepository } from '@/lib/repositories/factory';
+import { getAuthFromCookies } from '@/lib/auth';
+import { cookies } from 'next/headers';
 import { waitUntil } from '@vercel/functions';
+import type { Evento } from '@/lib/database.types';
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const leadId = url.searchParams.get('lead_id');
 
-    const session = await (await import('@/lib/auth')).getAuthFromCookies();
+    const session = await getAuthFromCookies();
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    if (mock.isMockMode()) {
-       mock.seedTestData();
-       const events = mock.getEventos(leadId || undefined, undefined, undefined, session.corretor_id || undefined);
-       return NextResponse.json(events);
-    }
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getEventoRepository(client);
 
-    let query = supabaseAdmin
-      .from('eventos')
-      .select('*, lead:leads(*), corretor:corretores(*)')
-      .eq('imobiliaria_id', session.imobiliaria_id);
-    
-    // Apply Role Filter
-    const { applyRoleFilter } = await import('@/lib/api-utils');
-    query = applyRoleFilter(query, session);
+    const events = await repository.findAll({
+      imobiliaria_id: session.imobiliaria_id,
+      lead_id: leadId || undefined,
+      corretor_id: session.app_role === 'corretor' ? session.corretor_id || undefined : undefined
+    });
 
-    query = query.order('data_hora', { ascending: true });
-
-    if (leadId) {
-      query = query.eq('lead_id', leadId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-       return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (err) {
+    return NextResponse.json(events);
+  } catch (err: any) {
     console.error('[API Eventos GET Error]:', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Erro interno' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthFromCookies();
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
     const body = await request.json();
-    const { imobiliaria_id, lead_id, tipo, titulo, data_hora, local, descricao } = body;
+    const { lead_id, tipo, titulo, data_hora, local, descricao } = body;
     let { corretor_id } = body;
 
-    if (!imobiliaria_id || !lead_id || !data_hora || !titulo) {
+    if (!lead_id || !data_hora || !titulo) {
        return NextResponse.json({ error: 'Faltando campos obrigatórios' }, { status: 400 });
     }
 
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getEventoRepository(client);
+
     // 1. Broker Assignment (if not provided, fetch from Lead)
-    if (!corretor_id && !mock.isMockMode()) {
-      const { data: lead } = await supabaseAdmin
-        .from('leads')
-        .select('corretor_id')
-        .eq('id', lead_id)
-        .maybeSingle();
-      
+    if (!corretor_id) {
+      const { getLeadRepository } = await import('@/lib/repositories/factory');
+      const leadRepo = getLeadRepository(client);
+      const lead = await leadRepo.findById(lead_id, session.imobiliaria_id);
       if (lead?.corretor_id) {
         corretor_id = lead.corretor_id;
       }
     }
 
-    const eventData: Omit<Evento, 'id' | 'criado_em'> = {
-      imobiliaria_id,
+    const eventData: Partial<Evento> = {
+      imobiliaria_id: session.imobiliaria_id,
       lead_id,
       corretor_id: corretor_id || null,
       tipo: tipo || 'outro',
@@ -81,30 +72,27 @@ export async function POST(request: Request) {
       status: 'agendado',
     };
 
-    if (mock.isMockMode()) {
-       const newEvent = mock.createEvento(eventData);
-       return NextResponse.json(newEvent, { status: 201 });
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('eventos')
-      .insert(eventData)
-      .select()
-      .single();
-
-    if (error) {
-       return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    const data = await repository.create(eventData);
 
     // 2. WhatsApp Notification to Lead (via waitUntil for reliability)
     waitUntil((async () => {
       try {
         console.log(`[Agendamento] Iniciando processo de notificação para Evento ID: ${data.id}`);
 
-        // Sequential fetches for maximum robustness (avoid relationship ambiguity)
-        const { data: lead } = await supabaseAdmin.from('leads').select('nome, telefone').eq('id', lead_id).single();
-        const { data: corretor } = corretor_id ? await supabaseAdmin.from('corretores').select('nome, whatsapp_instance').eq('id', corretor_id).single() : { data: null };
-        const { data: imob } = await supabaseAdmin.from('imobiliarias').select('config_pais').eq('id', imobiliaria_id).single();
+        // We need admin client here because we might need to bypass RLS to fetch complete data if needed, 
+        // but since we already have the data, we just need Lead and Corretor details.
+        const { getLeadRepository, getCorretorRepository, getImobiliariaRepository } = await import('@/lib/repositories/factory');
+        const leadRepo = getLeadRepository(client);
+        const corretorRepo = getCorretorRepository(client);
+        
+        const lead = await leadRepo.findById(lead_id, session.imobiliaria_id);
+        const corretor = corretor_id ? await corretorRepo.findById(corretor_id, session.imobiliaria_id) : null;
+        
+        // We don't have ImobiliariaRepository yet, but we have session info or can fetch it
+        const imobRes = await fetch(`${new URL(request.url).origin}/api/imobiliaria`, {
+          headers: { Cookie: cookieStore.toString() }
+        });
+        const imob = await imobRes.json();
 
         if (lead?.telefone) {
           const { sendWhatsAppMessage } = await import('@/lib/whatsapp');
@@ -137,17 +125,15 @@ Ficamos à disposição!`;
           );
           
           console.log(`✅ Notificação enviada! SID: ${sid} para ${lead.nome} (${lead.telefone})`);
-        } else {
-          console.warn(`⚠️ Lead sem telefone ou não encontrado. Notificação pulada.`);
         }
       } catch (notifyError) {
-        console.error('❌ Falha CRÍTICA ao enviar notificação de agendamento:', notifyError);
+        console.error('❌ Falha ao enviar notificação de agendamento:', notifyError);
       }
     })());
 
     return NextResponse.json(data, { status: 201 });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[API Eventos POST Error]:', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Erro interno' }, { status: 500 });
   }
 }

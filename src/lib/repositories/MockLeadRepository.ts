@@ -6,6 +6,9 @@ export class MockLeadRepository implements ILeadRepository {
   async findAll(filters: LeadFilters): Promise<{ data: LeadComCorretor[]; count: number }> {
     mock.seedTestData();
     let leads = mock.getLeads(filters.status, filters.corretor_id);
+    if (!filters.status) {
+      leads = leads.filter(l => l.status !== 'descartado');
+    }
     
     // Filter by imobiliaria_id (simulating what RLS or manual filters do)
     leads = leads.filter(l => l.imobiliaria_id === filters.imobiliaria_id);

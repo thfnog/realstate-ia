@@ -10,7 +10,11 @@ export class SupabaseLeadRepository implements ILeadRepository {
       .from('leads')
       .select('*, corretores(*), imoveis(*)', { count: 'exact' });
 
-    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    } else {
+      query = query.neq('status', 'descartado');
+    }
     if (filters.corretor_id) query = query.eq('corretor_id', filters.corretor_id);
     
     query = query.eq('imobiliaria_id', filters.imobiliaria_id);

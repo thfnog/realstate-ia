@@ -211,6 +211,14 @@ export function TableView({
                         )}
                       </button>
 
+                       <button
+                        onClick={() => updateStatus(lead.id, 'descartado' as StatusLead)}
+                        title="Descartar Lead"
+                        className="p-1.5 rounded-lg text-text-muted hover:text-slate-600 hover:bg-slate-100 transition-all"
+                      >
+                        🔇
+                      </button>
+
                       <button
                         onClick={() => deleteLead(lead.id, lead.nome)}
                         title="Excluir Permanentemente"

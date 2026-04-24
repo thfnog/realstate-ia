@@ -246,21 +246,27 @@ export default function AgendaPage() {
               
               {modoEscala && (
                 <div className="animate-fade-in flex flex-wrap items-center gap-2">
-                  <select
-                    value={selectedCorretorId}
-                    onChange={(e) => setSelectedCorretorId(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border-2 border-primary/40 bg-white text-xs text-text-primary focus:outline-none focus:border-primary shadow-sm min-w-[180px]"
-                  >
-                    <option value="">+ Escolher corretor...</option>
-                    {corretores.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.whatsapp_status === 'close' ? '⚠️ ' : ''}
-                        {c.nome}
-                      </option>
-                    ))}
-                  </select>
+                  {corretores.length > 1 ? (
+                    <select
+                      value={selectedCorretorId}
+                      onChange={(e) => setSelectedCorretorId(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg border-2 border-primary/40 bg-white text-xs text-text-primary focus:outline-none focus:border-primary shadow-sm min-w-[180px]"
+                    >
+                      <option value="">+ Escolher corretor...</option>
+                      {corretores.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.whatsapp_status === 'close' ? '⚠️ ' : ''}
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-primary/20 shadow-sm">
+                      <span className="text-[10px] font-black text-primary uppercase">✨ Modo Único: {corretores[0]?.nome}</span>
+                    </div>
+                  )}
                   <span className="hidden xl:inline text-[10px] font-black text-primary uppercase animate-pulse">
-                    ✨ Clique nos dias
+                    ✨ Clique nos dias para alternar escala
                   </span>
                 </div>
               )}

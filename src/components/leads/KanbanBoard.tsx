@@ -108,14 +108,23 @@ function SortableLeadCard({
          if (!isDragging) onClick();
       }}
     >
-       {/* Quick Action Delete */}
-       <button 
-         onClick={(e) => { e.stopPropagation(); onDelete(lead.id, lead.nome); }}
-         className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all z-20"
-         title="Excluir Permanentemente"
-       >
-         🗑️
-       </button>
+       {/* Quick Actions */}
+       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
+         <button 
+           onClick={(e) => { e.stopPropagation(); onStatusChange(lead.id, 'descartado'); }}
+           className="p-1.5 bg-slate-50 text-slate-500 rounded-lg hover:bg-slate-200 transition-all"
+           title="Descartar Lead (Ocultar do funil)"
+         >
+           🔇
+         </button>
+         <button 
+           onClick={(e) => { e.stopPropagation(); onDelete(lead.id, lead.nome); }}
+           className="p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+           title="Excluir Permanentemente"
+         >
+           🗑️
+         </button>
+       </div>
 
        <div className={`absolute top-0 left-0 right-0 h-1 ${config.bg.split(' ')[0]}`} />
 
