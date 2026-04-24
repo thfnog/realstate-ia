@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import * as mock from '@/lib/mockDb';
+import { getUserSupabaseClient } from '@/lib/supabase';
+import { cookies } from 'next/headers';
+import { getImovelRepository } from '@/lib/repositories/factory';
 import { getConfig } from '@/lib/countryConfig';
 import type { Moeda } from '@/lib/database.types';
 import { getAuthFromCookies } from '@/lib/auth';
@@ -11,36 +12,21 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get('status');
-  const corretor_id = searchParams.get('corretor_id');
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '50');
 
-  if (mock.isMockMode()) {
-    mock.seedTestData();
-    let imoveis = mock.getImoveis(status || undefined);
-    
-    // Multi-tenant filtering
-    imoveis = imoveis.filter(i => i.imobiliaria_id === session.imobiliaria_id);
-    
-    // Filter by broker if requested (e.g. "My properties")
-    if (corretor_id) {
-       imoveis = imoveis.filter(i => i.corretor_id === corretor_id);
-    }
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value || '';
+  const client = getUserSupabaseClient(token);
+  const repository = getImovelRepository(client);
 
-    return NextResponse.json(imoveis);
-  }
+  const { data, count } = await repository.findAll({
+    imobiliaria_id: session.imobiliaria_id,
+    page,
+    limit
+  });
 
-  let query = supabaseAdmin
-    .from('imoveis')
-    .select('*')
-    .eq('imobiliaria_id', session.imobiliaria_id)
-    .order('criado_em', { ascending: false });
-
-  if (status) query = query.eq('status', status);
-  if (corretor_id) query = query.eq('corretor_id', corretor_id);
-
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json({ data, count });
 }
 
 // POST: Create a new property
@@ -96,26 +82,19 @@ export async function POST(request: Request) {
       fotos: body.fotos || [],
     };
 
-    if (mock.isMockMode()) {
-      const imovel = mock.createImovel(imovelData);
-      return NextResponse.json(imovel, { status: 201 });
-    }
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getImovelRepository(client);
 
-    const { data, error } = await supabaseAdmin
-      .from('imoveis')
-      .insert(imovelData)
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const imovel = await repository.create(imovelData);
 
     // Step 2: Trigger Reverse Matching (Async)
-    // No await here because we don't want to delay the API response
     import('@/lib/engine/reverseMatching').then(({ matchLeadsForProperty }) => {
-      matchLeadsForProperty(data);
+      matchLeadsForProperty(imovel);
     }).catch(e => console.error('Erro ao disparar match reverso:', e));
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(imovel, { status: 201 });
   } catch (err: any) {
     console.error('API Error:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

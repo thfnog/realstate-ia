@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getUserSupabaseClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
-import * as mock from '@/lib/mockDb';
+import { getLeadRepository } from '@/lib/repositories/factory';
 import { getConfig } from '@/lib/countryConfig';
+import { isMockMode, DEFAULT_IMOBILIARIA_ID, getLeads } from '@/lib/mockDb';
 import type { LeadFormData, Lead } from '@/lib/database.types';
 import { getAuthFromCookies } from '@/lib/auth';
 
@@ -27,47 +28,20 @@ export async function GET(request: Request) {
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '50');
 
-  if (mock.isMockMode()) {
-    mock.seedTestData();
-    const leads = mock.getLeads(status || undefined, session.corretor_id || undefined);
-    const filtered = leads.filter(l => l.imobiliaria_id === session.imobiliaria_id);
-    const from = (page - 1) * limit;
-    const paginated = filtered.slice(from, from + limit);
-    
-    return NextResponse.json({
-      data: paginated,
-      count: filtered.length,
-      page,
-      limit
-    });
-  }
-
-  // Use user-bound client for RLS
+  // Initialize Repository
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value || '';
-  const userSupabase = getUserSupabaseClient(token);
+  const client = getUserSupabaseClient(token);
+  const repository = getLeadRepository(client);
 
-  let query = userSupabase
-    .from('leads')
-    .select('*, corretores(*)', { count: 'exact' });
-  
-  // Note: Manual filters (imobiliaria_id and role) are now handled by RLS in Supabase
-  
-  query = query.order('criado_em', { ascending: false });
-
-  if (status) {
-    query = query.eq('status', status);
-  }
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-  query = query.range(from, to);
-
-  const { data, count, error } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  // Fetch leads using the repository (handles both Mock and Supabase/RLS)
+  const { data, count } = await repository.findAll({
+    imobiliaria_id: session.imobiliaria_id,
+    status: status || undefined,
+    corretor_id: session.role === 'corretor' ? (session.corretor_id || undefined) : undefined,
+    page,
+    limit
+  });
 
   return NextResponse.json({
     data,
@@ -127,7 +101,7 @@ export async function POST(request: Request) {
     const url = new URL(request.url);
     let imobId = url.searchParams.get('imob_id');
 
-    if (!mock.isMockMode() && (!imobId || imobId === mock.DEFAULT_IMOBILIARIA_ID)) {
+    if (!isMockMode() && (!imobId || imobId === DEFAULT_IMOBILIARIA_ID)) {
       const { data: firstImob } = await supabaseAdmin
         .from('imobiliarias')
         .select('id')
@@ -139,65 +113,39 @@ export async function POST(request: Request) {
       }
     }
 
-    const imobiliaria_id = imobId || mock.DEFAULT_IMOBILIARIA_ID;
-
-    if (mock.isMockMode()) {
-      mock.seedTestData();
-      const lead = mock.createLead({
-        imobiliaria_id,
-        nome: data.nome,
-        telefone: data.telefone,
-        origem,
-        portal_origem,
-        moeda,
-        finalidade: data.finalidade || null,
-        prazo: data.prazo || null,
-        pagamento: data.pagamento || null,
-        descricao_interesse: data.descricao_interesse || null,
-        tipo_interesse: data.tipo_interesse || null,
-        orcamento: data.orcamento || null,
-        area_interesse: data.area_interesse || null,
-        quartos_interesse: data.quartos_interesse || null,
-        vagas_interesse: data.vagas_interesse || null,
-        bairros_interesse: data.bairros_interesse || null,
-        corretor_id: null,
-        status: 'novo',
-      });
-
-      processLeadMock(lead).catch((err) => console.error('Erro no processamento automático:', err));
-      return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
-    }
+    const imobiliaria_id = imobId || DEFAULT_IMOBILIARIA_ID;
+    const repository = getLeadRepository(supabaseAdmin);
 
     // De-duplication Logic
-    const { data: existingLead } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('imobiliaria_id', imobiliaria_id)
-      .eq('telefone', data.telefone)
-      .maybeSingle();
+    let existingLead: Lead | null = null;
+    
+    if (isMockMode()) {
+       existingLead = (getLeads().find(l => l.imobiliaria_id === imobiliaria_id && l.telefone === data.telefone) as any) || null;
+    } else {
+       const { data: res } = await supabaseAdmin
+         .from('leads')
+         .select('*')
+         .eq('imobiliaria_id', imobiliaria_id)
+         .eq('telefone', data.telefone)
+         .maybeSingle();
+       existingLead = res as any;
+    }
 
     if (existingLead && !['vendido', 'descartado', 'finalizado'].includes(existingLead.status)) {
       const newBairros = [...(existingLead.bairros_interesse || []), ...(data.bairros_interesse || [])];
       const uniqueBairros = Array.from(new Set(newBairros));
 
-      const { data: updatedLead, error: updateError } = await supabaseAdmin
-        .from('leads')
-        .update({
-          nome: data.nome || existingLead.nome,
-          bairros_interesse: uniqueBairros,
-          tipo_interesse: data.tipo_interesse || existingLead.tipo_interesse,
-          orcamento: data.orcamento || existingLead.orcamento,
-          prazo: data.prazo || existingLead.prazo,
-          pagamento: data.pagamento || existingLead.pagamento,
-          descricao_interesse: data.descricao_interesse 
-            ? `${existingLead.descricao_interesse ? existingLead.descricao_interesse + '\n--- Novo Interesse ---\n' : ''}${data.descricao_interesse}`
-            : existingLead.descricao_interesse,
-        })
-        .eq('id', existingLead.id)
-        .select()
-        .single();
-
-      if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+      await repository.update(existingLead.id, imobiliaria_id, {
+        nome: data.nome || existingLead.nome,
+        bairros_interesse: uniqueBairros,
+        tipo_interesse: data.tipo_interesse || existingLead.tipo_interesse,
+        orcamento: data.orcamento || existingLead.orcamento,
+        prazo: data.prazo || existingLead.prazo,
+        pagamento: data.pagamento || existingLead.pagamento,
+        descricao_interesse: data.descricao_interesse 
+          ? `${existingLead.descricao_interesse ? existingLead.descricao_interesse + '\n--- Novo Interesse ---\n' : ''}${data.descricao_interesse}`
+          : existingLead.descricao_interesse,
+      });
 
       await supabaseAdmin.from('eventos').insert({
         imobiliaria_id,
@@ -212,32 +160,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, leadId: existingLead.id, note: 'Lead atualizado' }, { status: 200 });
     }
 
-    // Insert the lead
-    const { data: lead, error } = await supabaseAdmin
-      .from('leads')
-      .insert({
-        imobiliaria_id,
-        nome: data.nome,
-        telefone: data.telefone,
-        origem,
-        portal_origem,
-        moeda,
-        finalidade: data.finalidade || null,
-        prazo: data.prazo || null,
-        pagamento: data.pagamento || null,
-        descricao_interesse: data.descricao_interesse || null,
-        tipo_interesse: data.tipo_interesse || null,
-        orcamento: data.orcamento || null,
-        area_interesse: data.area_interesse || null,
-        quartos_interesse: data.quartos_interesse || null,
-        vagas_interesse: data.vagas_interesse || null,
-        bairros_interesse: data.bairros_interesse || null,
-        status: 'novo',
-      })
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Insert the lead using repository
+    const lead = await repository.create({
+      imobiliaria_id,
+      nome: data.nome,
+      telefone: data.telefone,
+      origem,
+      portal_origem,
+      moeda,
+      finalidade: data.finalidade || null,
+      prazo: data.prazo || null,
+      pagamento: data.pagamento || null,
+      descricao_interesse: data.descricao_interesse || null,
+      tipo_interesse: data.tipo_interesse || null,
+      orcamento: data.orcamento || null,
+      area_interesse: data.area_interesse || null,
+      quartos_interesse: data.quartos_interesse || null,
+      vagas_interesse: data.vagas_interesse || null,
+      bairros_interesse: data.bairros_interesse || null,
+      status: 'novo',
+    });
 
     processLeadReal(lead as Lead).catch((err) => console.error('Erro no processamento automático:', err));
 

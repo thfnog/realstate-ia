@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import * as mock from '@/lib/mockDb';
+import { getUserSupabaseClient } from '@/lib/supabase';
+import { cookies } from 'next/headers';
+import { getCorretorRepository } from '@/lib/repositories/factory';
+import { getAuthFromCookies } from '@/lib/auth';
 import { fetchInstanceOwner } from '@/lib/whatsapp';
 
 // GET: Get a broker by ID
@@ -9,23 +11,20 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getAuthFromCookies();
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
     const { id } = await params;
-    
-    if (mock.isMockMode()) {
-      const c = mock.getCorretorById(id);
-      if (!c) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
-      return NextResponse.json(c);
-    }
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getCorretorRepository(client);
 
-    const { data, error } = await supabaseAdmin
-      .from('corretores')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
-  } catch {
+    const corretor = await repository.findById(id, session.imobiliaria_id);
+    if (!corretor) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+    return NextResponse.json(corretor);
+  } catch (err) {
+    console.error('SERVER ERROR GET CORRETOR:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
@@ -36,39 +35,28 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getAuthFromCookies();
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
     const { id } = await params;
     const body = await request.json();
 
-    if (mock.isMockMode()) {
-      const updated = mock.updateCorretor(id, {
-        nome: body.nome,
-        telefone: body.telefone,
-        email: body.email || null,
-        ativo: body.ativo ?? true,
-      });
-      if (!updated) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
-      return NextResponse.json(updated);
-    }
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getCorretorRepository(client);
 
-    const { data, error } = await supabaseAdmin
-      .from('corretores')
-      .update({
-        nome: body.nome,
-        telefone: body.telefone,
-        email: body.email || null,
-        ativo: body.ativo ?? true,
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    const updated = await repository.update(id, session.imobiliaria_id, {
+      nome: body.nome,
+      telefone: body.telefone,
+      email: body.email || null,
+      ativo: body.ativo ?? true,
+    });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch {
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    console.error('API PUT Error:', err);
+    return NextResponse.json({ error: err.message || 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -78,25 +66,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getAuthFromCookies();
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
     const { id } = await params;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getCorretorRepository(client);
 
-    if (mock.isMockMode()) {
-      mock.deleteCorretor(id);
-      return NextResponse.json({ success: true });
-    }
-
-    const { error } = await supabaseAdmin
-      .from('corretores')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
+    await repository.delete(id, session.imobiliaria_id);
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  } catch (err: any) {
+    console.error('SERVER ERROR DELETE CORRETOR:', err);
+    return NextResponse.json({ error: err.message || 'Erro interno' }, { status: 500 });
   }
 }
 
@@ -106,18 +89,20 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getAuthFromCookies();
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
     const { id } = await params;
     const body = await request.json();
 
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value || '';
+    const client = getUserSupabaseClient(token);
+    const repository = getCorretorRepository(client);
+
     // --- LÓGICA DE SEGURANÇA WHATSAPP (STRICT 1:1) ---
     if (body.whatsapp_status === 'open') {
-      let currentBroker;
-      if (mock.isMockMode()) {
-        currentBroker = mock.getCorretorById(id);
-      } else {
-        const { data } = await supabaseAdmin.from('corretores').select('*').eq('id', id).single();
-        currentBroker = data;
-      }
+      const currentBroker = await repository.findById(id, session.imobiliaria_id);
 
       if (currentBroker && currentBroker.whatsapp_instance) {
         // 1. Descobrir qual número realmente conectou
@@ -126,23 +111,11 @@ export async function PATCH(
 
         if (connectedNumber) {
           // 2. Verificar se esse número já pertence a outro corretor
-          // (Seja pelo campo 'telefone' ou pelo 'whatsapp_number' de quem está 'open')
-          let conflict;
-          if (mock.isMockMode()) {
-             // Mock check
-             conflict = mock.getCorretores().find(c => 
-               c.id !== id && 
-               (c.telefone?.replace(/\D/g, '') === connectedNumber || c.whatsapp_number === connectedNumber)
-             );
-          } else {
-             const { data } = await supabaseAdmin
-               .from('corretores')
-               .select('id, nome')
-               .neq('id', id)
-               .or(`telefone.ilike.%${connectedNumber}%,whatsapp_number.eq.${connectedNumber}`)
-               .maybeSingle();
-             conflict = data;
-          }
+          const corretores = await repository.findAll(session.imobiliaria_id);
+          const conflict = corretores.find(c => 
+            c.id !== id && 
+            (c.telefone?.replace(/\D/g, '') === connectedNumber || c.whatsapp_number === connectedNumber)
+          );
 
           if (conflict) {
             console.warn(`🛑 CONFLITO WHATSAPP: O número ${connectedNumber} já pertence ao corretor ${conflict.nome}`);
@@ -164,26 +137,10 @@ export async function PATCH(
       }
     }
 
-    if (mock.isMockMode()) {
-      const updated = mock.updateCorretor(id, body);
-      if (!updated) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
-      return NextResponse.json(updated);
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('corretores')
-      .update(body)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('❌ Erro no PATCH Corretor:', error);
-    return NextResponse.json({ error: 'Erro interno ao processar atualização' }, { status: 500 });
+    const updated = await repository.update(id, session.imobiliaria_id, body);
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    console.error('❌ Erro no PATCH Corretor:', err);
+    return NextResponse.json({ error: err.message || 'Erro interno ao processar atualização' }, { status: 500 });
   }
 }
