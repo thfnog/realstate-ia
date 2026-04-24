@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, getUserSupabaseClient } from '@/lib/supabase';
+import { cookies } from 'next/headers';
 import * as mock from '@/lib/mockDb';
 import { getConfig } from '@/lib/countryConfig';
 import type { LeadFormData, Lead } from '@/lib/database.types';
@@ -41,14 +42,16 @@ export async function GET(request: Request) {
     });
   }
 
-  let query = supabaseAdmin
+  // Use user-bound client for RLS
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value || '';
+  const userSupabase = getUserSupabaseClient(token);
+
+  let query = userSupabase
     .from('leads')
-    .select('*, corretores(*)', { count: 'exact' })
-    .eq('imobiliaria_id', session.imobiliaria_id);
+    .select('*, corretores(*)', { count: 'exact' });
   
-  // Apply Role Filter
-  const { applyRoleFilter } = await import('@/lib/api-utils');
-  query = applyRoleFilter(query, session);
+  // Note: Manual filters (imobiliaria_id and role) are now handled by RLS in Supabase
   
   query = query.order('criado_em', { ascending: false });
 

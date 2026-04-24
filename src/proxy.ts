@@ -1,34 +1,71 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { jwtVerify } from 'jose';
+
+// These routes don't require authentication
+const publicRoutes = [
+  '/login',
+  '/registro',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/ingest',
+  '/api/webhooks',
+  '/api/public',
+  '/api/cron', // Cron routes have their own internal validation
+  '/_next',
+  '/favicon.ico',
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /admin routes
-  if (!pathname.startsWith('/admin')) {
+  // Check if it's a public route
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Check for auth token in cookies
+  // Get token from cookies
   const token = request.cookies.get('auth-token')?.value;
 
   if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  const payload = await verifyToken(token);
-  if (!payload) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  try {
+    // We need to verify the JWT
+    // Middleware runs on Edge, so we use jose
+    const secret = new TextEncoder().encode(
+      process.env.NEXTAUTH_SECRET || 'fallback-dev-secret-only-for-local-mock'
+    );
+    
+    await jwtVerify(token, secret);
+    
+    // Token is valid
+    return NextResponse.next();
+  } catch (error) {
+    console.error('Middleware Auth Error:', error);
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Token inválido ou expirado' }, { status: 401 });
+    }
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('auth-token');
+    return response;
   }
-
-  return NextResponse.next();
 }
 
+// See "Matching Paths" below to learn more
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/public (public APIs)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api/public|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
