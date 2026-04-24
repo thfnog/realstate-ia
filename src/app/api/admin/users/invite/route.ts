@@ -25,6 +25,7 @@ export async function POST(request: Request) {
         hash_senha: 'password123', // Default for mock
         role: role as any,
         corretor_id: corretor_id || null,
+        auth_id: null,
       });
       return NextResponse.json({ success: true, user: newUser });
     }

@@ -627,6 +627,7 @@ export function seedTestData() {
       hash_senha: 'admin123', // In mock mode we use plain or handled by bypass
       role: 'admin',
       corretor_id: null,
+      auth_id: null,
     });
   }
 
@@ -648,6 +649,7 @@ export function seedTestData() {
       hash_senha: 'admin123',
       role: 'corretor',
       corretor_id: c1.id,
+      auth_id: null,
     });
   }
   

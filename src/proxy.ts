@@ -1,65 +1,67 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
+import { verifyToken } from './lib/auth';
 
-// These routes don't require authentication
+// Routes that don't require authentication
 const publicRoutes = [
   '/login',
   '/registro',
-  '/api/auth/login',
-  '/api/auth/register',
+  '/auth/confirm',
+  '/api/auth',
+  '/api/public',
   '/api/ingest',
   '/api/webhooks',
-  '/api/public',
-  '/api/cron', // Cron routes have their own internal validation
+  '/api/cron',
   '/_next',
   '/favicon.ico',
+  '/formulario'
 ];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if it's a public route
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  // 1. Skip for public routes and root
+  if (pathname === '/' || publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Get token from cookies
+  // 2. Check for auth-token cookie
   const token = request.cookies.get('auth-token')?.value;
 
   if (!token) {
-    console.log('Middleware: No token found for', pathname);
-    /* 
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
-    return NextResponse.redirect(new URL('/login', request.url));
-    */
     return NextResponse.next();
   }
 
-  try {
-    const secret = new TextEncoder().encode(
-      process.env.SUPABASE_JWT_SECRET || process.env.NEXTAUTH_SECRET || 'fallback-dev-secret-only-for-local-mock'
-    );
-    
-    await jwtVerify(token, secret);
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware Auth Error for', pathname, ':', error);
-    /*
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Token inválido ou expirado' }, { status: 401 });
-    }
+  // 3. Verify token
+  const payload = await verifyToken(token);
+
+  if (!payload) {
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('auth-token');
     return response;
-    */
-    return NextResponse.next();
   }
+
+  // 4. Role-based protection
+  if (payload.app_role === 'corretor') {
+    const adminOnlyRoutes = [
+      '/admin/config',
+      '/admin/carteira',
+      '/admin/webhook-logs',
+      '/admin/usuarios'
+    ];
+    
+    if (adminOnlyRoutes.some(route => pathname.startsWith(route))) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+  }
+
+  return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
+// Matching Paths
 export const config = {
   matcher: [
     /*

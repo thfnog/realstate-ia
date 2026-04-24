@@ -33,6 +33,7 @@ export async function POST(request: Request) {
           hash_senha: pswd, // Note: Always hash in production
           role: 'admin',
           corretor_id: null,
+          auth_id: null,
         });
 
         // ... (demo data injection follows)
