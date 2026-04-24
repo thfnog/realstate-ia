@@ -209,13 +209,13 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       }
 
       if (currentStatus !== 'novo') {
-        console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${maskName(lead.nome)}.`);
+        console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${maskName(lead.nome)} (${currentStatus}).`);
       } else {
         // 5.3 Check if name is pending — ask for it instead of standard reply
         const isNamePending = lead.nome?.startsWith('Lead #');
         
         if (isNamePending && !options?.customReply) {
-          console.log('📱 Step 5: Nome pendente — enviando pergunta de nome ao Lead...');
+          console.log(`📱 Step 5: Nome pendente — enviando pergunta de nome ao Lead... (Instância: ${isFormLead && !isSoloBroker ? 'Default' : 'Broker'})`);
           const nameAskMsg = config.code === 'BR'
             ? `Olá! 😊 Sou o ${corretor.nome}, da nossa equipe. Recebi sua mensagem e quero te ajudar da melhor forma!\n\nPra começar, poderia me dizer seu nome?`
             : `Olá! 😊 Sou o ${corretor.nome}, da nossa equipa. Recebi a sua mensagem e quero ajudá-lo da melhor forma!\n\nPara começar, pode dizer-me o seu nome?`;
@@ -227,6 +227,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             customMessage: nameAskMsg,
             useDefaultInstance: isFormLead && !isSoloBroker,
           });
+          console.log('  → Pergunta de nome enviada.');
         } else {
           // 5.4 For form leads from a company, send corporate-style confirmation from default instance
           let replyMsg = options?.customReply;
@@ -236,7 +237,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
               : `Olá${lead.nome && !lead.nome.startsWith('Lead #') ? ` ${lead.nome.split(' ')[0]}` : ''}! 😊 Recebemos a sua solicitação e o consultor ${corretor.nome} irá contactá-lo brevemente. Obrigado pelo seu interesse!`;
           }
 
-          console.log(`📱 Step 5: Enviando resposta automática ao Lead...${isFormLead ? ' (via formulário)' : ''}`);
+          console.log(`📱 Step 5: Enviando resposta automática ao Lead...${isFormLead ? ' (via formulário)' : ''} (Instância: ${isFormLead && !isSoloBroker ? 'Default' : 'Broker'})`);
           await sendAutoReplyToLead({
             lead,
             corretor,
@@ -244,6 +245,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             customMessage: replyMsg,
             useDefaultInstance: isFormLead && !isSoloBroker,
           });
+          console.log('  → Resposta automática enviada com sucesso.');
         }
       }
     } else {

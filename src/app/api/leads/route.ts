@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getUserSupabaseClient } from '@/lib/supabase';
+import { waitUntil } from '@vercel/functions';
 import { cookies } from 'next/headers';
 import { getLeadRepository } from '@/lib/repositories/factory';
 import { getConfig } from '@/lib/countryConfig';
@@ -181,7 +182,11 @@ export async function POST(request: Request) {
       status: 'novo',
     });
 
-    processLeadReal(lead as Lead).catch((err) => console.error('Erro no processamento automático:', err));
+    if (isMockMode()) {
+      processLeadMock(lead as Lead).catch((err) => console.error('Erro no processamento automático (mock):', err));
+    } else {
+      waitUntil(processLeadReal(lead as Lead));
+    }
 
     return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
   } catch (err) {
