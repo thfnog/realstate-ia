@@ -30,7 +30,12 @@ export default function ImoveisPage() {
     try {
       const res = await fetch('/api/imoveis');
       const data = await res.json();
-      if (Array.isArray(data)) setImoveis(data);
+      
+      if (data && Array.isArray(data.data)) {
+        setImoveis(data.data);
+      } else if (Array.isArray(data)) {
+        setImoveis(data);
+      }
     } catch (err) {
       console.error('Erro:', err);
     } finally {
