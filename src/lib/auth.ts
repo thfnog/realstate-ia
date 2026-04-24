@@ -46,23 +46,41 @@ export async function signIn(email: string, password: string): Promise<string | 
 
   if (isMockMode()) {
     user = getUsuarioByEmail(email);
+    if (!user || !user.hash_senha) return null;
+    const isValid = await bcrypt.compare(password, user.hash_senha);
+    if (!isValid) return null;
   } else {
-    // REAL MODE: Query Supabase
-    const { supabaseAdmin } = await import('@/lib/supabase');
-    const { data, error } = await supabaseAdmin
+    // REAL MODE: Authenticate via Supabase Auth
+    const { supabase, supabaseAdmin } = await import('@/lib/supabase');
+    
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError || !authData.user) return null;
+
+    // Fetch the profile from our public.usuarios table
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('usuarios')
       .select('*')
-      .eq('email', email)
+      .eq('auth_id', authData.user.id)
       .single();
     
-    if (error || !data) return null;
-    user = data;
+    if (profileError || !profile) {
+      // Fallback: search by email if auth_id link isn't established yet
+      const { data: fallbackProfile } = await supabaseAdmin
+        .from('usuarios')
+        .select('*')
+        .eq('email', email)
+        .single();
+      
+      if (!fallbackProfile) return null;
+      user = fallbackProfile;
+    } else {
+      user = profile;
+    }
   }
-
-  if (!user || !user.hash_senha) return null;
-  
-  const isValid = await bcrypt.compare(password, user.hash_senha);
-  if (!isValid) return null;
 
   const payload: SessionPayload = {
     usuario_id: user.id,

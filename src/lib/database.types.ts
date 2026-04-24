@@ -24,6 +24,7 @@ export type Usuario = {
   hash_senha?: string;
   role: Role;
   corretor_id: string | null;
+  auth_id: string | null;
   criado_em: string;
 };
 

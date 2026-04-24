@@ -31,25 +31,26 @@ Para o sistema funcionar em produção (Vercel), as seguintes variáveis devem e
 | `SUPABASE_JWT_SECRET` | *(JWT Secret)* | Necessário para assinar os tokens compatíveis com RLS |
 | `WHATSAPP_DEFAULT_INSTANCE` | *(Nome da instância)* | Instância "mãe" da agência para auto-respostas |
 
-### 4. CRM & Agenda (Fase 3) - CONCLUÍDO
+### 4. CRM & Agenda (Fase 3) - CONCLUÍDO ✅
 Implementamos as funcionalidades de negócio para otimizar o fluxo operacional da imobiliária:
-- **WebCal Sync (Calendário Externo)**: Criamos a rota `api/calendar/[id].ics` que permite aos corretores sincronizarem sua agenda do ImobIA com Google Calendar/Outlook.
-- **Dashboards Gerenciais**: Nova visão de performance por corretor, taxa de conversão e origem de leads em tempo real via `api/stats`.
-- **CRM Avançado**: Introdução do status "Descartado", melhorias no Kanban e na Tabela, permitindo esconder leads inativos do funil principal.
-- **Webhooks (ZAP/VivaReal)**: Integração via Canal Pro (`api/webhooks/grupozap`) para recebimento automático de leads de portais externos.
-- **UX Single Broker**: Otimização da Agenda e Escala para imobiliárias de um único consultor (auto-seleção e interface simplificada).
+- **WebCal Sync (Calendário Externo)**: Rota `/api/calendar/[id]` para sincronização com Google/Outlook.
+- **Dashboards Gerenciais**: Nova visão de performance e conversão via `/api/stats`.
+- **CRM Avançado**: Status "Descartado" e botões de ação rápida no Kanban/Tabela.
+- **Webhooks (ZAP/VivaReal)**: Integração via Canal Pro para recebimento automático de leads.
+- **UX Single Broker**: Otimização da agenda para imobiliárias de um único consultor.
 
-## 🛠️ Configuração de Ambiente (Envs)
+## 🛠️ Deploy & Produção
 
-Para o sistema funcionar em produção (Vercel), as seguintes variáveis devem estar configuradas:
+- **Código**: Submetido para a branch `master` (Vercel deploy em andamento).
+- **Build**: Validado localmente com sucesso.
+- **Ambiente**: O `MOCK_MODE` está desativado no Vercel; o sistema utiliza Supabase com RLS.
 
-| Variável | Valor Recomendado | Finalidade |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_MOCK_MODE` | `false` | Ativa o banco de dados real (Supabase) |
-| `SUPABASE_URL` | *(URL do seu projeto)* | Conexão com o banco real |
-| `SUPABASE_SERVICE_KEY` | *(Service Role Key)* | Acesso administrativo para o motor de IA |
-| `SUPABASE_JWT_SECRET` | *(JWT Secret)* | Necessário para assinar os tokens compatíveis com RLS |
-| `WHATSAPP_DEFAULT_INSTANCE` | *(Nome da instância)* | Instância "mãe" da agência para auto-respostas |
+> [!IMPORTANT]
+> **Ação Requerida**: É necessário rodar o script de migração no Supabase SQL Editor:
+> ```sql
+> ALTER TYPE status_lead ADD VALUE 'descartado';
+> ```
+> O script também está disponível em `supabase/migrations/20260424191000_add_descartado_to_lead_status.sql`.
 
 ## 🚀 Próximos Passos (Fase 4: Escala & IA Avançada)
 

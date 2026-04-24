@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import BrokerOnboarding from '@/components/corretores/BrokerOnboarding';
 
 import {
   BarChart,
@@ -43,7 +44,7 @@ interface Stats {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<{ app_role: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ app_role: string; email: string; corretor_id: string | null } | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -139,6 +140,10 @@ export default function AdminDashboard() {
            </Link>
         </div>
       </div>
+
+      {user?.app_role === 'corretor' && user.corretor_id && (
+        <BrokerOnboarding brokerId={user.corretor_id} />
+      )}
 
       {/* ===== TOP METRICS ===== */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

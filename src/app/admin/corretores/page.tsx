@@ -10,7 +10,7 @@ export default function CorretoresPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: '', telefone: '', email: '', ativo: true });
+  const [form, setForm] = useState({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false });
 
   async function fetchCorretores() {
     try {
@@ -27,13 +27,13 @@ export default function CorretoresPage() {
   useEffect(() => { fetchCorretores(); }, []);
 
   function openNew() {
-    setForm({ nome: '', telefone: '', email: '', ativo: true });
+    setForm({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false });
     setEditingId(null);
     setShowModal(true);
   }
 
   function openEdit(c: Corretor) {
-    setForm({ nome: c.nome, telefone: c.telefone, email: c.email || '', ativo: c.ativo });
+    setForm({ nome: c.nome, telefone: c.telefone, email: c.email || '', ativo: c.ativo, liberarAcesso: false });
     setEditingId(c.id);
     setShowModal(true);
   }
@@ -41,17 +41,45 @@ export default function CorretoresPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    let brokerId = editingId;
+    
     if (editingId) {
       await fetch(`/api/corretores/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          nome: form.nome,
+          telefone: form.telefone,
+          email: form.email,
+          ativo: form.ativo
+        }),
       });
     } else {
-      await fetch('/api/corretores', {
+      const res = await fetch('/api/corretores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          nome: form.nome,
+          telefone: form.telefone,
+          email: form.email,
+          ativo: form.ativo
+        }),
+      });
+      const data = await res.json();
+      brokerId = data.id;
+    }
+
+    // IF liberarAcesso is checked AND we have an email
+    if (form.liberarAcesso && form.email && brokerId) {
+      await fetch('/api/admin/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          role: 'corretor',
+          corretor_id: brokerId,
+          nome: form.nome
+        }),
       });
     }
 
@@ -197,15 +225,33 @@ export default function CorretoresPage() {
                 <label className="block text-sm font-medium text-text-primary mb-1">E-mail</label>
                 <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="ativo"
-                  checked={form.ativo}
-                  onChange={(e) => setForm({ ...form, ativo: e.target.checked })}
-                  className="rounded border-border"
-                />
-                <label htmlFor="ativo" className="text-sm text-text-primary">Ativo</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="ativo"
+                    checked={form.ativo}
+                    onChange={(e) => setForm({ ...form, ativo: e.target.checked })}
+                    className="rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="ativo" className="text-sm font-medium text-text-primary cursor-pointer">Corretor Ativo</label>
+                </div>
+
+                {!editingId && (
+                  <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                    <input
+                      type="checkbox"
+                      id="liberarAcesso"
+                      checked={form.liberarAcesso}
+                      onChange={(e) => setForm({ ...form, liberarAcesso: e.target.checked })}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="liberarAcesso" className="text-sm font-bold text-primary cursor-pointer">
+                      Liberar acesso à plataforma
+                      <span className="block text-[10px] font-normal text-slate-500">Envia convite por e-mail para ativar conta</span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {editingId && (
