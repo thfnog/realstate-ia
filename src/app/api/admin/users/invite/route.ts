@@ -31,32 +31,9 @@ export async function POST(request: Request) {
     }
 
     // REAL MODE: Supabase Auth Invitation
-    // 1. First, pre-create the profile in public.usuarios
-    // This ensures that when they accept the invite, the trigger finds the record.
-    const { data: existingUser } = await supabaseAdmin
-      .from('usuarios')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (!existingUser) {
-      const { error: profileError } = await supabaseAdmin
-        .from('usuarios')
-        .insert({
-          imobiliaria_id: session.imobiliaria_id,
-          email,
-          role: role as any,
-          corretor_id: corretor_id || null,
-        });
-
-      if (profileError) {
-        console.error('[INVITE] Erro ao criar perfil:', profileError);
-        return NextResponse.json({ error: 'Erro ao criar perfil de usuário' }, { status: 500 });
-      }
-    }
-
-    // 2. Send Supabase Invitation
-    // metadata will be picked up by the trigger if needed, though we already created the profile.
+    // We no longer pre-create the profile here. 
+    // We call invite FIRST. If it succeeds, the DB trigger 'on_auth_user_created' 
+    // will automatically create the profile in 'public.usuarios'.
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: {
         imobiliaria_id: session.imobiliaria_id,

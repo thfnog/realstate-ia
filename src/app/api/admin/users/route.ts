@@ -69,20 +69,22 @@ export async function DELETE(request: Request) {
       .eq('id', userId)
       .single();
 
-    if (getError) throw getError;
+    if (getError && getError.code !== 'PGRST116') throw getError;
 
-    // 2. Delete from auth.users (this will cascade delete from public.usuarios via our REFERENCES)
+    // 2. Delete from auth.users (if it exists)
     if (user?.auth_id) {
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user.auth_id);
-      if (authError) throw authError;
-    } else {
-      // If no auth_id, just delete from public.usuarios
-      const { error: dbError } = await supabaseAdmin
-        .from('usuarios')
-        .delete()
-        .eq('id', userId);
-      if (dbError) throw dbError;
+      // We don't throw if auth user is already gone, just log it
+      if (authError) console.warn('[USERS DELETE] Auth user not found or error:', authError.message);
     }
+
+    // 3. Delete from public.usuarios explicitly (even if it's supposed to cascade)
+    const { error: dbError } = await supabaseAdmin
+      .from('usuarios')
+      .delete()
+      .eq('id', userId);
+
+    if (dbError) throw dbError;
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
