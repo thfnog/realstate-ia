@@ -42,49 +42,39 @@ O ImobIA está preparado para capturar leads nos principais ecossistemas imobili
 
 ---
 
-## 3. Inteligência e Atribuição
-
-Uma vez que o lead entra no sistema, o motor executa as seguintes lógicas:
-
-1.  **Detecção de Região**: O sistema aplica tabelas de impostos (CNPJ/NIF) e terminologia regional de forma isolada por agência.
-2.  **A Regra do Plantão (Escala)**:
-    - O sistema verifica a **Agenda de Escala**.
-    - Se houver um corretor escalado para o dia/hora, ele recebe o lead com prioridade total.
-    - Caso contrário, o sistema utiliza o **Round-robin** (fila circular) entre os corretores ativos.
-3.  **Property Matching**:
-    - A IA analisa o orçamento e bairros de interesse.
-    - Seleciona automaticamente os **3 melhores imóveis** do portfólio da agência para sugerir no briefing.
+3.  **Property Matching (Engine V2)**:
+    - **Filtro de Finalidade**: O sistema separa rigorosamente leads de **Compra** e **Arrendamento/Aluguel**.
+    - **Algoritmo de Scoring**: Calcula um índice de 0 a 100% pesando:
+        - **Preço**: Recompensas para valores dentro de 15% do orçamento.
+        - **Quartos**: Peso maior para match exato.
+        - **Localização**: Busca fuzzy (similaridade de texto) para bairros e freguesias.
+    - **Transparência**: O corretor vê exatamente o que deu match (ex: "Mesmo Bairro", "Preço Ideal").
 
 ---
 
-## 4. O Briefing (Output Final)
+## 4. O Briefing e Notificações Customizadas
 
-A entrega ao corretor é feita via WhatsApp de forma estruturada:
+A entrega ao corretor é personalizada por perfil:
 
-- **Identificação do Cliente**: Nome e telefone com link direto para chamada.
-- **Origem do Lead**: Ex: "Vindo do VivaReal".
-- **Resumo IA**: "O cliente busca um apto de 3 quartos no Morumbi até R$ 800k".
-- **Sugestões de Atendimento**: "Apresente o Imóvel REF-123 e REF-456 que são compatíveis".
+- **Preferências do Usuário**: Cada corretor define no painel de configurações se deseja receber alertas por **WhatsApp, E-mail ou Push**.
+- **Conteúdo Estruturado**:
+    - **Identificação do Cliente**: Nome e telefone com link direto para chamada.
+    - **Match Score**: Ex: "92% de Compatibilidade".
+    - **Sugestões Justificadas**: "Apresente o Imóvel REF-123 (Mesmo bairro e tipologia)".
 
 ---
 
 ## 5. Agenda e Sincronização Unificada
-
-O fluxo pós-atendimento é gerido pela Agenda Inteligente:
-
-- **Agendamento**: O corretor marca visitas ou reuniões no painel.
-- **Sincronização**: O sistema gera um link **WebCal (WebCal)**.
-  - > [!TIP]
-  - > Este link permite que o corretor visualize os seus compromissos do ImobIA diretamente no **Google Calendar** ou **iPhone**, sem precisar de abrir a nossa App.
+(Mantido conforme anterior...)
 
 ---
 
-## 6. Gestão da Imobiliária
+## 6. Gestão e Diagnósticos Administrativos
 
-O administrador tem controle total sobre o ecossistema:
-- **Painel de Configurações**: Ativação/Desativação de canais conforme a região.
-- **Segurança**: Chaves segredo para validação de Webhooks (Anit-Spam).
-- **Escala**: Gestão visual dos corretores de plantão.
+O administrador tem ferramentas para garantir que o ecossistema está saudável:
+- **Painel de Diagnóstico**: Ferramentas integradas para testar o envio de mensagens (WhatsApp e Slack) com log de resposta bruto da API.
+- **Segurança**: Chaves de API e Webhook Secrets protegidos.
+- **Auditoria de Matching**: Acesso à API de recomendações centralizada para validar sugestões.
 
 ---
 © 2026 ImobIA — Inteligência Imobiliária de Ponta a Ponta.

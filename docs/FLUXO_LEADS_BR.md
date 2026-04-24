@@ -14,15 +14,21 @@ O motor regionalizado do ImobIA assume o controle em 4 etapas:
 
 1.  **Identificação**: O sistema deteta que a agência é **BR** e aplica as regras de moeda (R$) e terminologia (Quartos, Vagas).
 2.  **Atribuição (Roleta)**: O lead é entregue ao corretor que está "De Plantão" na Escala do dia. Se não houver escala, usa-se o sistema de Fila (Round-robin).
-3.  **Qualificação**: O motor analisa a mensagem original do lead para identificar o perfil de interesse e a finalidade (Venda ou Aluguer).
-4.  **Recomendação**: O sistema faz um "match" instantâneo com os imóveis da agência, selecionando os 3 mais compatíveis por Bairro e Orçamento.
+3.  **Qualificação e Filtro Estrito**: O motor identifica a finalidade (**Comprar** vs. **Alugar**). O sistema agora garante que leads interessados em compra nunca recebam sugestões de aluguel, e vice-versa.
+4.  **Matching Inteligente (Scoring)**: O sistema calcula um score de compatibilidade (0-100%) baseado em:
+    - **Finalidade**: Match obrigatório.
+    - **Preço**: Margem de ±15% a ±25%.
+    - **Tipologia**: Match exato ou ±1 quarto.
+    - **Localização**: Busca por similaridade de strings nos bairros.
 
-## 3. Entrega (Briefing para o Corretor)
-O corretor não precisa de abrir o computador. Ele recebe um **Briefing Inteligente** via WhatsApp:
+## 3. Entrega (Briefing e Notificações)
+O corretor recebe a inteligência onde preferir, conforme suas **Preferências de Notificação**:
 
-- **Dados do Lead**: Nome, Telefone (com botão de clique para ligar) e Origem (ex: VivaReal).
-- **Contexto**: Resumo da mensagem do cliente.
-- **Sugestão de Atendimento**: O sistema sugere imóveis específicos do portfólio para o corretor já iniciar o atendimento com opções na mão.
+- **Canais Configuráveis**: O corretor pode ativar/desativar alertas via WhatsApp, E-mail e Push no seu perfil.
+- **Briefing no WhatsApp**: 
+    - **Dados do Lead**: Nome, Telefone (com botão de clique para ligar) e Origem (ex: VivaReal).
+    - **Match Score**: Indicação visual da compatibilidade (ex: "85% Match").
+    - **Sugestão de Atendimento**: Imóveis compatíveis com selos de "Valor", "Bairro" ou "Quartos" para justificar a escolha.
 
 ---
 
