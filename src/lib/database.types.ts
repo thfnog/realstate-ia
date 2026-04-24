@@ -37,6 +37,10 @@ export type Corretor = {
   whatsapp_instance?: string;
   whatsapp_status?: 'open' | 'close' | 'connecting';
   whatsapp_number?: string;
+  // P3: Preferências de Notificação
+  pref_notif_whatsapp: boolean;
+  pref_notif_email: boolean;
+  pref_notif_push: boolean;
   criado_em: string;
 };
 

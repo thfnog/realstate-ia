@@ -3,6 +3,33 @@ import { supabaseAdmin } from '@/lib/supabase';
 import * as mock from '@/lib/mockDb';
 import { fetchInstanceOwner } from '@/lib/whatsapp';
 
+// GET: Get a broker by ID
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    
+    if (mock.isMockMode()) {
+      const c = mock.getCorretorById(id);
+      if (!c) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+      return NextResponse.json(c);
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('corretores')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
+
 // PUT: Update a broker
 export async function PUT(
   request: Request,

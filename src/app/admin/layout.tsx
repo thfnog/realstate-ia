@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
+import { CommandPalette } from '@/components/CommandPalette';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
@@ -20,8 +21,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [countryMode, setCountryMode] = useState<string>('PT');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
 
   useEffect(() => {
+    // Fetch imobiliaria info
     fetch('/api/imobiliaria')
       .then(res => res.json())
       .then(data => {
@@ -30,9 +33,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       })
       .catch(() => {});
-  }, []);
+
+    // Fetch user session
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.role) {
+          setUser(data);
+        } else {
+          router.push('/login');
+        }
+      })
+      .catch(() => {
+        router.push('/login');
+      });
+  }, [router]);
 
   const countryFlag = countryMode === 'PT' ? '🇵🇹' : '🇧🇷';
+
+  // Filter nav items based on role
+  const filteredNavItems = navItems.filter(item => {
+    if (user?.role === 'admin') return true;
+    
+    // Brokers don't see Configurações or Carteira
+    const restricted = ['/admin/config', '/admin/carteira'];
+    return !restricted.includes(item.href);
+  });
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -47,14 +73,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span className="text-2xl">🏠</span>
           <div>
             <h1 className="text-white font-bold text-lg leading-none">ImobIA</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Painel Admin {countryFlag}</p>
+            <p className="text-xs text-slate-500 mt-0.5">Painel {user?.role === 'admin' ? 'Admin' : 'Corretor'} {countryFlag}</p>
           </div>
         </Link>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -74,30 +100,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="px-3 py-4 border-t border-white/5">
+      {/* User Info & Logout */}
+      <div className="px-3 py-6 border-t border-white/5 space-y-4 bg-sidebar-bg/50 backdrop-blur-md">
+        {user && (
+          <div className="px-4 py-2.5 bg-white/5 rounded-xl border border-white/5">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Usuário</p>
+            <p className="text-sm text-slate-300 truncate font-medium">{user.email}</p>
+          </div>
+        )}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-all duration-300 border border-transparent hover:border-rose-500/20"
         >
-          <span className="text-lg">🚪</span>
-          Sair
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🚪</span>
+            Sair da Conta
+          </div>
+          <span className="text-[10px] opacity-40 italic">v2.0</span>
         </button>
       </div>
     </>
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <CommandPalette />
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-sidebar-bg flex-col shrink-0">
+      <aside className="hidden lg:flex w-64 bg-sidebar-bg flex-col shrink-0 border-r border-white/5">
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar (Drawer) */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-sm transition-all duration-300"
           onClick={() => setIsSidebarOpen(false)}
         >
           <aside 
@@ -128,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth">
+        <main className="flex-1 overflow-y-auto scroll-smooth bg-background">
           <div className="p-4 md:p-8 max-w-7xl mx-auto">
             <Toaster position="top-right" richColors closeButton />
             {children}

@@ -207,25 +207,43 @@ export function AgendaModal({
                 </div>
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
-                  {matchingImoveis.map(imob => (
-                    <div key={imob.id} className="min-w-[240px] max-w-[240px] p-4 bg-white rounded-2xl border border-border-light shadow-sm hover:shadow-md transition-all group">
-                      <div className="h-24 rounded-xl overflow-hidden mb-3">
-                         <img 
-                           src={imob.fotos?.[0]?.url_media || 'https://placehold.co/400x300?text=ImobIA'} 
-                           className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
-                           alt="Imóvel"
-                         />
+                  {matchingImoveis.map(imob => {
+                    const scorePercentage = Math.min(100, ((imob.score || 0) / 15) * 100).toFixed(0);
+                    return (
+                      <div key={imob.id} className="min-w-[260px] max-w-[260px] p-4 bg-white rounded-2xl border border-border-light shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+                        {/* Match Score Badge */}
+                        <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-primary text-white text-[9px] font-black rounded-lg shadow-lg">
+                           {scorePercentage}% MATCH
+                        </div>
+
+                        <div className="h-24 rounded-xl overflow-hidden mb-3">
+                           <img 
+                             src={imob.fotos?.[0]?.url_media || 'https://placehold.co/400x300?text=ImobIA'} 
+                             className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" 
+                             alt="Imóvel"
+                           />
+                        </div>
+                        <h4 className="text-xs font-bold text-text-primary truncate">{imob.titulo}</h4>
+                        <p className="text-[10px] text-primary font-black mt-1">{(imob.valor / 1000).toFixed(0)}k • {imob.freguesia}</p>
+                        
+                        {/* Score Breakdown (Small dots or text) */}
+                        <div className="mt-3 flex flex-wrap gap-1">
+                           {imob.scoreBreakdown?.slice(0, 3).map((b: string, idx: number) => (
+                             <span key={idx} className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium">
+                               {b.split(':')[0]}
+                             </span>
+                           ))}
+                        </div>
+
+                        <Link 
+                          href={`/admin/imoveis/${imob.id}`}
+                          className="mt-4 block text-center py-2.5 rounded-xl bg-surface-alt text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all border border-border-light/50"
+                        >
+                          Ver Imóvel
+                        </Link>
                       </div>
-                      <h4 className="text-xs font-bold text-text-primary truncate">{imob.titulo}</h4>
-                      <p className="text-[10px] text-primary font-black mt-1">{(imob.valor / 1000).toFixed(0)}k • {imob.freguesia}</p>
-                      <Link 
-                        href={`/admin/imoveis/${imob.id}`}
-                        className="mt-3 block text-center py-2 rounded-lg bg-surface-alt text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
-                      >
-                        Ver Detalhes
-                      </Link>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

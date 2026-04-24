@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PreferencesCard } from '@/components/config/PreferencesCard';
 
 interface ChannelConfig {
   form: boolean;
@@ -10,6 +11,7 @@ interface ChannelConfig {
 }
 
 export default function ConfigPage() {
+  const [user, setUser] = useState<{ role: string; corretor_id: string | null } | null>(null);
   const [countryMode, setCountryMode] = useState<'PT' | 'BR'>('PT');
   const [imobId, setImobId] = useState<string>('');
   const [nome, setNome] = useState<string>('');
@@ -24,6 +26,10 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => setUser(data));
+
     fetch('/api/imobiliaria')
       .then(res => res.json())
       .then(data => {
@@ -82,6 +88,12 @@ export default function ConfigPage() {
         <h1 className="text-2xl font-bold text-text-primary">Configurações</h1>
         <p className="text-text-secondary text-sm mt-1">Configuração do sistema e canais de entrada</p>
       </div>
+
+      {user?.corretor_id && (
+        <div className="mb-8">
+           <PreferencesCard />
+        </div>
+      )}
 
       {/* Tenant Identity Panel */}
       <div className="bg-white rounded-xl border border-border-light overflow-hidden mb-6">
@@ -356,6 +368,57 @@ export default function ConfigPage() {
            <div className="bg-slate-900 rounded-lg p-4">
              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Log da Resposta:</span>
              <pre id="debugLog" className="text-[11px] font-mono text-emerald-400 overflow-x-auto whitespace-pre-wrap min-h-[40px]">
+               Aguardando teste...
+             </pre>
+           </div>
+         </div>
+      )}
+
+      {/* Slack Diagnostic */}
+      {user?.role === 'admin' && (
+         <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 mb-6">
+           <div className="flex items-center gap-3 mb-4">
+             <span className="text-2xl text-slate-600">💬</span>
+             <div>
+               <h2 className="text-lg font-bold text-slate-900">Teste de Alertas Slack</h2>
+               <p className="text-xs text-slate-600">Envie um alerta de teste para o canal configurado via Webhook</p>
+             </div>
+           </div>
+
+           <div className="flex flex-col sm:flex-row gap-4 mb-4">
+             <input 
+               type="text" 
+               placeholder="Mensagem de teste..."
+               id="slackMsg"
+               className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-slate-300 outline-none text-sm"
+             />
+             <button 
+               onClick={async () => {
+                 const message = (document.getElementById('slackMsg') as HTMLInputElement).value;
+                 const logArea = document.getElementById('slackLog');
+                 if (logArea) logArea.innerText = '⏳ Enviando para Slack...';
+                 
+                 try {
+                   const res = await fetch('/api/admin/slack-test', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ message })
+                   });
+                   const data = await res.json();
+                   if (logArea) logArea.innerText = JSON.stringify(data, null, 2);
+                 } catch (err: any) {
+                   if (logArea) logArea.innerText = '❌ Erro: ' + err.message;
+                 }
+               }}
+               className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
+             >
+               <span>📤</span> Enviar Teste
+             </button>
+           </div>
+
+           <div className="bg-slate-900 rounded-lg p-4">
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Status do Envio:</span>
+             <pre id="slackLog" className="text-[11px] font-mono text-emerald-400 overflow-x-auto whitespace-pre-wrap min-h-[40px]">
                Aguardando teste...
              </pre>
            </div>

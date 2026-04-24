@@ -187,9 +187,11 @@ export function deleteImovel(id: string): boolean {
 
 // ===== Leads =====
 
-export function getLeads(status?: string): LeadComCorretor[] {
+export function getLeads(status?: string, corretorId?: string): LeadComCorretor[] {
   let result = [...leads];
   if (status) result = result.filter((l) => l.status === status);
+  if (corretorId) result = result.filter((l) => l.corretor_id === corretorId);
+  
   return result
     .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
     .map((l) => ({
@@ -314,11 +316,12 @@ export function deleteEscala(id: string): boolean {
 
 // ===== Eventos =====
 
-export function getEventos(leadId?: string, start?: string, end?: string): EventoComDetalhes[] {
+export function getEventos(leadId?: string, start?: string, end?: string, corretorId?: string): EventoComDetalhes[] {
   let result = [...eventos];
   if (leadId) result = result.filter(e => e.lead_id === leadId);
   if (start) result = result.filter(e => e.data_hora >= start);
   if (end) result = result.filter(e => e.data_hora <= end);
+  if (corretorId) result = result.filter(e => e.corretor_id === corretorId);
   
   return result
     .sort((a, b) => a.data_hora.localeCompare(b.data_hora))
@@ -360,10 +363,10 @@ function seedPT() {
   const iId = DEFAULT_IMOBILIARIA_ID;
 
   // Create brokers (consultores in PT)
-  const c1 = createCorretor({ imobiliaria_id: iId, nome: 'João Ferreira', telefone: '+351912345001', email: 'joao@imob.pt', ativo: true });
-  const c2 = createCorretor({ imobiliaria_id: iId, nome: 'Ana Rodrigues', telefone: '+351912345002', email: 'ana@imob.pt', ativo: true });
-  const c3 = createCorretor({ imobiliaria_id: iId, nome: 'Pedro Santos', telefone: '+351912345003', email: 'pedro@imob.pt', ativo: true });
-  createCorretor({ imobiliaria_id: iId, nome: 'Maria Costa', telefone: '+351912345004', email: 'maria@imob.pt', ativo: false });
+  const c1 = createCorretor({ imobiliaria_id: iId, nome: 'João Ferreira', telefone: '+351912345001', email: 'joao@imob.pt', ativo: true, pref_notif_whatsapp: true, pref_notif_email: true, pref_notif_push: true });
+  const c2 = createCorretor({ imobiliaria_id: iId, nome: 'Ana Rodrigues', telefone: '+351912345002', email: 'ana@imob.pt', ativo: true, pref_notif_whatsapp: true, pref_notif_email: true, pref_notif_push: true });
+  const c3 = createCorretor({ imobiliaria_id: iId, nome: 'Pedro Santos', telefone: '+351912345003', email: 'pedro@imob.pt', ativo: true, pref_notif_whatsapp: true, pref_notif_email: true, pref_notif_push: true });
+  createCorretor({ imobiliaria_id: iId, nome: 'Maria Costa', telefone: '+351912345004', email: 'maria@imob.pt', ativo: false, pref_notif_whatsapp: false, pref_notif_email: false, pref_notif_push: false });
 
   // Create properties (Portugal — T1, T2, T3, etc.)
   createImovel({ imobiliaria_id: iId, tipo: 'apartamento', freguesia: 'Chiado', valor: 350000, moeda, area_util: 65, quartos: 2, vagas_garagem: 1, status: 'disponivel', link_fotos: null } as any);
@@ -468,10 +471,10 @@ function seedBR() {
   const iId = DEFAULT_IMOBILIARIA_ID;
 
   // Create brokers
-  const c1 = createCorretor({ imobiliaria_id: iId, nome: 'Carlos Mendes', telefone: '+5511999990001', email: 'carlos@imob.com', ativo: true });
-  const c2 = createCorretor({ imobiliaria_id: iId, nome: 'Ana Beatriz', telefone: '+5511999990002', email: 'ana@imob.com', ativo: true });
-  const c3 = createCorretor({ imobiliaria_id: iId, nome: 'Roberto Silva', telefone: '+5511999990003', email: 'roberto@imob.com', ativo: true });
-  createCorretor({ imobiliaria_id: iId, nome: 'Juliana Costa', telefone: '+5511999990004', email: 'juliana@imob.com', ativo: false });
+  const c1 = createCorretor({ imobiliaria_id: iId, nome: 'Carlos Mendes', telefone: '+5511999990001', email: 'carlos@imob.com', ativo: true, pref_notif_whatsapp: true, pref_notif_email: true, pref_notif_push: true });
+  const c2 = createCorretor({ imobiliaria_id: iId, nome: 'Ana Beatriz', telefone: '+5511999990002', email: 'ana@imob.com', ativo: true, pref_notif_whatsapp: true, pref_notif_email: true, pref_notif_push: true });
+  const c3 = createCorretor({ imobiliaria_id: iId, nome: 'Roberto Silva', telefone: '+5511999990003', email: 'roberto@imob.com', ativo: true, pref_notif_whatsapp: true, pref_notif_email: true, pref_notif_push: true });
+  createCorretor({ imobiliaria_id: iId, nome: 'Juliana Costa', telefone: '+5511999990004', email: 'juliana@imob.com', ativo: false, pref_notif_whatsapp: false, pref_notif_email: false, pref_notif_push: false });
 
   // Seed Indaiatuba (BR) Properties for testing
   const today = new Date();
@@ -616,14 +619,35 @@ export function seedTestData() {
     } as any);
   }
 
-  // 2. Create Default User (Admin - BR) if missing
-  if (!usuarios.some(u => u.email === 'admin@imobiliaria.com')) {
+  // 2. Create Default Users (Admin & Corretor) if missing
+  if (!usuarios.some(u => u.email === 'admin@imobia.com')) {
     createUsuario({
       imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
-      email: 'admin@imobiliaria.com',
-      hash_senha: 'senha_segura_aqui',
+      email: 'admin@imobia.com',
+      hash_senha: 'admin123', // In mock mode we use plain or handled by bypass
       role: 'admin',
       corretor_id: null,
+    });
+  }
+
+  if (!usuarios.some(u => u.email === 'thiago@imobia.com')) {
+    const c1 = corretores.find(c => c.email === 'thiago@imobia.com') || createCorretor({
+      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
+      nome: 'Thiago Corretor',
+      telefone: '+5511912345678',
+      email: 'thiago@imobia.com',
+      ativo: true,
+      pref_notif_whatsapp: true,
+      pref_notif_email: true,
+      pref_notif_push: true
+    });
+
+    createUsuario({
+      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
+      email: 'thiago@imobia.com',
+      hash_senha: 'admin123',
+      role: 'corretor',
+      corretor_id: c1.id,
     });
   }
   

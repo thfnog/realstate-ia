@@ -48,6 +48,9 @@ export async function POST(request: Request) {
         telefone: body.telefone,
         email: body.email || null,
         ativo: body.ativo ?? true,
+        pref_notif_whatsapp: true,
+        pref_notif_email: true,
+        pref_notif_push: true,
       });
       return NextResponse.json(corretor, { status: 201 });
     }
@@ -60,6 +63,9 @@ export async function POST(request: Request) {
         telefone: body.telefone,
         email: body.email || null,
         ativo: body.ativo ?? true,
+        pref_notif_whatsapp: true,
+        pref_notif_email: true,
+        pref_notif_push: true,
       })
       .select()
       .single();

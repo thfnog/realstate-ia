@@ -9,18 +9,25 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const leadId = url.searchParams.get('lead_id');
 
+    const session = await (await import('@/lib/auth')).getAuthFromCookies();
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
     if (mock.isMockMode()) {
        mock.seedTestData();
-       const events = mock.getEventos();
-       // Filter by lead_id if provided
-       const filtered = leadId ? events.filter((e: any) => e.lead_id === leadId) : events;
-       return NextResponse.json(filtered);
+       const events = mock.getEventos(leadId || undefined, undefined, undefined, session.corretor_id || undefined);
+       return NextResponse.json(events);
     }
 
     let query = supabaseAdmin
       .from('eventos')
       .select('*, lead:leads(*), corretor:corretores(*)')
-      .order('data_hora', { ascending: true });
+      .eq('imobiliaria_id', session.imobiliaria_id);
+    
+    // Apply Role Filter
+    const { applyRoleFilter } = await import('@/lib/api-utils');
+    query = applyRoleFilter(query, session);
+
+    query = query.order('data_hora', { ascending: true });
 
     if (leadId) {
       query = query.eq('lead_id', leadId);

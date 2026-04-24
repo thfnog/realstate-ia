@@ -14,18 +14,24 @@ export interface SessionPayload {
   imobiliaria_id: string;
   email: string;
   role: string;
+  corretor_id: string | null;
 }
 
 export async function signIn(email: string, password: string): Promise<string | null> {
-  // PRAGMATIC MOCK BYPASS: Ensure test admin always logs in
+  // PRAGMATIC MOCK BYPASS: Ensure test credentials always work
   if (isMockMode()) {
     seedTestData();
-    if (email === 'admin@jetagency.br' && password === 'admin123') {
+    const isTestAdmin = email === 'admin@imobia.com' && password === 'admin123';
+    const isTestBroker = email === 'thiago@imobia.com' && password === 'admin123';
+
+    if (isTestAdmin || isTestBroker) {
+       const { DEFAULT_IMOBILIARIA_ID } = await import('@/lib/mockDb');
        return await new SignJWT({
-         usuario_id: 'user-0000-default-admin',
-         imobiliaria_id: 'imob-0000-default-id',
-         email: 'admin@jetagency.br',
-         role: 'admin',
+         usuario_id: isTestAdmin ? 'user-0000-admin' : 'user-0001-thiago',
+         imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
+         email: email,
+         role: isTestAdmin ? 'admin' : 'corretor',
+         corretor_id: isTestAdmin ? null : 'corretor-0001-thiago',
        })
        .setProtectedHeader({ alg: 'HS256' })
        .setIssuedAt()
@@ -61,6 +67,7 @@ export async function signIn(email: string, password: string): Promise<string | 
     imobiliaria_id: user.imobiliaria_id,
     email: user.email,
     role: user.role,
+    corretor_id: user.corretor_id || null,
   };
 
   const token = await new SignJWT({ ...payload })

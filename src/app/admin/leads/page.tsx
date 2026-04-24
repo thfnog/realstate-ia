@@ -205,43 +205,16 @@ export default function LeadsPage() {
         })
         .finally(() => setLoadingMessages(false));
       
-      // Also fetch matching imoveis with proper scoring (mirrors backend recommendImoveis)
+      // Also fetch matching imoveis from centralized API
       setLoadingMatching(true);
-      const resImov = await fetch('/api/imoveis');
-      const allImoveis = await resImov.json();
+      const resMatch = await fetch(`/api/leads/${lead.id}/recommendations`);
+      const suggestions = await resMatch.json();
       
-      const scored = allImoveis.map((imob: any) => {
-        let score = 0;
-        // Tipo match (+5)
-        if (lead.tipo_interesse && imob.tipo?.toLowerCase() === lead.tipo_interesse.toLowerCase()) score += 5;
-        // Quartos match (+4)
-        if (lead.quartos_interesse && imob.quartos === lead.quartos_interesse) score += 4;
-        // Valor within ±15% of budget (+4)
-        if (lead.orcamento && imob.valor) {
-          if (imob.valor >= lead.orcamento * 0.85 && imob.valor <= lead.orcamento * 1.15) score += 4;
-        }
-        // Bairro match (+3) — case-insensitive partial match
-        if (lead.bairros_interesse && lead.bairros_interesse.length > 0 && imob.freguesia) {
-          const bairroNorm = imob.freguesia.toLowerCase().trim();
-          if (lead.bairros_interesse.some((b: string) => 
-            bairroNorm.includes(b.toLowerCase().trim()) || b.toLowerCase().trim().includes(bairroNorm)
-          )) score += 3;
-        }
-        // Area within ±20% (+2)
-        if (lead.area_interesse && imob.area_util) {
-          if (imob.area_util >= lead.area_interesse * 0.8 && imob.area_util <= lead.area_interesse * 1.2) score += 2;
-        }
-        // Vagas match (+1)
-        if (lead.vagas_interesse && imob.vagas_garagem === lead.vagas_interesse) score += 1;
-        return { ...imob, _score: score };
-      });
-      
-      const suggestions = scored
-        .filter((i: any) => i._score >= 3)
-        .sort((a: any, b: any) => b._score - a._score)
-        .slice(0, 5);
-      
-      setMatchingImoveis(suggestions);
+      if (Array.isArray(suggestions)) {
+        setMatchingImoveis(suggestions);
+      } else {
+        setMatchingImoveis([]);
+      }
       
     } catch {
       console.error('Erro ao buscar eventos/sugestões');

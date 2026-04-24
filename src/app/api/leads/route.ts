@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
   if (mock.isMockMode()) {
     mock.seedTestData();
-    const leads = mock.getLeads(status || undefined);
+    const leads = mock.getLeads(status || undefined, session.corretor_id || undefined);
     const filtered = leads.filter(l => l.imobiliaria_id === session.imobiliaria_id);
     const from = (page - 1) * limit;
     const paginated = filtered.slice(from, from + limit);
@@ -44,8 +44,13 @@ export async function GET(request: Request) {
   let query = supabaseAdmin
     .from('leads')
     .select('*, corretores(*)', { count: 'exact' })
-    .eq('imobiliaria_id', session.imobiliaria_id)
-    .order('criado_em', { ascending: false });
+    .eq('imobiliaria_id', session.imobiliaria_id);
+  
+  // Apply Role Filter
+  const { applyRoleFilter } = await import('@/lib/api-utils');
+  query = applyRoleFilter(query, session);
+  
+  query = query.order('criado_em', { ascending: false });
 
   if (status) {
     query = query.eq('status', status);
@@ -69,31 +74,56 @@ export async function GET(request: Request) {
   });
 }
 
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rateLimit';
+
+const leadSchema = z.object({
+  nome: z.string().min(2, 'Nome muito curto'),
+  telefone: z.string().min(8, 'Telefone inválido'),
+  origem: z.enum(['formulario', 'email_ego', 'webhook_grupozap', 'whatsapp', 'manual']).optional(),
+  portal_origem: z.string().optional(),
+  moeda: z.enum(['BRL', 'EUR']).optional(),
+  finalidade: z.enum(['comprar', 'alugar', 'investir']).optional(),
+  prazo: z.string().optional(),
+  pagamento: z.string().optional(),
+  descricao_interesse: z.string().optional(),
+  tipo_interesse: z.string().optional(),
+  orcamento: z.number().optional(),
+  area_interesse: z.number().optional(),
+  quartos_interesse: z.number().optional(),
+  vagas_interesse: z.number().optional(),
+  bairros_interesse: z.array(z.string()).optional(),
+});
+
 // POST: Create a new lead (public) and trigger processing engine
 export async function POST(request: Request) {
   try {
-    const body: LeadFormData = await request.json();
-    const config = getConfig();
-
-    // Validate required fields
-    if (!body.nome || !body.telefone) {
-      return NextResponse.json(
-        { error: 'Nome e telefone são obrigatórios' },
-        { status: 400 }
-      );
+    // 1. Rate Limiting (Identifier: IP or X-Forwarded-For)
+    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: 'Muitas solicitações. Tente novamente mais tarde.' }, { status: 429 });
     }
 
+    const body = await request.json();
+    
+    // 2. Zod Validation
+    const validation = leadSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.format() }, { status: 400 });
+    }
+
+    const data = validation.data;
+    const config = getConfig();
+
     // v2: Default origem and moeda from country config
-    const origem = body.origem || 'formulario';
-    const moeda = body.moeda || (config.currency.code as 'EUR' | 'BRL');
-    const portal_origem = body.portal_origem || null;
+    const origem = data.origem || 'formulario';
+    const moeda = data.moeda || (config.currency.code as 'EUR' | 'BRL');
+    const portal_origem = data.portal_origem || null;
     
     // In V2 SaaS, public form should append ?imob_id in the URL.
-    // We default to the original mock ID to retain current landing behavior.
     const url = new URL(request.url);
     let imobId = url.searchParams.get('imob_id');
 
-    // v2.1: Robust UUID Fallback for Production
     if (!mock.isMockMode() && (!imobId || imobId === mock.DEFAULT_IMOBILIARIA_ID)) {
       const { data: firstImob } = await supabaseAdmin
         .from('imobiliarias')
@@ -112,71 +142,60 @@ export async function POST(request: Request) {
       mock.seedTestData();
       const lead = mock.createLead({
         imobiliaria_id,
-        nome: body.nome,
-        telefone: body.telefone,
+        nome: data.nome,
+        telefone: data.telefone,
         origem,
         portal_origem,
         moeda,
-        finalidade: body.finalidade || null,
-        prazo: body.prazo || null,
-        pagamento: body.pagamento || null,
-        descricao_interesse: body.descricao_interesse || null,
-        tipo_interesse: body.tipo_interesse || null,
-        orcamento: body.orcamento || null,
-        area_interesse: body.area_interesse || null,
-        quartos_interesse: body.quartos_interesse || null,
-        vagas_interesse: body.vagas_interesse || null,
-        bairros_interesse: body.bairros_interesse || null,
+        finalidade: data.finalidade || null,
+        prazo: data.prazo || null,
+        pagamento: data.pagamento || null,
+        descricao_interesse: data.descricao_interesse || null,
+        tipo_interesse: data.tipo_interesse || null,
+        orcamento: data.orcamento || null,
+        area_interesse: data.area_interesse || null,
+        quartos_interesse: data.quartos_interesse || null,
+        vagas_interesse: data.vagas_interesse || null,
+        bairros_interesse: data.bairros_interesse || null,
         corretor_id: null,
         status: 'novo',
       });
 
-      // Trigger processing
-      processLeadMock(lead).catch((err) => {
-        console.error('Erro no processamento automático:', err);
-      });
-
+      processLeadMock(lead).catch((err) => console.error('Erro no processamento automático:', err));
       return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
     }
 
-    // De-duplication Logic: Check if lead already exists for this imobiliaria
+    // De-duplication Logic
     const { data: existingLead } = await supabaseAdmin
       .from('leads')
       .select('*')
       .eq('imobiliaria_id', imobiliaria_id)
-      .eq('telefone', body.telefone)
+      .eq('telefone', data.telefone)
       .maybeSingle();
 
     if (existingLead && !['vendido', 'descartado', 'finalizado'].includes(existingLead.status)) {
-      console.log(`♻️ Lead duplicado detectado (${body.telefone}). Atualizando lead ${existingLead.id} em vez de criar novo.`);
-      
-      // Merge logic for specific fields
-      const newBairros = [...(existingLead.bairros_interesse || []), ...(body.bairros_interesse || [])];
+      const newBairros = [...(existingLead.bairros_interesse || []), ...(data.bairros_interesse || [])];
       const uniqueBairros = Array.from(new Set(newBairros));
 
       const { data: updatedLead, error: updateError } = await supabaseAdmin
         .from('leads')
         .update({
-          nome: body.nome || existingLead.nome,
+          nome: data.nome || existingLead.nome,
           bairros_interesse: uniqueBairros,
-          tipo_interesse: body.tipo_interesse || existingLead.tipo_interesse,
-          orcamento: body.orcamento || existingLead.orcamento,
-          prazo: body.prazo || existingLead.prazo,
-          pagamento: body.pagamento || existingLead.pagamento,
-          descricao_interesse: body.descricao_interesse 
-            ? `${existingLead.descricao_interesse ? existingLead.descricao_interesse + '\n--- Novo Interesse ---\n' : ''}${body.descricao_interesse}`
+          tipo_interesse: data.tipo_interesse || existingLead.tipo_interesse,
+          orcamento: data.orcamento || existingLead.orcamento,
+          prazo: data.prazo || existingLead.prazo,
+          pagamento: data.pagamento || existingLead.pagamento,
+          descricao_interesse: data.descricao_interesse 
+            ? `${existingLead.descricao_interesse ? existingLead.descricao_interesse + '\n--- Novo Interesse ---\n' : ''}${data.descricao_interesse}`
             : existingLead.descricao_interesse,
         })
         .eq('id', existingLead.id)
         .select()
         .single();
 
-      if (updateError) {
-        console.error('Erro ao atualizar lead duplicado:', updateError);
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
-      }
+      if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-      // Add timeline event
       await supabaseAdmin.from('eventos').insert({
         imobiliaria_id,
         lead_id: existingLead.id,
@@ -187,54 +206,41 @@ export async function POST(request: Request) {
         status: 'realizado'
       });
 
-      // No need to re-run the full processLead if it's already in service, 
-      // but maybe re-run it if requested. For now, let's just return success.
       return NextResponse.json({ success: true, leadId: existingLead.id, note: 'Lead atualizado' }, { status: 200 });
     }
 
-    // Insert the lead (Original logic)
+    // Insert the lead
     const { data: lead, error } = await supabaseAdmin
       .from('leads')
       .insert({
         imobiliaria_id,
-        nome: body.nome,
-        telefone: body.telefone,
+        nome: data.nome,
+        telefone: data.telefone,
         origem,
         portal_origem,
         moeda,
-        finalidade: body.finalidade || null,
-        prazo: body.prazo || null,
-        pagamento: body.pagamento || null,
-        descricao_interesse: body.descricao_interesse || null,
-        tipo_interesse: body.tipo_interesse || null,
-        orcamento: body.orcamento || null,
-        area_interesse: body.area_interesse || null,
-        quartos_interesse: body.quartos_interesse || null,
-        vagas_interesse: body.vagas_interesse || null,
-        bairros_interesse: body.bairros_interesse || null,
+        finalidade: data.finalidade || null,
+        prazo: data.prazo || null,
+        pagamento: data.pagamento || null,
+        descricao_interesse: data.descricao_interesse || null,
+        tipo_interesse: data.tipo_interesse || null,
+        orcamento: data.orcamento || null,
+        area_interesse: data.area_interesse || null,
+        quartos_interesse: data.quartos_interesse || null,
+        vagas_interesse: data.vagas_interesse || null,
+        bairros_interesse: data.bairros_interesse || null,
         status: 'novo',
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Erro ao inserir lead:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Trigger processing engine (async, don't wait)
-    processLeadReal(lead as Lead).catch((err) => {
-      console.error('Erro no processamento automático:', err);
-    });
+    processLeadReal(lead as Lead).catch((err) => console.error('Erro no processamento automático:', err));
 
-    return NextResponse.json(
-      { success: true, leadId: lead.id },
-      { status: 201 }
-    );
-  } catch {
-    return NextResponse.json(
-      { error: 'Erro interno ao processar lead' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
+  } catch (err) {
+    console.error('API Leads POST error:', err);
+    return NextResponse.json({ error: 'Erro interno ao processar lead' }, { status: 500 });
   }
 }
