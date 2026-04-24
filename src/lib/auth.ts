@@ -13,7 +13,8 @@ export interface SessionPayload {
   usuario_id: string;
   imobiliaria_id: string;
   email: string;
-  role: string;
+  app_role: string;
+  role: string; // Required by Supabase (must be 'authenticated')
   corretor_id: string | null;
 }
 
@@ -30,7 +31,8 @@ export async function signIn(email: string, password: string): Promise<string | 
          usuario_id: isTestAdmin ? 'user-0000-admin' : 'user-0001-thiago',
          imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
          email: email,
-         role: isTestAdmin ? 'admin' : 'corretor',
+         app_role: isTestAdmin ? 'admin' : 'corretor',
+         role: 'authenticated',
          corretor_id: isTestAdmin ? null : 'corretor-0001-thiago',
        })
        .setProtectedHeader({ alg: 'HS256' })
@@ -66,7 +68,8 @@ export async function signIn(email: string, password: string): Promise<string | 
     usuario_id: user.id,
     imobiliaria_id: user.imobiliaria_id,
     email: user.email,
-    role: user.role,
+    app_role: user.role,
+    role: 'authenticated',
     corretor_id: user.corretor_id || null,
   };
 
@@ -92,5 +95,13 @@ export async function getAuthFromCookies(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   if (!token) return null;
-  return verifyToken(token);
+  const session = await verifyToken(token);
+  if (!session) return null;
+  
+  // Backward compatibility parsing
+  if (!session.app_role && session.role && session.role !== 'authenticated') {
+    session.app_role = session.role;
+  }
+  
+  return session;
 }

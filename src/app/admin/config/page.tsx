@@ -375,7 +375,7 @@ export default function ConfigPage() {
       )}
 
       {/* Slack Diagnostic */}
-      {user?.role === 'admin' && (
+      {user?.app_role === 'admin' && (
          <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 mb-6">
            <div className="flex items-center gap-3 mb-4">
              <span className="text-2xl text-slate-600">💬</span>

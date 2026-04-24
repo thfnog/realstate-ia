@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (data && data.role) {
+        if (data && data.app_role) {
           setUser(data);
         } else {
           router.push('/login');
@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Filter nav items based on role
   const filteredNavItems = navItems.filter(item => {
-    if (user?.role === 'admin') return true;
+    if (user?.app_role === 'admin') return true;
     
     // Brokers don't see Configurações, Carteira or Webhook Logs
     const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs'];
@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span className="text-2xl">🏠</span>
           <div>
             <h1 className="text-white font-bold text-lg leading-none">ImobIA</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Painel {user?.role === 'admin' ? 'Admin' : 'Corretor'} {countryFlag}</p>
+            <p className="text-xs text-slate-500 mt-0.5">Painel {user?.app_role === 'admin' ? 'Admin' : 'Corretor'} {countryFlag}</p>
           </div>
         </Link>
       </div>

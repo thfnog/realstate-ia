@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   const { data, count } = await repository.findAll({
     imobiliaria_id: session.imobiliaria_id,
     status: status || undefined,
-    corretor_id: session.role === 'corretor' ? (session.corretor_id || undefined) : undefined,
+    corretor_id: session.app_role === 'corretor' ? (session.corretor_id || undefined) : undefined,
     page,
     limit
   });

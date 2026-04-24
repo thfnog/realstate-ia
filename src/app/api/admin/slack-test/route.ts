@@ -5,7 +5,7 @@ import { getAuthFromCookies } from '@/lib/auth';
 export async function POST(request: Request) {
   try {
     const session = await getAuthFromCookies();
-    if (!session || session.role !== 'admin') {
+    if (!session || session.app_role !== 'admin') {
       return NextResponse.json({ error: 'Acesso restrito a administradores' }, { status: 403 });
     }
 

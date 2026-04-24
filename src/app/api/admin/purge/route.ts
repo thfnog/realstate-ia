@@ -12,7 +12,7 @@ export async function POST() {
     const session = await getAuthFromCookies();
 
     // 1. Authorization Check
-    if (!session || session.role !== 'admin') {
+    if (!session || session.app_role !== 'admin') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 

@@ -24,7 +24,7 @@ export function applyRoleFilter(
   session: SessionPayload,
   fieldName: string = 'corretor_id'
 ) {
-  if (session.role === 'admin') {
+  if (session.app_role === 'admin') {
     return query;
   }
   

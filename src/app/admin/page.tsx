@@ -49,7 +49,7 @@ export default function AdminDashboard() {
     leadsTemporal: [],
   });
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<{ role: string; corretor_id: string | null } | null>(null);
+  const [user, setUser] = useState<{ app_role: string; corretor_id: string | null } | null>(null);
 
   useEffect(() => {
     async function fetchStats() {
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
         let leads = leadsData.data || [];
 
         // Apply Role Filter
-        if (session.role === 'corretor' && session.corretor_id) {
+        if (session.app_role === 'corretor' && session.corretor_id) {
           leads = leads.filter((l: any) => l.corretor_id === session.corretor_id);
         }
 
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Olá, {user?.role === 'admin' ? 'Administrador' : 'Consultor'} 👋
+            Olá, {user?.app_role === 'admin' ? 'Administrador' : 'Consultor'} 👋
           </h1>
           <p className="text-slate-500 mt-1">Aqui está o resumo da sua performance.</p>
         </div>
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
               <Link href="/admin/imoveis" className="px-5 py-2.5 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all">
                 Novo Imóvel
               </Link>
-              {user?.role === 'admin' && (
+              {user?.app_role === 'admin' && (
                 <Link href="/admin/corretores" className="px-5 py-2.5 bg-slate-800 text-white border border-slate-700 rounded-xl font-bold hover:bg-slate-700 transition-all">
                   Gerir Equipe
                 </Link>
