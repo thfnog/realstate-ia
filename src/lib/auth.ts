@@ -3,11 +3,11 @@ import { cookies } from 'next/headers';
 import { getUsuarioByEmail, seedTestData, isMockMode } from '@/lib/mockDb';
 import bcrypt from 'bcryptjs';
 
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-if (!NEXTAUTH_SECRET && !isMockMode()) {
-  throw new Error('❌ NEXTAUTH_SECRET não configurado. Defina essa variável em produção para proteger os tokens JWT.');
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || process.env.NEXTAUTH_SECRET;
+if (!JWT_SECRET && !isMockMode()) {
+  throw new Error('❌ SUPABASE_JWT_SECRET não configurado. Defina essa variável em produção para os tokens JWT do Supabase RLS funcionarem.');
 }
-const secret = new TextEncoder().encode(NEXTAUTH_SECRET || (isMockMode() ? 'fallback-dev-secret-only-for-local-mock' : ''));
+const secret = new TextEncoder().encode(JWT_SECRET || (isMockMode() ? 'fallback-dev-secret-only-for-local-mock' : ''));
 
 export interface SessionPayload {
   usuario_id: string;
