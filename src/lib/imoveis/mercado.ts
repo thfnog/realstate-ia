@@ -46,10 +46,22 @@ const MERCADO_BR: Record<string, PrecoMercado | Record<string, PrecoMercado>> = 
     'apartamento': { mediano: 11000, valorizacao: 10.5 },
     'casa': { mediano: 12000, valorizacao: 12.0 },
     'terreno': { mediano: 2000, valorizacao: 15.0 },
+    // Bairros Reais (Dados Capturados)
+    'Jardim Residencial Helvétia Park I': { mediano: 11467, valorizacao: 14.5 },
+    'Jardim Europa': { mediano: 9655, valorizacao: 12.0 },
+    'Jardim Residencial Santa Clara': { mediano: 9559, valorizacao: 13.2 },
+    'Park Gran Reserve': { mediano: 8352, valorizacao: 18.0 },
+    'Loteamento Park Gran Reserve': { mediano: 8352, valorizacao: 18.0 },
+    'Jardim Residencial Shangrilá': { mediano: 7578, valorizacao: 10.5 },
+    'Residencial Duas Marias': { mediano: 7130, valorizacao: 12.5 },
+    'Centro': { mediano: 7011, valorizacao: 8.5 },
+    'Jardim Residencial Dona Lucilla': { mediano: 6906, valorizacao: 11.0 },
+    'Jardim Mantova': { mediano: 6644, valorizacao: 15.0 },
+    'Residencial Evidências': { mediano: 5283, valorizacao: 16.0 },
   } as any,
 };
 
-export function getMedianoRegiao(pais: 'PT' | 'BR', concelho: string, tipo?: string): PrecoMercado {
+export function getMedianoRegiao(pais: 'PT' | 'BR', concelho: string, tipo?: string, freguesia?: string): PrecoMercado {
   const table = pais === 'PT' ? MERCADO_PT : MERCADO_BR;
   const entry = table[concelho as keyof typeof table];
 
@@ -57,7 +69,11 @@ export function getMedianoRegiao(pais: 'PT' | 'BR', concelho: string, tipo?: str
     return { mediano: pais === 'PT' ? 1200 : 5500, valorizacao: 5.0 };
   }
 
-  // Handle specific sub-types like Indaiatuba
+  // Handle specific sub-types like Indaiatuba neighborhoods
+  if (concelho === 'Indaiatuba' && freguesia && (entry as any)[freguesia]) {
+      return (entry as any)[freguesia];
+  }
+
   if (concelho === 'Indaiatuba' && tipo && entry[tipo as keyof typeof entry]) {
       return (entry as any)[tipo];
   }

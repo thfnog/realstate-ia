@@ -37,21 +37,32 @@ export default function MapImplementation({ lat, lng, onChange, address, isAdmin
 
   const defaultCenter: [number, number] = position || [-23.1895, -47.2151]; // Indaiatuba
 
-  const handleGeocode = async () => {
-    if (!address) return;
+  const handleGeocode = async (addr: string) => {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}`);
       const data = await res.json();
       if (data && data.length > 0) {
         const newLat = parseFloat(data[0].lat);
         const newLng = parseFloat(data[0].lon);
         setPosition([newLat, newLng]);
-        onChange(newLat, newLng);
+        if (isAdmin) onChange(newLat, newLng);
       }
     } catch (err) {
       console.error('Geocoding error:', err);
     }
   };
+
+  useEffect(() => {
+    if (!position && address) {
+      handleGeocode(address);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    if (lat && lng) {
+      setPosition([lat, lng]);
+    }
+  }, [lat, lng]);
 
   return (
     <div className="space-y-3">

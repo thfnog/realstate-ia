@@ -7,15 +7,16 @@ interface MercadoIndicadorProps {
   valor: number;
   areaUtil: number;
   concelho: string;
+  freguesia?: string;
   pais: 'PT' | 'BR';
   tipo: string;
   config: CountryConfig;
 }
 
-export default function MercadoIndicador({ valor, areaUtil, concelho, pais, tipo, config }: MercadoIndicadorProps) {
+export default function MercadoIndicador({ valor, areaUtil, concelho, freguesia, pais, tipo, config }: MercadoIndicadorProps) {
   if (!valor || !areaUtil || !concelho) return null;
 
-  const mercado = getMedianoRegiao(pais, concelho, tipo);
+  const mercado = getMedianoRegiao(pais, concelho, tipo, freguesia);
   const indicador = calcularIndicador(valor, areaUtil, mercado.mediano);
   const precoM2 = valor / areaUtil;
 
@@ -45,7 +46,7 @@ export default function MercadoIndicador({ valor, areaUtil, concelho, pais, tipo
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider mb-1">Média {concelho}</p>
+          <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider mb-1">Média {freguesia || concelho}</p>
           <p className="text-lg font-bold text-text-primary">
             {formatCurrency(mercado.mediano, config)}<span className="text-xs font-normal">/m²</span>
           </p>
@@ -73,7 +74,7 @@ export default function MercadoIndicador({ valor, areaUtil, concelho, pais, tipo
          <div>
             <p className="text-[11px] font-bold text-text-primary mb-0.5">Tendência de Valorização</p>
             <p className="text-[10px] text-text-secondary leading-tight">
-                A região de {concelho} valorizou <strong>{mercado.valorizacao}%</strong> no último ano. Imóveis captados hoje têm alto potencial de apreciação.
+                A região de {freguesia || concelho} valorizou <strong>{mercado.valorizacao}%</strong> no último ano. Imóveis captados hoje têm alto potencial de apreciação.
             </p>
          </div>
       </div>

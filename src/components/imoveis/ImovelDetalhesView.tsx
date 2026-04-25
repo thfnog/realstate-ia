@@ -164,6 +164,7 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                    valor={imovel.valor}
                    areaUtil={imovel.area_util || 0}
                    concelho={imovel.concelho || ''}
+                   freguesia={imovel.freguesia || ''}
                    pais={imovel.pais as any}
                    tipo={imovel.tipo}
                    config={config}

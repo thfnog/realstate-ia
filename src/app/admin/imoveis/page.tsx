@@ -13,6 +13,12 @@ export default function ImoveisPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: '', tipo: '' });
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const LIMIT = 12;
 
   async function fetchConfig() {
     try {
@@ -27,14 +33,15 @@ export default function ImoveisPage() {
   }
 
   async function fetchImoveis() {
+    setLoading(true);
     try {
-      const res = await fetch('/api/imoveis');
-      const data = await res.json();
+      const res = await fetch(`/api/imoveis?page=${page}&limit=${LIMIT}`);
+      const result = await res.json();
       
-      if (data && Array.isArray(data.data)) {
-        setImoveis(data.data);
-      } else if (Array.isArray(data)) {
-        setImoveis(data);
+      if (result && Array.isArray(result.data)) {
+        setImoveis(result.data);
+        setTotalCount(result.count || 0);
+        setTotalPages(Math.ceil((result.count || 0) / LIMIT));
       }
     } catch (err) {
       console.error('Erro:', err);
@@ -45,8 +52,19 @@ export default function ImoveisPage() {
 
   useEffect(() => { 
     fetchConfig();
-    fetchImoveis(); 
   }, []);
+
+  useEffect(() => {
+    fetchImoveis();
+  }, [page]);
+
+  const proxyImage = (url: string) => {
+    if (!url) return '';
+    if (url.includes('rodrigomartinatti.com.br')) {
+      return `/api/proxy/image?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  };
 
   async function handleDelete(id: string) {
     if (!confirm('Excluir este imóvel?')) return;
@@ -71,7 +89,8 @@ export default function ImoveisPage() {
       const refMatch = im.referencia?.toLowerCase().includes(term);
       const titleMatch = im.titulo?.toLowerCase().includes(term);
       const concelhoMatch = im.concelho?.toLowerCase().includes(term);
-      if (!refMatch && !titleMatch && !concelhoMatch) return false;
+      const freguesiaMatch = im.freguesia?.toLowerCase().includes(term);
+      if (!refMatch && !titleMatch && !concelhoMatch && !freguesiaMatch) return false;
     }
     
     return true;
@@ -97,7 +116,7 @@ export default function ImoveisPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Total na Carteira</p>
-             <p className="text-2xl font-black text-text-primary">{imoveis.length}</p>
+             <p className="text-2xl font-black text-text-primary">{totalCount}</p>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Disponíveis</p>
@@ -179,8 +198,12 @@ export default function ImoveisPage() {
             >
               {/* Image Preview */}
               <div className="relative h-48 bg-surface-alt overflow-hidden">
-                {im.fotos && im.fotos.length > 0 ? (
-                  <img src={im.fotos.find(f => f.is_capa)?.url_media || im.fotos[0].url_media} alt={im.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                {im.fotos && (im.fotos as any[]).length > 0 ? (
+                  <img 
+                    src={proxyImage((im.fotos as any[]).find(f => f.is_capa)?.url_media || (im.fotos as any[])[0].url_media || (im.fotos as string[])[0])} 
+                    alt={im.titulo} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                     <span className="text-4xl">📸</span>
@@ -233,6 +256,47 @@ export default function ImoveisPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-8 pb-12">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-border-light text-text-primary hover:border-primary disabled:opacity-30 transition-all"
+          >
+            ←
+          </button>
+          
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .map((p, i, arr) => (
+                <div key={p} className="flex items-center">
+                  {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-text-muted">...</span>}
+                  <button
+                    onClick={() => setPage(p)}
+                    className={`w-10 h-10 rounded-xl font-bold text-xs transition-all ${
+                      page === p 
+                        ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' 
+                        : 'bg-white border border-border-light text-text-secondary hover:border-primary'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                </div>
+              ))}
+          </div>
+
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-border-light text-text-primary hover:border-primary disabled:opacity-30 transition-all"
+          >
+            →
+          </button>
         </div>
       )}
     </div>
