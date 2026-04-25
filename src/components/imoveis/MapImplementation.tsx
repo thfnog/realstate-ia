@@ -72,7 +72,7 @@ export default function MapImplementation({ lat, lng, onChange, address, isAdmin
           {address && (
             <button 
               type="button" 
-              onClick={handleGeocode}
+              onClick={() => address && handleGeocode(address)}
               className="text-primary hover:underline hover:text-primary-hover flex items-center gap-1"
             >
               🧭 Buscar Endereço

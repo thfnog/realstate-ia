@@ -200,7 +200,7 @@ export default function ImoveisPage() {
               <div className="relative h-48 bg-surface-alt overflow-hidden">
                 {im.fotos && (im.fotos as any[]).length > 0 ? (
                   <img 
-                    src={proxyImage((im.fotos as any[]).find(f => f.is_capa)?.url_media || (im.fotos as any[])[0].url_media || (im.fotos as string[])[0])} 
+                    src={proxyImage((im.fotos as any[]).find(f => f.is_capa)?.url_media || (im.fotos as any[])[0].url_media || (im.fotos as any[])[0])} 
                     alt={im.titulo} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />
