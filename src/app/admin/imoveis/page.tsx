@@ -18,6 +18,7 @@ export default function ImoveisPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState<any>(null);
   const LIMIT = 12;
 
   async function fetchConfig() {
@@ -50,8 +51,19 @@ export default function ImoveisPage() {
     }
   }
 
+  async function fetchStats() {
+    try {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error('Erro ao buscar stats:', err);
+    }
+  }
+
   useEffect(() => { 
     fetchConfig();
+    fetchStats();
   }, []);
 
   useEffect(() => {
@@ -116,19 +128,19 @@ export default function ImoveisPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Total na Carteira</p>
-             <p className="text-2xl font-black text-text-primary">{totalCount}</p>
+             <p className="text-2xl font-black text-text-primary">{stats?.totalImoveis || totalCount}</p>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Disponíveis</p>
-             <p className="text-2xl font-black text-emerald-600">{imoveis.filter(i => i.status === 'disponivel').length}</p>
+             <p className="text-2xl font-black text-emerald-600">{stats?.imoveisDisponiveis || (stats ? 0 : totalCount)}</p>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Em Negociação</p>
-             <p className="text-2xl font-black text-amber-500">{imoveis.filter(i => i.status === 'reservado').length}</p>
+             <p className="text-2xl font-black text-amber-500">{stats?.imoveisReservados || 0}</p>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-border-light shadow-sm">
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Fechados</p>
-             <p className="text-2xl font-black text-primary">{imoveis.filter(i => i.status === 'vendido' || i.status === 'arrendado').length}</p>
+             <p className="text-2xl font-black text-primary">{stats?.imoveisFechados || 0}</p>
           </div>
       </div>
 
