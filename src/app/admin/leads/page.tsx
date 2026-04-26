@@ -20,6 +20,8 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
   descartado: { label: 'Descartado 🗑️', color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
 };
 
+import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
+
 export default function LeadsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('kanban');
   const [leads, setLeads] = useState<LeadComCorretor[]>([]);
@@ -72,7 +74,6 @@ export default function LeadsPage() {
         setLeads(data.data);
         setTotalCount(data.count || 0);
       } else if (Array.isArray(data)) {
-        // Fallback in case of old API response
         setLeads(data);
         setTotalCount(data.length);
       }
@@ -89,14 +90,12 @@ export default function LeadsPage() {
     let channel: any = null;
     try {
       const { supabase } = require('@/lib/supabase');
-      // Subscribe to real-time changes on the 'leads' table
       channel = supabase
         .channel('leads-changes')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'leads' },
           (payload: any) => {
-            console.log('🔄 Atualização recebida em tempo real (Leads):', payload);
             fetchLeads();
           }
         )
@@ -105,7 +104,6 @@ export default function LeadsPage() {
       console.warn('⚠️ Supabase Realtime não configurado ou falhou, mantendo polling.', err);
     }
 
-    // Polling de fallback (mais lento agora que temos realtime)
     const interval = setInterval(fetchLeads, 120000); 
 
     return () => {
@@ -171,7 +169,6 @@ export default function LeadsPage() {
     }
     setResending(lead.id);
     try {
-      // Re-trigger processing by calling PATCH (the server can hook into this)
       await fetch(`/api/leads/${lead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -189,14 +186,13 @@ export default function LeadsPage() {
     setSelectedLead(lead);
     setLoadingEventos(true);
     setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '', corretor_id: '' });
-    setMsgStatus('idle'); // Reset messaging status
+    setMsgStatus('idle');
     
     try {
       const res = await fetch(`/api/eventos?lead_id=${lead.id}`);
       const data = await res.json();
       if (Array.isArray(data)) setLeadEventos(data);
 
-      // Fetch message history
       setLoadingMessages(true);
       fetch(`/api/leads/${lead.id}/messages`)
         .then(r => r.json())
@@ -205,7 +201,6 @@ export default function LeadsPage() {
         })
         .finally(() => setLoadingMessages(false));
       
-      // Also fetch matching imoveis from centralized API
       setLoadingMatching(true);
       const resMatch = await fetch(`/api/leads/${lead.id}/recommendations`);
       const suggestions = await resMatch.json();
@@ -244,7 +239,6 @@ export default function LeadsPage() {
         setLeadEventos(prev => [...prev, created].sort((a,b) => a.data_hora.localeCompare(b.data_hora)));
         setNewEvent({ tipo: 'visita', titulo: '', descricao: '', data_hora: '', local: '', corretor_id: '' });
         
-        // Auto-update lead status locally if it changed
         if (newEvent.tipo === 'visita' && (selectedLead.status === 'novo' || selectedLead.status === 'em_atendimento')) {
            setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, status: 'visita_agendada' as StatusLead } : l));
         }
@@ -254,38 +248,6 @@ export default function LeadsPage() {
     }
   }
 
-  function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
-  function isRecent(dateStr: string): boolean {
-    return Date.now() - new Date(dateStr).getTime() < 30 * 60 * 1000; // 30 minutes
-  }
-
-  function getProfileSummary(lead: LeadComCorretor): string {
-    const parts: string[] = [];
-    if (lead.finalidade) {
-      const f: Record<string, string> = { comprar: 'Compra', alugar: 'Aluguel', investir: 'Investimento' };
-      parts.push(f[lead.finalidade] || lead.finalidade);
-    }
-    if (lead.tipo_interesse) parts.push(lead.tipo_interesse);
-    if (lead.quartos_interesse) parts.push(`${lead.quartos_interesse}q`);
-    if (lead.orcamento) parts.push(`R$${(lead.orcamento / 1000).toFixed(0)}k`);
-    if (lead.bairros_interesse?.length) parts.push(lead.bairros_interesse.slice(0, 2).join(', '));
-    return parts.join(' • ') || 'Sem detalhes';
-  }
-
-  function getWhatsAppLink(phone: string): string {
-    return `https://wa.me/${phone.replace(/\D/g, '')}`;
-  }
-
-  // Computed Leads (Filtered)
   const filteredLeads = leads.filter(l => {
     if (origemFilter && l.origem !== origemFilter) return false;
     if (corretorFilter && l.corretor_id !== corretorFilter) return false;
@@ -297,11 +259,11 @@ export default function LeadsPage() {
   });
 
   return (
-    <div className="animate-fade-in pb-10 sm:pb-0">
+    <div className="animate-fade-in pb-20 space-y-8">
       <LeadsHeader 
         viewMode={viewMode}
         setViewMode={setViewMode}
-        leadsCount={leads.length}
+        leadsCount={totalCount}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         corretorFilter={corretorFilter}
@@ -314,19 +276,19 @@ export default function LeadsPage() {
       />
 
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-border-light p-5 animate-pulse">
-              <div className="h-4 w-32 bg-surface-alt rounded mb-3" />
-              <div className="h-3 w-48 bg-surface-alt rounded mb-2" />
-              <div className="h-3 w-64 bg-surface-alt rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <div key={idx} className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-4 shadow-xl shadow-slate-200/50">
+              <LoadingSkeleton className="h-4 w-24" />
+              <LoadingSkeleton className="h-6 w-full" />
+              <LoadingSkeleton className="h-4 w-2/3" />
             </div>
           ))}
         </div>
       ) : filteredLeads.length === 0 ? (
-        <div className="bg-white rounded-xl border border-border-light p-12 text-center">
-          <p className="text-4xl mb-3">📭</p>
-          <p className="text-text-secondary">Nenhum lead encontrado com estes filtros</p>
+        <div className="bg-white rounded-[3rem] border border-dashed border-slate-200 p-24 text-center">
+          <p className="text-7xl mb-6 opacity-20">📭</p>
+          <p className="text-slate-400 font-black uppercase tracking-widest text-sm">Nenhum lead encontrado com estes filtros</p>
         </div>
       ) : viewMode === 'kanban' ? (
         <KanbanBoard 
@@ -349,27 +311,27 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Pagination Controls (Shared for both Table and Kanban) */}
+      {/* Pagination Controls */}
       {Math.ceil(totalCount / limit) > 1 && (
-        <div className="flex items-center justify-between px-6 py-4 mt-6 bg-white rounded-2xl border border-border-light shadow-sm">
-          <p className="text-xs text-text-secondary">
-            Mostrando <span className="font-bold text-text-primary">{(page - 1) * limit + 1}</span> até <span className="font-bold text-text-primary">{Math.min(page * limit, totalCount)}</span> de <span className="font-bold text-text-primary">{totalCount}</span> leads
+        <div className="flex items-center justify-between px-10 py-6 bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Exibindo <span className="text-slate-900">{(page - 1) * limit + 1}</span> — <span className="text-slate-900">{Math.min(page * limit, totalCount)}</span> de <span className="text-slate-900">{totalCount}</span> leads
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <button 
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold border border-border-light bg-white text-text-secondary hover:bg-slate-50 hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-600 hover:bg-slate-900 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               Anterior
             </button>
-            <span className="text-xs font-medium text-text-muted px-2">
-              {page} / {Math.ceil(totalCount / limit)}
+            <span className="text-[10px] font-black text-primary px-2 uppercase tracking-widest">
+              Página {page} / {Math.ceil(totalCount / limit)}
             </span>
             <button 
               disabled={page >= Math.ceil(totalCount / limit)}
               onClick={() => setPage(page + 1)}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold border border-border-light bg-white text-text-secondary hover:bg-slate-50 hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-600 hover:bg-slate-900 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               Próxima
             </button>
@@ -377,7 +339,6 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Agenda/Processes Modal */}
       {selectedLead && (
         <AgendaModal 
           selectedLead={selectedLead}

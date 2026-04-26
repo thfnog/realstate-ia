@@ -16,12 +16,31 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('imobiliarias')
-    .select('*')
+    .select(`
+      *,
+      assinaturas (
+        id,
+        status,
+        planos (
+          id,
+          nome,
+          modulos
+        )
+      )
+    `)
     .eq('id', session.imobiliaria_id)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  
+  // Flatten plan data for easier frontend consumption
+  const responseData = {
+    ...data,
+    active_plan: data.assinaturas?.[0]?.planos?.nome || data.plano || 'Essencial',
+    active_modules: data.assinaturas?.[0]?.planos?.modulos || ['dashboard', 'crm', 'sistema']
+  };
+
+  return NextResponse.json(responseData);
 }
 
 export async function PATCH(request: Request) {

@@ -9,12 +9,14 @@ import { CommandPalette } from '@/components/CommandPalette';
 const navGroups = [
   {
     label: 'Dashboard',
+    module: 'dashboard',
     items: [
       { href: '/admin', label: 'Início', icon: '📊' },
     ]
   },
   {
     label: 'CRM',
+    module: 'crm',
     items: [
       { href: '/admin/leads', label: 'Leads', icon: '👤' },
       { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
@@ -22,12 +24,14 @@ const navGroups = [
   },
   {
     label: 'Inventário',
+    module: 'inventario',
     items: [
       { href: '/admin/imoveis', label: 'Imóveis', icon: '🏠' },
     ]
   },
   {
     label: 'Locação',
+    module: 'locacao',
     items: [
       { href: '/admin/alugueis/propostas', label: 'Propostas', icon: '📨' },
       { href: '/admin/contratos', label: 'Contratos', icon: '📄' },
@@ -36,6 +40,7 @@ const navGroups = [
   },
   {
     label: 'Operação',
+    module: 'operacao',
     items: [
       { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
       { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
@@ -43,7 +48,17 @@ const navGroups = [
     ]
   },
   {
+    label: 'MASTER PLATFORM',
+    module: 'master',
+    items: [
+      { href: '/admin/master/planos', label: 'Gestão de Planos', icon: '💎' },
+      { href: '/admin/master/imobiliarias', label: 'Imobiliárias', icon: '🏢' },
+      { href: '/admin/master/financeiro', label: 'Receita Global', icon: '📈' },
+    ]
+  },
+  {
     label: 'Sistema',
+    module: 'sistema',
     items: [
       { href: '/admin/usuarios', label: 'Usuários', icon: '👤' },
       { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
@@ -58,6 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [countryMode, setCountryMode] = useState<string>('PT');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ email: string; app_role: string } | null>(null);
+  const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'sistema']); // Default basic modules
 
   useEffect(() => {
     // Fetch imobiliaria info
@@ -66,6 +82,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then(data => {
         if (data && data.config_pais) {
           setCountryMode(data.config_pais);
+        }
+        if (data.active_modules) {
+          setActivePlanModules(data.active_modules);
         }
       })
       .catch(() => {});
@@ -86,16 +105,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router]);
 
   const countryFlag = countryMode === 'PT' ? '🇵🇹' : '🇧🇷';
+  const isMaster = user?.email === 'admin@imobia.com' || user?.app_role === 'master';
 
-  // Filter nav groups and items based on role
-  const filteredNavGroups = navGroups.map(group => ({
-    ...group,
-    items: group.items.filter(item => {
-      if (user?.app_role === 'admin') return true;
-      const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
-      return !restricted.includes(item.href);
-    })
-  })).filter(group => group.items.length > 0);
+  // Filter nav groups and items based on role AND plan modules
+  const filteredNavGroups = navGroups.map(group => {
+    // 1. Check module access
+    if (group.module === 'master' && !isMaster) return null;
+    if (group.module !== 'master' && group.module !== 'dashboard' && group.module !== 'sistema' && !activePlanModules.includes(group.module)) return null;
+
+    return {
+      ...group,
+      items: group.items.filter(item => {
+        // Master sees everything in their module
+        if (group.module === 'master') return true;
+
+        // Admin role sees everything in their enabled modules
+        if (user?.app_role === 'admin') return true;
+
+        // Broker role restriction
+        const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
+        return !restricted.includes(item.href);
+      })
+    };
+  }).filter(group => group !== null && group.items.length > 0) as typeof navGroups;
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });

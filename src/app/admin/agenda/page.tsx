@@ -1,37 +1,32 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import type { EventoComDetalhes, StatusEvento, TipoEvento, EscalaComCorretor, Corretor } from '@/lib/database.types';
+import { useState, useEffect } from 'react';
+import { IoCalendarOutline, IoChevronBackOutline, IoChevronForwardOutline, IoSyncOutline, IoTrashOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoCreateOutline, IoLocationOutline, IoPersonOutline, IoBriefcaseOutline } from 'react-icons/io5';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import WhatsAppConnector from '@/components/corretores/WhatsAppConnector';
 import { getConfig } from '@/lib/countryConfig';
 
-const eventConfig: Record<TipoEvento, { label: string; color: string; bg: string }> = {
-  visita: { label: 'Visita', color: 'text-blue-700', bg: 'bg-blue-100 border-blue-200' },
-  assinatura: { label: 'Assinatura', color: 'text-purple-700', bg: 'bg-purple-100 border-purple-200' },
-  cartorio: { label: 'Cartório', color: 'text-emerald-700', bg: 'bg-emerald-100 border-emerald-200' },
-  reuniao: { label: 'Reunião', color: 'text-amber-700', bg: 'bg-amber-100 border-amber-200' },
-  vistoria: { label: 'Vistoria', color: 'text-indigo-700', bg: 'bg-indigo-100 border-indigo-200' },
-  outro: { label: 'Outro', color: 'text-slate-700', bg: 'bg-slate-100 border-slate-200' },
+const eventConfig: Record<string, { label: string, color: string, bg: string, icon: string }> = {
+  visita: { label: 'Visita', color: 'text-primary', bg: 'bg-primary/10 border-primary/20', icon: '🏠' },
+  reuniao: { label: 'Reunião', color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100', icon: '🤝' },
+  vistoria: { label: 'Vistoria', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100', icon: '🔍' },
+  assinatura: { label: 'Assinatura', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100', icon: '✍️' },
+  outro: { label: 'Outro', color: 'text-slate-600', bg: 'bg-slate-50 border-slate-100', icon: '📅' },
 };
 
 export default function AgendaPage() {
   const config = getConfig();
-  const [eventos, setEventos] = useState<EventoComDetalhes[]>([]);
-  const [escala, setEscala] = useState<EscalaComCorretor[]>([]);
-  const [corretores, setCorretores] = useState<Corretor[]>([]);
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [escala, setEscala] = useState<any[]>([]);
+  const [corretores, setCorretores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Escala Mode
   const [modoEscala, setModoEscala] = useState(false);
   const [selectedCorretorId, setSelectedCorretorId] = useState('');
   
-  // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<EventoComDetalhes | null>(null);
-  
-  // Edit State
-  const [updating, setUpdating] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editData, setEditData] = useState<Partial<EventoComDetalhes>>({});
+  const [updating, setUpdating] = useState(false);
+  const [editData, setEditData] = useState<any>({});
 
   useEffect(() => {
     if (selectedEvent) {
@@ -67,7 +62,6 @@ export default function AgendaPage() {
   async function fetchData() {
     try {
       setLoading(true);
-      // Fetch Eventos, Escala, and Corretores basically in parallel for the MVP unifier
       const [evtRes, escRes, corRes] = await Promise.all([
         fetch('/api/eventos'),
         fetch('/api/escala'),
@@ -79,7 +73,7 @@ export default function AgendaPage() {
       
       if (Array.isArray(evtData)) setEventos(evtData);
       if (Array.isArray(escData)) setEscala(escData);
-      if (Array.isArray(corData)) setCorretores(corData.filter((c: Corretor) => c.ativo));
+      if (Array.isArray(corData)) setCorretores(corData.filter((c: any) => c.ativo));
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     } finally {
@@ -91,7 +85,6 @@ export default function AgendaPage() {
     fetchData();
   }, []);
 
-  // Auto-select corretor if only one exists
   useEffect(() => {
     if (corretores.length === 1 && !selectedCorretorId) {
       setSelectedCorretorId(corretores[0].id);
@@ -110,7 +103,6 @@ export default function AgendaPage() {
     setCurrentDate(new Date());
   }
 
-  // Generate Calendar Grid
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   
@@ -121,19 +113,17 @@ export default function AgendaPage() {
   
   const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-  // Helper to get events for a specific day
   function getEventsForDay(day: number) {
     const targetDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return eventos.filter(e => e.data_hora.startsWith(targetDateStr));
   }
 
-  // Format time (HH:MM)
   function formatTime(isoStr: string) {
     const d = new Date(isoStr);
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
-  async function updateEventStatus(id: string, newStatus: StatusEvento) {
+  async function updateEventStatus(id: string, newStatus: string) {
     try {
       setUpdating(true);
       await fetch(`/api/eventos/${id}`, {
@@ -166,7 +156,6 @@ export default function AgendaPage() {
     }
   }
 
-  // Escala Handlers
   function getEscalaForDay(targetDateStr: string) {
     return escala.filter(e => e.data === targetDateStr);
   }
@@ -199,41 +188,44 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="animate-fade-in flex flex-col h-[calc(100vh-2rem)]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 shrink-0 gap-2">
+    <div className="animate-fade-in flex flex-col h-[calc(100vh-2rem)] space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Agenda & Processos</h1>
-          <p className="text-text-secondary text-sm mt-1">Acompanhamento de visitas, assinaturas e cartório.</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Agenda Operacional</h1>
+          <p className="text-slate-500 font-medium mt-1">Acompanhamento centralizado de visitas, vistorias e contratos.</p>
         </div>
-        <div className="flex gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-3">
           <button 
             onClick={fetchData}
-            className="p-2.5 rounded-xl border border-border-light bg-white text-text-secondary hover:text-primary hover:bg-primary-subtle transition-all"
-            title="Atualizar"
+            className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-primary hover:shadow-lg transition-all"
+            title="Atualizar Dados"
           >
-            ↻
+            <IoSyncOutline size={20} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-border-light p-4 flex-1 flex flex-col min-h-0">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex-1 flex flex-col min-h-0 shadow-2xl shadow-slate-200/50">
         {/* Calendar Header Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 shrink-0 gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <h2 className="text-xl font-bold text-slate-800 sm:w-48">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 shrink-0 gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-8">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight lg:w-72">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
-            <div className="flex items-center bg-surface-alt rounded-lg p-1 w-fit">
-              <button onClick={handlePrevMonth} className="px-3 py-1 rounded hover:bg-white text-slate-600 font-medium">←</button>
-              <button onClick={handleToday} className="px-4 py-1 rounded hover:bg-white text-slate-800 font-medium text-sm">Hoje</button>
-              <button onClick={handleNextMonth} className="px-3 py-1 rounded hover:bg-white text-slate-600 font-medium">→</button>
+            <div className="flex items-center bg-slate-50 p-1.5 rounded-[1.25rem] border border-slate-100 w-fit shadow-sm">
+              <button onClick={handlePrevMonth} className="p-2.5 rounded-xl hover:bg-white hover:text-primary transition-all text-slate-400">
+                <IoChevronBackOutline size={20} />
+              </button>
+              <button onClick={handleToday} className="px-6 py-2 rounded-xl hover:bg-white text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all mx-1">Hoje</button>
+              <button onClick={handleNextMonth} className="p-2.5 rounded-xl hover:bg-white hover:text-primary transition-all text-slate-400">
+                <IoChevronForwardOutline size={20} />
+              </button>
             </div>
             
-            {/* NOVO: MODO ESCALA TOGGLE E SELECTOR */}
-            <div className={`flex items-center gap-3 px-2 py-1 border-border-light text-sm transition-all sm:border-l ${modoEscala ? 'bg-primary-subtle rounded-lg' : ''}`}>
-              <label className="flex items-center gap-2 cursor-pointer font-bold text-primary select-none shrink-0">
-                <div className={`w-8 h-4 bg-slate-300 rounded-full relative transition-colors ${modoEscala ? '!bg-primary' : ''}`}>
-                  <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-all ${modoEscala ? 'left-[18px]' : 'left-0.5'}`}></div>
+            <div className={`flex items-center gap-4 px-6 py-2 border-slate-100 transition-all lg:border-l ${modoEscala ? 'bg-primary/5 rounded-2xl ring-2 ring-primary/10' : ''}`}>
+              <label className="flex items-center gap-3 cursor-pointer group select-none shrink-0">
+                <div className={`w-12 h-6 bg-slate-200 rounded-full relative transition-all duration-500 ${modoEscala ? '!bg-primary' : ''}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-500 shadow-sm ${modoEscala ? 'left-7' : 'left-1'}`}></div>
                 </div>
                 <input 
                   type="checkbox" 
@@ -241,44 +233,42 @@ export default function AgendaPage() {
                   onChange={(e) => setModoEscala(e.target.checked)} 
                   className="hidden" 
                 />
-                Escala
+                <span className={`text-[10px] font-black uppercase tracking-widest ${modoEscala ? 'text-primary' : 'text-slate-400'}`}>
+                  Escala de Corretores
+                </span>
               </label>
               
               {modoEscala && (
-                <div className="animate-fade-in flex flex-wrap items-center gap-2">
+                <div className="animate-fade-in flex flex-wrap items-center gap-4">
                   {corretores.length > 1 ? (
                     <select
                       value={selectedCorretorId}
                       onChange={(e) => setSelectedCorretorId(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg border-2 border-primary/40 bg-white text-xs text-text-primary focus:outline-none focus:border-primary shadow-sm min-w-[180px]"
+                      className="px-6 py-2 rounded-xl border-2 border-primary/20 bg-white text-[10px] font-black uppercase tracking-widest text-slate-900 focus:ring-4 focus:ring-primary/10 outline-none shadow-sm min-w-[220px]"
                     >
-                      <option value="">+ Escolher corretor...</option>
+                      <option value="">Selecione o Consultor...</option>
                       {corretores.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.whatsapp_status === 'close' ? '⚠️ ' : ''}
-                          {c.nome}
+                          {c.nome} {c.whatsapp_status === 'close' ? ' (OFF)' : ''}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-primary/20 shadow-sm">
-                      <span className="text-[10px] font-black text-primary uppercase">✨ Modo Único: {corretores[0]?.nome}</span>
+                    <div className="flex items-center gap-3 px-6 py-2 bg-white rounded-xl border-2 border-primary/20 shadow-sm">
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">✨ Foco: {corretores[0]?.nome}</span>
                     </div>
                   )}
-                  <span className="hidden xl:inline text-[10px] font-black text-primary uppercase animate-pulse">
-                    ✨ Clique nos dias para alternar escala
-                  </span>
                 </div>
               )}
             </div>
           </div>
           
           {!modoEscala && (
-            <div className="flex flex-wrap gap-3 text-xs">
+            <div className="flex flex-wrap gap-4 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100">
               {Object.entries(eventConfig).map(([key, conf]) => (
-                <div key={key} className="flex items-center gap-1.5">
+                <div key={key} className="flex items-center gap-2">
                   <span className={`w-3 h-3 rounded-full ${conf.bg.split(' ')[0]} border ${conf.bg.split(' ')[1]}`}></span>
-                  <span className="text-slate-600">{conf.label}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{conf.label}</span>
                 </div>
               ))}
             </div>
@@ -286,264 +276,240 @@ export default function AgendaPage() {
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 min-h-0 flex flex-col border border-border-light rounded-xl overflow-x-auto bg-surface-alt/30 overscroll-none scrollbar-thin">
-          <div className="min-w-[700px] flex-1 flex flex-col h-full">
-          {/* Days Header */}
-          <div className="grid grid-cols-7 border-b border-border-light bg-surface-alt shrink-0">
-            {daysOfWeek.map((day, idx) => (
-              <div key={day} className={`p-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider ${idx > 0 ? 'border-l border-border-light' : ''}`}>
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          {/* Calendar Body */}
-          <div className="flex-1 grid grid-cols-7 auto-rows-fr">
-            {/* Empty boxes for offset */}
-            {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} className={`p-2 border-b border-border-light bg-slate-50/50 ${i > 0 ? 'border-l border-border-light' : ''}`} />
-            ))}
+        <div className="flex-1 min-h-0 flex flex-col border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50/30">
+          <div className="min-w-[1000px] flex-1 flex flex-col h-full overflow-x-auto">
+            {/* Days Header */}
+            <div className="grid grid-cols-7 bg-white border-b border-slate-100 shrink-0">
+              {daysOfWeek.map((day, idx) => (
+                <div key={day} className={`px-4 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest ${idx > 0 ? 'border-l border-slate-50' : ''}`}>
+                  {day}
+                </div>
+              ))}
+            </div>
             
-            {/* Actual Days */}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const isToday = 
-                day === new Date().getDate() && 
-                currentDate.getMonth() === new Date().getMonth() && 
-                currentDate.getFullYear() === new Date().getFullYear();
+            {/* Calendar Body */}
+            <div className="flex-1 grid grid-cols-7 auto-rows-fr overflow-y-auto custom-scrollbar">
+              {/* Empty boxes for offset */}
+              {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                <div key={`empty-${i}`} className={`bg-slate-50/20 border-b border-slate-100 ${i > 0 ? 'border-l border-slate-50' : ''}`} />
+              ))}
               
-              const dayEvents = getEventsForDay(day);
-              const colIdx = (firstDayOfMonth + i) % 7;
-              
-              const dayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-              const escalaHoje = getEscalaForDay(dayStr);
-              
-              return (
-                <div 
-                  key={day} 
-                  onClick={() => modoEscala && toggleEscalaDia(dayStr, selectedCorretorId)}
-                  className={`p-1 flex flex-col border-b border-border-light bg-white ${colIdx > 0 ? 'border-l border-border-light' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary-subtle border border-transparent hover:border-primary/30 z-10' : 'hover:bg-slate-50/50'} transition-all`}
-                >
-                  <div className="flex items-start justify-between mb-1.5 p-1">
-                    {/* Escala Badges rendering */}
-                    <div className="flex flex-wrap gap-1 items-start flex-1 min-w-0 pr-1">
-                      {escalaHoje.map(esc => {
-                        const init = esc.corretores?.nome.substring(0, 2).toUpperCase() || 'NA';
+              {/* Actual Days */}
+              {loading ? (
+                Array.from({ length: daysInMonth }).map((_, i) => (
+                  <div key={`skeleton-${i}`} className="p-4 border-b border-slate-100 border-l border-slate-50 bg-white animate-pulse">
+                    <LoadingSkeleton className="w-8 h-8 rounded-full mb-4" />
+                    <LoadingSkeleton className="h-4 w-full rounded-lg mb-2" />
+                    <LoadingSkeleton className="h-4 w-3/4 rounded-lg" />
+                  </div>
+                ))
+              ) : Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const isToday = 
+                  day === new Date().getDate() && 
+                  currentDate.getMonth() === new Date().getMonth() && 
+                  currentDate.getFullYear() === new Date().getFullYear();
+                
+                const dayEvents = getEventsForDay(day);
+                const colIdx = (firstDayOfMonth + i) % 7;
+                
+                const dayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const escalaHoje = getEscalaForDay(dayStr);
+                
+                return (
+                  <div 
+                    key={day} 
+                    onClick={() => modoEscala && toggleEscalaDia(dayStr, selectedCorretorId)}
+                    className={`group relative p-4 flex flex-col border-b border-slate-100 bg-white ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      {/* Escala Badges */}
+                      <div className="flex flex-wrap gap-1.5 items-start flex-1 min-w-0 pr-2">
+                        {escalaHoje.map(esc => {
+                          const init = esc.corretores?.nome.substring(0, 2).toUpperCase() || '??';
+                          return (
+                            <div 
+                              key={esc.id}
+                              title={esc.corretores?.nome}
+                              onClick={(e) => { 
+                                if (modoEscala) { e.stopPropagation(); toggleEscalaDia(dayStr, esc.corretor_id); }
+                              }}
+                              className={`flex items-center justify-center w-7 h-7 text-[9px] font-black rounded-xl border-2 shrink-0 transition-all ${modoEscala ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 hover:bg-rose-500 hover:border-rose-500 scale-110' : 'bg-slate-50 text-slate-500 border-slate-100 group-hover:border-slate-200'}`}
+                            >
+                              {init}
+                            </div>
+                          )
+                        })}
+                      </div>
+                      
+                      {/* Day Number */}
+                      <div className="shrink-0">
+                        <span className={`inline-flex items-center justify-center w-9 h-9 text-xs font-black tracking-tighter rounded-2xl transition-all ${isToday ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-110' : 'text-slate-900 group-hover:scale-110'}`}>
+                          {day}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className={`flex-1 space-y-2 pr-1 transition-all duration-500 ${modoEscala ? 'opacity-20 pointer-events-none blur-[1px]' : ''}`}>
+                      {dayEvents.map(evt => {
+                        const ec = eventConfig[evt.tipo] || eventConfig.outro;
                         return (
                           <div 
-                            key={esc.id}
-                            title={esc.corretores?.nome}
-                            onClick={(e) => { 
-                              if (modoEscala) { e.stopPropagation(); toggleEscalaDia(dayStr, esc.corretor_id); }
-                            }}
-                            className={`flex items-center justify-center w-6 h-6 text-[9px] font-bold rounded-full border shrink-0 ${modoEscala ? 'bg-primary text-white border-primary-hover shadow-sm hover:bg-danger hover:border-danger hover:text-white' : 'bg-surface-alt text-slate-600 border-slate-200'} transition-colors`}
+                            key={evt.id} 
+                            onClick={() => setSelectedEvent(evt)}
+                            className={`flex flex-col px-3 py-2.5 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all ${ec.bg} ${evt.status === 'realizado' ? 'opacity-50' : ''}`}
                           >
-                            {init}
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-slate-900/60">{formatTime(evt.data_hora)}</span>
+                              {evt.status === 'agendado' && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                              )}
+                            </div>
+                            <span className={`text-[10px] font-black uppercase tracking-widest leading-tight line-clamp-1 ${ec.color}`}>{evt.titulo}</span>
+                            {evt.lead && <span className="text-[9px] font-bold text-slate-500 mt-1 line-clamp-1">{evt.lead.nome}</span>}
                           </div>
                         )
                       })}
                     </div>
-                    
-                    {/* Day Number */}
-                    <div className="shrink-0">
-                      <span className={`inline-flex items-center justify-center w-7 h-7 text-sm rounded-full ${isToday ? 'bg-primary text-white font-bold' : 'text-slate-700'}`}>
-                        {day}
-                      </span>
-                    </div>
                   </div>
-                  
-                  <div className={`flex-1 overflow-y-auto space-y-1.5 custom-scrollbar pr-1 transition-opacity ${modoEscala ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
-                    {loading ? null : dayEvents.map(evt => {
-                      const ec = eventConfig[evt.tipo] || eventConfig.outro;
-                      return (
-                        <div 
-                          key={evt.id} 
-                          onClick={() => setSelectedEvent(evt)}
-                          title={`${evt.titulo}\n${evt.lead?.nome || ''}\n${evt.local || ''}`}
-                          className={`flex flex-col px-2 py-1.5 rounded-lg border text-xs cursor-pointer hover:brightness-95 transition-all ${ec.bg} ${evt.status === 'realizado' ? 'opacity-60 line-through' : ''}`}
-                        >
-                          <div className="flex justify-between items-start mb-0.5 gap-1">
-                            <span className="font-semibold truncate text-slate-800">{formatTime(evt.data_hora)}</span>
-                            {evt.status === 'agendado' && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0 animate-pulse"></span>
-                            )}
-                          </div>
-                          <span className={`font-medium truncate ${ec.color}`}>{evt.titulo}</span>
-                          {evt.lead && <span className="truncate text-slate-600 mt-0.5">{evt.lead.nome}</span>}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            
-            {/* Trailing empty boxes */}
-            {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
-              <div key={`trail-${i}`} className={`p-2 border-b border-border-light bg-slate-50/50 border-l border-border-light`} />
-            ))}
+                );
+              })}
+              
+              {/* Trailing empty boxes */}
+              {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
+                <div key={`trail-${i}`} className={`bg-slate-50/20 border-b border-slate-100 border-l border-slate-50`} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* Event Details Modal */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedEvent(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-scale-in" onClick={e => e.stopPropagation()}>
-            <div className={`p-5 border-b ${eventConfig[selectedEvent.tipo]?.bg.split(' ')[0]} flex justify-between items-start`}>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1 block">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-6" onClick={() => setSelectedEvent(null)}>
+          <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-scale-in border border-white/20" onClick={e => e.stopPropagation()}>
+            <div className={`px-10 py-10 border-b border-slate-50 ${eventConfig[selectedEvent.tipo]?.bg.split(' ')[0]} relative`}>
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-black/5 bg-white/40 shadow-sm`}>
                   {eventConfig[selectedEvent.tipo]?.label}
                 </span>
-                <h2 className="text-lg font-bold text-slate-800 leading-tight">
-                  {selectedEvent.titulo}
-                </h2>
+                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-black/5 bg-white/40 shadow-sm`}>
+                  {selectedEvent.status}
+                </span>
               </div>
-              <button onClick={() => setSelectedEvent(null)} className="p-1 text-slate-400 hover:text-slate-700 bg-white/50 hover:bg-white rounded-lg transition-colors">
-                ✕
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                {selectedEvent.titulo}
+              </h2>
+              <button onClick={() => setSelectedEvent(null)} className="absolute top-10 right-10 p-3 text-slate-500 hover:text-slate-900 hover:bg-white/50 rounded-2xl transition-all">
+                <IoCloseCircleOutline size={28} />
               </button>
             </div>
             
-            <div className="p-5 space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Data e Hora</p>
+            <div className="p-10 space-y-10">
+              <div className="grid grid-cols-2 gap-10">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data e Horário</p>
                   {editMode ? (
                     <input 
                       type="datetime-local"
                       value={editData.data_hora ? editData.data_hora.substring(0, 16) : ''}
                       onChange={(e) => setEditData({ ...editData, data_hora: e.target.value })}
-                      className="w-full px-2 py-1 text-sm border border-primary rounded"
+                      className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
                     />
                   ) : (
-                    <p className="font-semibold text-slate-800">
-                      {new Date(selectedEvent.data_hora).toLocaleDateString('pt-BR')} às {formatTime(selectedEvent.data_hora)}
-                    </p>
+                    <div className="flex items-center gap-3 text-slate-900">
+                      <IoCalendarOutline className="text-primary text-xl" />
+                      <p className="text-sm font-black uppercase tracking-widest">
+                        {new Date(selectedEvent.data_hora).toLocaleDateString('pt-BR')} <span className="text-primary">•</span> {formatTime(selectedEvent.data_hora)}
+                      </p>
+                    </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Status</p>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${selectedEvent.status === 'agendado' ? 'bg-blue-500' : selectedEvent.status === 'realizado' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                    <span className="font-semibold text-slate-800 capitalize">{selectedEvent.status}</span>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status Operacional</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${selectedEvent.status === 'agendado' ? 'bg-blue-500' : selectedEvent.status === 'realizado' ? 'bg-emerald-500' : 'bg-red-500'} shadow-lg`}></div>
+                    <p className="text-sm font-black uppercase tracking-widest text-slate-900">{selectedEvent.status}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Assunto</p>
-                  {editMode ? (
-                    <input 
-                      type="text"
-                      value={editData.titulo || ''}
-                      onChange={(e) => setEditData({ ...editData, titulo: e.target.value })}
-                      className="w-full px-2 py-1 text-sm border border-primary rounded"
-                    />
-                  ) : (
-                    <p className="text-sm font-medium text-slate-800">{selectedEvent.titulo}</p>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Tipo</p>
-                  {editMode ? (
-                    <select
-                      value={editData.tipo || 'outro'}
-                      onChange={(e) => setEditData({ ...editData, tipo: e.target.value as TipoEvento })}
-                      className="w-full px-2 py-1 text-sm border border-primary rounded"
-                    >
-                      {Object.entries(eventConfig).map(([key, conf]) => (
-                        <option key={key} value={key}>{conf.label}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="text-sm font-medium text-slate-800">{eventConfig[selectedEvent.tipo]?.label}</p>
-                  )}
-                </div>
-              </div>
-
               {selectedEvent.lead && (
-                <div className="pt-3 border-t border-slate-100">
-                  <p className="text-xs font-medium text-slate-500 mb-1">Cliente / Origem</p>
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                      👤
-                    </span>
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Interessado / Lead</p>
+                  <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm">
+                      <IoPersonOutline size={24} />
+                    </div>
                     <div>
-                      <p className="font-semibold text-slate-800">{selectedEvent.lead.nome}</p>
-                      <p className="text-xs text-slate-500">{selectedEvent.lead.telefone}</p>
+                      <p className="text-lg font-black text-slate-900 tracking-tight">{selectedEvent.lead.nome}</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">{selectedEvent.lead.telefone}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="pt-3 border-t border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-1">Corretor Responsável</p>
-                <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
-                    💼
-                  </span>
-                  <div>
-                    <p className="font-semibold text-slate-800">
-                      {selectedEvent.corretor?.nome || 'Não atribuído'}
-                    </p>
-                    {selectedEvent.corretor?.telefone && (
-                      <p className="text-xs text-slate-500">{selectedEvent.corretor.telefone}</p>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Consultor Responsável</p>
+                  <div className="flex items-center gap-4 text-slate-900">
+                    <IoBriefcaseOutline className="text-emerald-500 text-xl" />
+                    <p className="text-sm font-black uppercase tracking-widest">{selectedEvent.corretor?.nome || 'NÃO ATRIBUÍDO'}</p>
                   </div>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Localização</p>
+                  {editMode ? (
+                    <input 
+                      type="text"
+                      value={editData.local || ''}
+                      onChange={(e) => setEditData({ ...editData, local: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-4 text-slate-900">
+                      <IoLocationOutline className="text-indigo-500 text-xl" />
+                      <p className="text-sm font-black uppercase tracking-widest line-clamp-1">{selectedEvent.local || 'A DEFINIR'}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-0.5">Local</p>
-                {editMode ? (
-                  <input 
-                    type="text"
-                    value={editData.local || ''}
-                    onChange={(e) => setEditData({ ...editData, local: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-primary rounded"
-                  />
-                ) : (
-                  <p className="text-sm text-slate-700 flex items-start gap-1">
-                    📍 {selectedEvent.local || 'A combinar'}
-                  </p>
-                )}
-              </div>
-
-              <div className="pt-3 border-t border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-0.5">Observações</p>
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas do Atendimento</p>
                 {editMode ? (
                   <textarea 
                     value={editData.descricao || ''}
                     onChange={(e) => setEditData({ ...editData, descricao: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-primary rounded h-20"
+                    className="w-full bg-slate-50 border border-slate-100 px-8 py-6 rounded-[2rem] text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all min-h-[120px]"
                   />
                 ) : (
-                  <p className="text-sm text-slate-700 italic border-l-2 border-slate-200 pl-3">
-                    {selectedEvent.descricao || 'Sem observações'}
-                  </p>
+                  <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 border-l-4 border-l-primary/30">
+                    <p className="text-sm text-slate-700 font-medium italic leading-relaxed">
+                      {selectedEvent.descricao || 'Sem observações adicionais para este registro.'}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
               <button 
                 onClick={() => deleteEvent(selectedEvent.id)}
                 disabled={updating}
-                className="text-xs text-danger font-medium hover:underline disabled:opacity-50"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-700 transition-all disabled:opacity-30"
               >
-                Excluir
+                <IoTrashOutline size={18} /> Excluir Registro
               </button>
               
-              <div className="flex gap-2">
+              <div className="flex gap-4">
                 {!editMode && (
                   <button 
                     onClick={() => setEditMode(true)}
                     disabled={updating}
-                    className="px-3 py-1.5 rounded-lg border border-primary text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                    className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:border-primary hover:text-primary transition-all shadow-sm"
                   >
-                    Editar
+                    <IoCreateOutline size={18} /> Editar Dados
                   </button>
                 )}
                 
@@ -551,31 +517,31 @@ export default function AgendaPage() {
                   <button 
                     onClick={saveEventChanges}
                     disabled={updating}
-                    className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-hover disabled:opacity-50"
+                    className="px-10 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
                   >
-                    {updating ? 'Salvando...' : 'Salvar Alterações'}
+                    {updating ? 'Sincronizando...' : 'Confirmar Alterações'}
                   </button>
                 ) : (
-                  <>
+                  <div className="flex gap-3">
                     {selectedEvent.status !== 'cancelado' && (
                       <button 
                         onClick={() => updateEventStatus(selectedEvent.id, 'cancelado')}
                         disabled={updating}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                        className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-all shadow-sm"
                       >
-                        Marcar Cancelado
+                        <IoCloseCircleOutline size={18} /> Cancelar
                       </button>
                     )}
                     {selectedEvent.status === 'agendado' && (
                       <button 
                         onClick={() => updateEventStatus(selectedEvent.id, 'realizado')}
                         disabled={updating}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50"
+                        className="flex items-center gap-2 px-10 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-slate-900/10"
                       >
-                        Marcar Realizado
+                        <IoCheckmarkCircleOutline size={18} /> Marcar Realizado
                       </button>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
