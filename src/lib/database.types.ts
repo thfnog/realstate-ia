@@ -254,33 +254,44 @@ export type Contrato = {
   imovel_id: string | null;
   lead_id: string | null;
   corretor_id: string | null;
-  tipo: ContratoTipo;
+  tipo: 'venda' | 'aluguel';
   status: ContratoStatus;
   valor_total: number;
   valor_entrada_caucao: number;
+  taxa_administracao_porcentagem?: number;
+  proprietario_nome?: string;
+  proprietario_contato?: string;
+  garantia_tipo?: 'seguro_fianca' | 'titulo_capitalizacao' | 'fiador' | 'caucao' | 'sem_garantia';
+  valor_reajuste_anual_indexador?: 'IGPM' | 'IPCA' | 'fixo';
+  dia_base_reajuste?: number;
   data_inicio: string;
-  data_fim: string | null;
-  dia_vencimento: number | null;
-  clausulas_extras: string | null;
-  documento_url: string | null;
+  data_fim?: string;
+  dia_vencimento?: number;
+  clausulas_extras?: string;
+  documento_url?: string;
   criado_em: string;
   atualizado_em: string;
+  // Joins
+  imovel?: any;
+  lead?: any;
+  corretor?: any;
+  pagamentos?: PagamentoContrato[];
 };
 
-export type PagamentoStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado';
-export type PagamentoTipo = 'entrada' | 'parcela' | 'aluguel_mensal' | 'comissao';
-
-export type PagamentoContrato = {
+export interface PagamentoContrato {
   id: string;
   contrato_id: string;
-  tipo: PagamentoTipo;
+  tipo: 'entrada' | 'parcela' | 'aluguel_mensal' | 'comissao';
   valor_esperado: number;
   valor_pago: number;
+  valor_taxa_adm?: number;
+  valor_repasse_proprietario?: number;
+  status_repasse?: 'nao_aplicavel' | 'pendente' | 'processado' | 'erro';
   data_vencimento: string;
-  data_pagamento: string | null;
-  status: PagamentoStatus;
+  data_pagamento?: string | null;
+  status: 'pendente' | 'pago' | 'atrasado' | 'cancelado';
   criado_em: string;
-};
+}
 
 export type ContratoTemplate = {
   id: string;

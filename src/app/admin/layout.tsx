@@ -12,6 +12,7 @@ const navItems = [
   { href: '/admin/imoveis', label: 'Imóveis', icon: '🏠' },
   { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
   { href: '/admin/contratos', label: 'Contratos', icon: '📄' },
+  { href: '/admin/financeiro/alugueis', label: 'Financeiro', icon: '💰' },
   { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
   { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
   { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },

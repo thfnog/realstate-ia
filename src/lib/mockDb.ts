@@ -646,6 +646,8 @@ export function createContrato(data: Omit<Contrato, 'id' | 'criado_em' | 'atuali
     id: crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
+    taxa_administracao_porcentagem: 10,
+    garantia_tipo: 'caucao',
     ...data,
   };
   contratos.push(contrato);
@@ -653,7 +655,7 @@ export function createContrato(data: Omit<Contrato, 'id' | 'criado_em' | 'atuali
 }
 
 export function updateContrato(id: string, data: Partial<Contrato>): Contrato | null {
-  const idx = contratos.findIndex(c => c.id === id);
+  const idx = contratos.findIndex((c) => c.id === id);
   if (idx === -1) return null;
   contratos[idx] = { ...contratos[idx], ...data, atualizado_em: new Date().toISOString() };
   return contratos[idx];
@@ -661,18 +663,26 @@ export function updateContrato(id: string, data: Partial<Contrato>): Contrato | 
 
 // ===== Pagamentos =====
 
-export function getPagamentos(contrato_id: string): PagamentoContrato[] {
-  return pagamentos.filter(p => p.contrato_id === contrato_id);
+export function getPagamentos(contratoId: string): PagamentoContrato[] {
+  return pagamentos.filter((p) => p.contrato_id === contratoId);
 }
 
 export function createPagamento(data: Omit<PagamentoContrato, 'id' | 'criado_em'>): PagamentoContrato {
-  const pag: PagamentoContrato = {
+  const pagamento: PagamentoContrato = {
     id: crypto.randomUUID(),
     criado_em: new Date().toISOString(),
+    status_repasse: 'nao_aplicavel',
     ...data,
   };
-  pagamentos.push(pag);
-  return pag;
+  pagamentos.push(pagamento);
+  return pagamento;
+}
+
+export function updatePagamento(id: string, data: Partial<PagamentoContrato>): PagamentoContrato | null {
+  const idx = pagamentos.findIndex((p) => p.id === id);
+  if (idx === -1) return null;
+  pagamentos[idx] = { ...pagamentos[idx], ...data };
+  return pagamentos[idx];
 }
 
 // ===== Templates =====

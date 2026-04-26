@@ -48,11 +48,18 @@ export async function POST(req: NextRequest) {
 
     // If it's a rental, we generate the first payment (caucao) and optionally the first month
     if (contrato.tipo === 'aluguel') {
+      const taxaPct = contrato.taxa_administracao_porcentagem || 10;
+      const valorTaxa = (contrato.valor_total * taxaPct) / 100;
+      const valorRepasse = contrato.valor_total - valorTaxa;
+
       await repo.createPagamento({
         contrato_id: contrato.id,
         tipo: 'entrada',
         valor_esperado: contrato.valor_entrada_caucao || contrato.valor_total,
         valor_pago: 0,
+        valor_taxa_adm: valorTaxa,
+        valor_repasse_proprietario: valorRepasse,
+        status_repasse: 'pendente',
         data_vencimento: contrato.data_inicio,
         data_pagamento: null,
         status: 'pendente'

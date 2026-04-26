@@ -57,8 +57,8 @@ export class MockContratoRepository implements IContratoRepository {
   }
 
   async updatePagamento(id: string, data: Partial<PagamentoContrato>): Promise<PagamentoContrato | null> {
-    // Basic mock update logic
-    return null; // Implementation deferred for now if not immediately needed
+    const { updatePagamento } = require('@/lib/mockDb');
+    return updatePagamento(id, data);
   }
 
   async getTemplates(imobiliaria_id: string): Promise<ContratoTemplate[]> {
