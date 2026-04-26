@@ -53,10 +53,18 @@ export function shouldIgnoreMessage(text: string): boolean {
     return true;
   }
 
-  // 4. Specific "random" words that don't indicate a lead
-  const randomWords = ['goodie', 'teste', 'testando', 'spam'];
-  if (randomWords.some(word => normalized === word || normalized === `${word}!`)) {
-    console.log(`[Filter] Ignorando palavra aleatória: "${normalized}"`);
+  // 4. Specific "noise" words that don't indicate a lead
+  const noiseWords = [
+    'goodie', 'teste', 'testando', 'spam', 
+    'correndo', 'correria', 'correria braba', 'semana corrida',
+    'trânsito', 'transito',
+    'atendendo', 'em reunião', 'em reuniao',
+    'ok', 'beleza', 'combinado', 'fechado',
+    'vlw', 'valeu', 'obrigado', 'obrigada'
+  ];
+
+  if (noiseWords.some(word => normalized === word || normalized === `${word}!` || normalized === `${word}.`)) {
+    console.log(`[Filter] Ignorando palavra de ruído/status: "${normalized}"`);
     return true;
   }
 

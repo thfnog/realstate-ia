@@ -23,9 +23,8 @@ export async function extractLeadWithAI(text: string): Promise<AILeadProfile> {
   console.log('🤖 Consultando Groq para extração de dados...');
 
   if (!GROQ_API_KEY) {
-    console.warn('⚠️ GROQ_API_KEY não configurada. Usando fallback básico.');
-    // Poderia chamar o extrator Regex antigo como fallback
-    return { is_lead: true };
+    console.warn('⚠️ GROQ_API_KEY não configurada. Usando fallback seguro (ignorar).');
+    return { is_lead: false };
   }
 
   const prompt = `
@@ -36,24 +35,17 @@ MENSAGEM DO CLIENTE:
 "${text}"
 
 REGRAS DE CLASSIFICAÇÃO (is_lead):
-- Marque "is_lead": true se houver intenção clara de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, ou pedidos de agendamento: "quero marcar uma reunião para ver a casa", "preciso de atendimento sobre o terreno").
-- Marque "is_lead": false para RELATOS DE STATUS ou conversas sociais (ex: "estava atendendo o cliente", "estou em reunião agora", "já te ligo", "tô no trânsito"). A palavra "reunião" ou "atendimento" sozinha NÃO torna a mensagem um lead se não houver um contexto de interesse imobiliário acompanhando.
-- EXCEÇÃO: Se a mensagem contém APENAS um nome (ex: "Pedro", "Maria Silva", "Sou o Carlos"), marque "is_lead": true e extraia o nome.
+- Marque "is_lead": true se houver intenção clara de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, agendamento de visitas, ou interesse em vender/alugar seu próprio imóvel).
+- Marque "is_lead": false para RELATOS DE STATUS, conversas sociais ou saudações genéricas sem contexto (ex: "estava atendendo o cliente", "estou em reunião", "já te ligo", "tô no trânsito", "correndo", "semana corrida", "semana corrida man", "correria braba", "ok", "beleza", "combinado").
+- IMPORTANTE: Mensagens que são apenas saudações ("Oi", "Bom dia") ou status ("Tô correndo") NÃO são leads.
+- EXCEÇÃO: Se a mensagem contém APENAS um nome próprio (ex: "Pedro", "Maria Silva", "Sou o Carlos") e nada mais, pode marcar como "is_lead": true para capturarmos o nome, mas seja criterioso.
 
 REGRAS DE EXTRAÇÃO:
-1. Extraia o nome se mencionado — mesmo que seja a ÚNICA informação na mensagem.
-   Exemplos de mensagens que contêm nome:
-   - "Pedro" → nome: "Pedro"
-   - "Sou o Carlos" → nome: "Carlos"
-   - "Me chamo Ana" → nome: "Ana"
-   - "Meu nome é Roberto Silva" → nome: "Roberto Silva"
-   - "É Maria" → nome: "Maria"
+1. Extraia o nome se mencionado de forma clara (ex: "Sou o Carlos").
 2. Identifique o tipo: 'apartamento', 'casa' ou 'terreno'.
 3. Identifique o bairro (freguesia) e cidade (concelho).
-4. Converta valores monetários para números puros (ex: 1.5 milhão = 1500000).
-5. Extraia o número de quartos.
-6. Se não encontrar uma informação, deixe nulo.
-7. Retorne APENAS um objeto JSON puro.
+4. Converta valores monetários para números puros.
+5. Retorne APENAS um objeto JSON puro.
 
 EXEMPLO DE SAÍDA (LEAD):
 {
@@ -61,21 +53,13 @@ EXEMPLO DE SAÍDA (LEAD):
   "nome": "Roberto",
   "tipo_interesse": "casa",
   "freguesia": "Swiss Park",
-  "orcamento": 1800000,
   "resumo_ia": "Cliente busca casa de alto padrão."
 }
 
-EXEMPLO DE SAÍDA (APENAS NOME):
-{
-  "is_lead": true,
-  "nome": "Carlos",
-  "resumo_ia": "Cliente informou seu nome."
-}
-
-EXEMPLO DE SAÍDA (RUÍDO):
+EXEMPLO DE SAÍDA (RUÍDO/STATUS):
 {
   "is_lead": false,
-  "resumo_ia": "Conversa social ou saudação genérica."
+  "resumo_ia": "Relato de status ou conversa social (ex: correndo)."
 }
   `;
 
@@ -87,7 +71,7 @@ EXEMPLO DE SAÍDA (RUÍDO):
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', // Modelo rápido e eficiente
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0,
         response_format: { type: 'json_object' }
@@ -97,7 +81,7 @@ EXEMPLO DE SAÍDA (RUÍDO):
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Erro na API do Groq:', response.status, errorText);
-      return { is_lead: true };
+      return { is_lead: false };
     }
 
     const data = await response.json();
@@ -105,10 +89,9 @@ EXEMPLO DE SAÍDA (RUÍDO):
 
     if (!rawContent) {
       console.error('⚠️ Resposta do Groq sem conteúdo:', data);
-      return { is_lead: true };
+      return { is_lead: false };
     }
 
-    // Clean markdown code blocks if the model included them
     const cleanJson = rawContent.replace(/```json\n?|```/g, '').trim();
     const result = JSON.parse(cleanJson);
     
@@ -117,6 +100,6 @@ EXEMPLO DE SAÍDA (RUÍDO):
 
   } catch (error) {
     console.error('❌ Erro na extração via Groq:', error);
-    return { is_lead: true };
+    return { is_lead: false };
   }
 }
