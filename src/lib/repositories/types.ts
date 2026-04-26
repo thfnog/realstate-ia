@@ -19,8 +19,19 @@ export interface ILeadRepository {
   delete(id: string, imobiliaria_id: string): Promise<void>;
 }
 
+export interface ImovelFilters extends PaginationParams {
+  imobiliaria_id: string;
+  status?: string;
+  tipo?: string;
+  min_valor?: number;
+  max_valor?: number;
+  min_area?: number;
+  max_area?: number;
+  search?: string;
+}
+
 export interface IImovelRepository {
-  findAll(filters: { imobiliaria_id: string } & PaginationParams): Promise<{ data: Imovel[]; count: number }>;
+  findAll(filters: ImovelFilters): Promise<{ data: Imovel[]; count: number }>;
   findById(id: string, imobiliaria_id: string): Promise<Imovel | null>;
   create(data: Partial<Imovel>): Promise<Imovel>;
   update(id: string, imobiliaria_id: string, data: Partial<Imovel>): Promise<Imovel>;

@@ -31,14 +31,37 @@ export async function POST(request: Request) {
     }
 
     // REAL MODE: Supabase Auth Invitation
-    // We no longer pre-create the profile here. 
+    // If role is corretor, we should ensure a corretor record exists
+    let finalCorretorId = corretor_id;
+    
+    if (role === 'corretor' && !finalCorretorId) {
+      // Create a broker record first to get an ID
+      const { data: newBroker, error: brokerError } = await supabaseAdmin
+        .from('corretores')
+        .insert({
+          imobiliaria_id: session.imobiliaria_id,
+          nome: nome || email.split('@')[0],
+          email: email,
+          telefone: '—', // Placeholder to be updated by the user
+          ativo: true
+        })
+        .select()
+        .single();
+        
+      if (brokerError) {
+        console.error('[INVITE] Erro ao criar corretor:', brokerError);
+        return NextResponse.json({ error: 'Erro ao pré-cadastrar corretor' }, { status: 500 });
+      }
+      finalCorretorId = newBroker.id;
+    }
+
     // We call invite FIRST. If it succeeds, the DB trigger 'on_auth_user_created' 
     // will automatically create the profile in 'public.usuarios'.
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: {
         imobiliaria_id: session.imobiliaria_id,
         role: role,
-        corretor_id: corretor_id || null,
+        corretor_id: finalCorretorId || null,
         display_name: nome || email.split('@')[0],
       },
       redirectTo: `${new URL(request.url).origin}/auth/confirm`,

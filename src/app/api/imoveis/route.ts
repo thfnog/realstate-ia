@@ -14,6 +14,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '50');
+  
+  const status = searchParams.get('status') || undefined;
+  const tipo = searchParams.get('tipo') || undefined;
+  const min_valor = searchParams.get('min_valor') ? parseInt(searchParams.get('min_valor')!) : undefined;
+  const max_valor = searchParams.get('max_valor') ? parseInt(searchParams.get('max_valor')!) : undefined;
+  const min_area = searchParams.get('min_area') ? parseInt(searchParams.get('min_area')!) : undefined;
+  const max_area = searchParams.get('max_area') ? parseInt(searchParams.get('max_area')!) : undefined;
+  const search = searchParams.get('search') || undefined;
 
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value || '';
@@ -23,7 +31,14 @@ export async function GET(request: Request) {
   const { data, count } = await repository.findAll({
     imobiliaria_id: session.imobiliaria_id,
     page,
-    limit
+    limit,
+    status,
+    tipo,
+    min_valor,
+    max_valor,
+    min_area,
+    max_area,
+    search
   });
 
   return NextResponse.json({ data, count });

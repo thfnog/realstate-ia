@@ -98,7 +98,10 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-slate-500 text-sm mt-6">
+        <p className="text-center text-slate-500 text-sm mt-6 flex flex-col gap-2">
+          <Link href="/registro" className="text-primary font-bold hover:underline">
+            Não tem uma conta? Registre sua imobiliária
+          </Link>
           <Link href="/" className="hover:text-white transition-colors">
             ← Voltar ao site
           </Link>

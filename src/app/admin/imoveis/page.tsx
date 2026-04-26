@@ -11,7 +11,14 @@ export default function ImoveisPage() {
   const [config, setConfig] = useState<CountryConfig>(getConfigByCode('PT'));
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({ status: '', tipo: '' });
+  const [filter, setFilter] = useState({ 
+    status: '', 
+    tipo: '', 
+    min_valor: '', 
+    max_valor: '', 
+    min_area: '', 
+    max_area: '' 
+  });
   const [searchTerm, setSearchTerm] = useState('');
   
   // Pagination State
@@ -36,7 +43,19 @@ export default function ImoveisPage() {
   async function fetchImoveis() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/imoveis?page=${page}&limit=${LIMIT}`);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: LIMIT.toString(),
+        status: filter.status,
+        tipo: filter.tipo,
+        min_valor: filter.min_valor,
+        max_valor: filter.max_valor,
+        min_area: filter.min_area,
+        max_area: filter.max_area,
+        search: searchTerm
+      });
+
+      const res = await fetch(`/api/imoveis?${params.toString()}`);
       const result = await res.json();
       
       if (result && Array.isArray(result.data)) {
@@ -68,7 +87,7 @@ export default function ImoveisPage() {
 
   useEffect(() => {
     fetchImoveis();
-  }, [page]);
+  }, [page, filter, searchTerm]);
 
   const proxyImage = (url: string) => {
     if (!url) return '';
@@ -91,22 +110,6 @@ export default function ImoveisPage() {
     arrendado: 'bg-sky-50 text-sky-700 border-sky-200',
     retirado: 'bg-slate-50 text-slate-700 border-slate-200',
   };
-
-  const filtered = imoveis.filter(im => {
-    if (filter.status && im.status !== filter.status) return false;
-    if (filter.tipo && im.tipo !== filter.tipo) return false;
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const refMatch = im.referencia?.toLowerCase().includes(term);
-      const titleMatch = im.titulo?.toLowerCase().includes(term);
-      const concelhoMatch = im.concelho?.toLowerCase().includes(term);
-      const freguesiaMatch = im.freguesia?.toLowerCase().includes(term);
-      if (!refMatch && !titleMatch && !concelhoMatch && !freguesiaMatch) return false;
-    }
-    
-    return true;
-  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -145,43 +148,99 @@ export default function ImoveisPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface-alt/50 p-4 rounded-2xl flex flex-wrap gap-4 items-center border border-border-light">
-          <div className="flex-1 min-w-[200px] relative">
-             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">🔍</span>
-             <input 
-                type="text"
-                placeholder="Buscar por referência, título ou cidade..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full bg-white border border-border-light rounded-xl pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-             />
+      <div className="bg-surface-alt/50 p-6 rounded-3xl space-y-4 border border-border-light shadow-sm">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-[280px] relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">🔍</span>
+              <input 
+                  type="text"
+                  placeholder="Buscar por referência, título ou cidade..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full bg-white border border-border-light rounded-xl pl-9 pr-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Status:</span>
+              <select 
+                  value={filter.status} 
+                  onChange={e => setFilter({...filter, status: e.target.value})}
+                  className="bg-white border border-border-light rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none shadow-sm"
+              >
+                  <option value="">Todos</option>
+                  <option value="disponivel">Disponíveis</option>
+                  <option value="reservado">Reservados</option>
+                  <option value="vendido">Vendidos</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Tipo:</span>
+              <select 
+                  value={filter.tipo} 
+                  onChange={e => setFilter({...filter, tipo: e.target.value})}
+                  className="bg-white border border-border-light rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none shadow-sm"
+              >
+                  <option value="">Todos</option>
+                  <option value="apartamento">Apartamento</option>
+                  <option value="casa">Casa</option>
+                  <option value="terreno">Terreno</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-             <span className="text-xs font-bold text-text-secondary uppercase">Status:</span>
-             <select 
-                value={filter.status} 
-                onChange={e => setFilter({...filter, status: e.target.value})}
-                className="bg-white border border-border-light rounded-lg px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none"
-             >
-                <option value="">Todos</option>
-                <option value="disponivel">Disponíveis</option>
-                <option value="reservado">Reservados</option>
-                <option value="vendido">Vendidos</option>
-             </select>
-          </div>
-          <div className="flex items-center gap-2">
-             <span className="text-xs font-bold text-text-secondary uppercase">Tipo:</span>
-             <select 
-                value={filter.tipo} 
-                onChange={e => setFilter({...filter, tipo: e.target.value})}
-                className="bg-white border border-border-light rounded-lg px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none"
-             >
-                <option value="">Todos</option>
-                <option value="apartamento">Apartamento</option>
-                <option value="casa">Casa</option>
-                <option value="terreno">Terreno</option>
-             </select>
+          <div className="flex flex-wrap gap-6 pt-2 border-t border-border-light/50">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Preço:</span>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  placeholder="Min" 
+                  value={filter.min_valor}
+                  onChange={e => setFilter({...filter, min_valor: e.target.value})}
+                  className="w-24 bg-white border border-border-light rounded-lg px-2 py-1.5 text-xs font-medium outline-none"
+                />
+                <span className="text-text-muted text-xs">—</span>
+                <input 
+                  type="number" 
+                  placeholder="Max" 
+                  value={filter.max_valor}
+                  onChange={e => setFilter({...filter, max_valor: e.target.value})}
+                  className="w-24 bg-white border border-border-light rounded-lg px-2 py-1.5 text-xs font-medium outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Área (m²):</span>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  placeholder="Min" 
+                  value={filter.min_area}
+                  onChange={e => setFilter({...filter, min_area: e.target.value})}
+                  className="w-20 bg-white border border-border-light rounded-lg px-2 py-1.5 text-xs font-medium outline-none"
+                />
+                <span className="text-text-muted text-xs">—</span>
+                <input 
+                  type="number" 
+                  placeholder="Max" 
+                  value={filter.max_area}
+                  onChange={e => setFilter({...filter, max_area: e.target.value})}
+                  className="w-20 bg-white border border-border-light rounded-lg px-2 py-1.5 text-xs font-medium outline-none"
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                setFilter({ status: '', tipo: '', min_valor: '', max_valor: '', min_area: '', max_area: '' });
+                setSearchTerm('');
+              }}
+              className="text-[10px] font-bold text-primary hover:underline ml-auto"
+            >
+              Limpar Filtros
+            </button>
           </div>
       </div>
 
@@ -191,25 +250,31 @@ export default function ImoveisPage() {
             <div key={i} className="bg-white rounded-3xl border border-border-light h-64 animate-pulse shadow-sm" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : imoveis.length === 0 ? (
         <div className="bg-white rounded-3xl border border-border-light p-20 text-center shadow-sm">
           <p className="text-6xl mb-6 scale-110">🏠</p>
           <h2 className="text-xl font-bold text-text-primary">Nenhum imóvel encontrado</h2>
-          <p className="text-text-secondary mt-2 mb-8">Comece captando seu primeiro imóvel para a agência.</p>
-          <Link href="/admin/imoveis/novo" className="px-8 py-3 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
-            Captar primeiro imóvel
-          </Link>
+          <p className="text-text-secondary mt-2 mb-8">Tente ajustar seus filtros para encontrar o que procura.</p>
+          <button 
+            onClick={() => {
+              setFilter({ status: '', tipo: '', min_valor: '', max_valor: '', min_area: '', max_area: '' });
+              setSearchTerm('');
+            }}
+            className="px-8 py-3 rounded-2xl bg-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-all"
+          >
+            Limpar todos os filtros
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((im) => (
+          {imoveis.map((im) => (
             <div 
               key={im.id} 
               onClick={() => router.push(`/admin/imoveis/${im.id}`)}
-              className="group bg-white rounded-3xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              className="group bg-white rounded-3xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full"
             >
               {/* Image Preview */}
-              <div className="relative h-48 bg-surface-alt overflow-hidden">
+              <div className="relative h-48 bg-surface-alt overflow-hidden shrink-0">
                 {im.fotos && (im.fotos as any[]).length > 0 ? (
                   <img 
                     src={proxyImage((im.fotos as any[]).find(f => f.is_capa)?.url_media || (im.fotos as any[])[0].url_media || (im.fotos as any[])[0])} 
@@ -231,7 +296,7 @@ export default function ImoveisPage() {
               </div>
 
               {/* Card Content */}
-              <div className="p-6">
+              <div className="p-6 flex flex-col flex-1">
                 <div className="flex justify-between items-start mb-2">
                    <div>
                       <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">{im.tipo} • {im.concelho}</p>
@@ -250,12 +315,12 @@ export default function ImoveisPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-6">
-                   <span className="text-lg font-black text-text-primary">
+                <div className="flex items-center justify-between mt-auto pt-6 gap-2">
+                   <span className="text-lg font-black text-text-primary truncate" title={formatCurrencyConfig(im.valor, config)}>
                       {formatCurrencyConfig(im.valor, config)}
                    </span>
                    
-                   <div className="flex gap-2">
+                   <div className="flex gap-2 shrink-0">
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleDelete(im.id); }}
                         className="p-2 rounded-xl bg-surface-alt hover:bg-rose-50 hover:text-rose-600 text-text-secondary transition-all"

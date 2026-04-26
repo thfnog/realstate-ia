@@ -14,10 +14,21 @@ interface Usuario {
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'corretor' });
   const [submitting, setSubmitting] = useState(false);
+
+  async function fetchCurrentUser() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      setCurrentUser(data);
+    } catch (err) {
+      console.error('Erro ao carregar sessão:', err);
+    }
+  }
 
   async function fetchUsuarios() {
     try {
@@ -34,6 +45,7 @@ export default function UsuariosPage() {
   }
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchUsuarios();
   }, []);
 
@@ -86,7 +98,7 @@ export default function UsuariosPage() {
               <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Usuário</th>
               <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Nível de Acesso</th>
               <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Vínculo</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Ações</th>
+              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-light">
@@ -101,68 +113,94 @@ export default function UsuariosPage() {
                 <td colSpan={4} className="px-6 py-12 text-center text-text-secondary italic">Nenhum usuário cadastrado</td>
               </tr>
             ) : (
-              usuarios.map((u) => (
-                <tr key={u.id} className="hover:bg-surface-alt/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-text-primary text-sm">{u.email}</span>
-                      <span className="text-[10px] text-slate-400 font-mono uppercase mt-0.5">{u.id.slice(0, 8)}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                      u.role === 'admin' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
-                    }`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-text-secondary">
-                      {u.corretores?.nome || '—'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={async () => {
-                          if (confirm('Reenviar convite para este usuário?')) {
-                            try {
-                              const res = await fetch('/api/admin/users', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ userId: u.id, action: 'resend_invite' }),
-                              });
-                              if (res.ok) toast.success('Convite reenviado!');
-                              else toast.error('Erro ao reenviar');
-                            } catch { toast.error('Erro de conexão'); }
-                          }
-                        }}
-                        className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                        title="Reenviar Convite"
-                      >
-                        ✉️
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
-                            try {
-                              const res = await fetch(`/api/admin/users?id=${u.id}`, { method: 'DELETE' });
-                              if (res.ok) {
-                                toast.success('Usuário excluído');
-                                fetchUsuarios();
-                              } else toast.error('Erro ao excluir');
-                            } catch { toast.error('Erro de conexão'); }
-                          }
-                        }}
-                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                        title="Excluir Usuário"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              usuarios.map((u) => {
+                const isSelf = currentUser?.usuario_id === u.id;
+                return (
+                  <tr key={u.id} className={`hover:bg-surface-alt/30 transition-colors ${isSelf ? 'bg-primary/5' : ''}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-text-primary text-sm">{u.email}</span>
+                          {isSelf && (
+                            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[8px] font-black uppercase">Você</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase mt-0.5">{u.id.slice(0, 8)}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        u.role === 'admin' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-text-secondary font-medium">
+                          {u.corretores?.nome || (
+                            <span className="text-slate-300 italic text-xs">Sem vínculo</span>
+                          )}
+                        </span>
+                        {u.role === 'admin' && !u.corretor_id && (
+                           <button 
+                             onClick={() => alert('Em breve: Vincular admin a um perfil de corretor para uso do WhatsApp.')}
+                             className="text-[10px] text-primary hover:underline font-bold mt-0.5"
+                           >
+                             + Criar Perfil de Corretor
+                           </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={async () => {
+                            if (confirm('Reenviar convite para este usuário?')) {
+                              try {
+                                const res = await fetch('/api/admin/users', {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ userId: u.id, action: 'resend_invite' }),
+                                });
+                                if (res.ok) toast.success('Convite reenviado!');
+                                else toast.error('Erro ao reenviar');
+                              } catch { toast.error('Erro de conexão'); }
+                            }
+                          }}
+                          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                          title="Reenviar Convite"
+                        >
+                          ✉️
+                        </button>
+                        <button
+                          disabled={isSelf}
+                          onClick={async () => {
+                            if (confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
+                              try {
+                                const res = await fetch(`/api/admin/users?id=${u.id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                  toast.success('Usuário excluído');
+                                  fetchUsuarios();
+                                } else {
+                                  const data = await res.json();
+                                  toast.error(data.error || 'Erro ao excluir');
+                                }
+                              } catch { toast.error('Erro de conexão'); }
+                            }
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isSelf ? 'opacity-20 cursor-not-allowed grayscale' : 'hover:bg-red-50 text-red-600'
+                          }`}
+                          title={isSelf ? 'Você não pode se excluir' : 'Excluir Usuário'}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

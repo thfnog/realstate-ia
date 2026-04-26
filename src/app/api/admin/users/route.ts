@@ -56,6 +56,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID do usuário é obrigatório' }, { status: 400 });
     }
 
+    if (userId === session.usuario_id) {
+      return NextResponse.json({ error: 'Você não pode excluir o seu próprio usuário enquanto está logado' }, { status: 400 });
+    }
+
     if (isMockMode()) {
       // Logic for Mock mode
       return NextResponse.json({ success: true });

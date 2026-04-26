@@ -1,16 +1,27 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { IImovelRepository, PaginationParams } from './types';
+import { IImovelRepository, ImovelFilters } from './types';
 import { Imovel } from '@/lib/database.types';
 
 export class SupabaseImovelRepository implements IImovelRepository {
   constructor(private client: SupabaseClient) {}
 
-  async findAll(filters: { imobiliaria_id: string } & PaginationParams): Promise<{ data: Imovel[]; count: number }> {
+  async findAll(filters: ImovelFilters): Promise<{ data: Imovel[]; count: number }> {
     let query = this.client
       .from('imoveis')
       .select('*', { count: 'exact' });
 
     query = query.eq('imobiliaria_id', filters.imobiliaria_id);
+
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.tipo) query = query.eq('tipo', filters.tipo);
+    if (filters.min_valor) query = query.gte('valor', filters.min_valor);
+    if (filters.max_valor) query = query.lte('valor', filters.max_valor);
+    if (filters.min_area) query = query.gte('area_util', filters.min_area);
+    if (filters.max_area) query = query.lte('area_util', filters.max_area);
+
+    if (filters.search) {
+      query = query.or(`titulo.ilike.%${filters.search}%,referencia.ilike.%${filters.search}%,concelho.ilike.%${filters.search}%,freguesia.ilike.%${filters.search}%`);
+    }
 
     query = query.order('criado_em', { ascending: false });
 

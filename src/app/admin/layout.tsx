@@ -15,6 +15,7 @@ const navItems = [
   { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
   { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
   { href: '/admin/usuarios', label: 'Usuários', icon: '👤' },
+  { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
   { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
 ];
 

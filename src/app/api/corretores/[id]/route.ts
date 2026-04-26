@@ -67,15 +67,47 @@ export async function DELETE(
 ) {
   try {
     const session = await getAuthFromCookies();
-    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!session || session.app_role !== 'admin') {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+    }
 
     const { id } = await params;
     const cookieStore = await cookies();
     const token = cookieStore.get('auth-token')?.value || '';
     const client = getUserSupabaseClient(token);
-    const repository = getCorretorRepository(client);
+    
+    // 1. Find linked users
+    const { data: users } = await client
+      .from('usuarios')
+      .select('id, auth_id, role')
+      .eq('corretor_id', id);
 
+    if (users && users.length > 0) {
+      const { supabaseAdmin } = await import('@/lib/supabase');
+      
+      for (const u of users) {
+        if (u.role === 'admin') {
+          // Just unlink
+          await supabaseAdmin
+            .from('usuarios')
+            .update({ corretor_id: null })
+            .eq('id', u.id);
+        } else {
+          // Delete broker-only user
+          if (u.auth_id) {
+            await supabaseAdmin.auth.admin.deleteUser(u.auth_id);
+          }
+          await supabaseAdmin
+            .from('usuarios')
+            .delete()
+            .eq('id', u.id);
+        }
+      }
+    }
+
+    const repository = getCorretorRepository(client);
     await repository.delete(id, session.imobiliaria_id);
+    
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('SERVER ERROR DELETE CORRETOR:', err);
