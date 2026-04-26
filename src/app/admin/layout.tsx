@@ -6,20 +6,50 @@ import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import { CommandPalette } from '@/components/CommandPalette';
 
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/leads', label: 'Leads', icon: '👤' },
-  { href: '/admin/imoveis', label: 'Imóveis', icon: '🏠' },
-  { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
-  { href: '/admin/contratos', label: 'Contratos', icon: '📄' },
-  { href: '/admin/financeiro/alugueis', label: 'Financeiro', icon: '💰' },
-  { href: '/admin/alugueis/propostas', label: 'Propostas de Aluguel', icon: '📨' },
-  { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
-  { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
-  { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
-  { href: '/admin/usuarios', label: 'Usuários', icon: '👤' },
-  { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
-  { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
+const navGroups = [
+  {
+    label: 'Dashboard',
+    items: [
+      { href: '/admin', label: 'Início', icon: '📊' },
+    ]
+  },
+  {
+    label: 'CRM',
+    items: [
+      { href: '/admin/leads', label: 'Leads', icon: '👤' },
+      { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
+    ]
+  },
+  {
+    label: 'Inventário',
+    items: [
+      { href: '/admin/imoveis', label: 'Imóveis', icon: '🏠' },
+    ]
+  },
+  {
+    label: 'Locação',
+    items: [
+      { href: '/admin/alugueis/propostas', label: 'Propostas', icon: '📨' },
+      { href: '/admin/contratos', label: 'Contratos', icon: '📄' },
+      { href: '/admin/financeiro/mensal', label: 'Financeiro', icon: '💰' },
+    ]
+  },
+  {
+    label: 'Operação',
+    items: [
+      { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
+      { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
+      { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
+    ]
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/admin/usuarios', label: 'Usuários', icon: '👤' },
+      { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
+      { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
+    ]
+  }
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -57,14 +87,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const countryFlag = countryMode === 'PT' ? '🇵🇹' : '🇧🇷';
 
-  // Filter nav items based on role
-  const filteredNavItems = navItems.filter(item => {
-    if (user?.app_role === 'admin') return true;
-    
-    // Brokers don't see Configurações, Carteira or Webhook Logs
-    const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
-    return !restricted.includes(item.href);
-  });
+  // Filter nav groups and items based on role
+  const filteredNavGroups = navGroups.map(group => ({
+    ...group,
+    items: group.items.filter(item => {
+      if (user?.app_role === 'admin') return true;
+      const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
+      return !restricted.includes(item.href);
+    })
+  })).filter(group => group.items.length > 0);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -85,25 +116,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-sidebar-active text-sidebar-text-active shadow-lg shadow-primary/20'
-                  : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
-              }`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 space-y-8 overflow-y-auto custom-scrollbar">
+        {filteredNavGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">
+              {group.label}
+            </h3>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                      isActive
+                        ? 'bg-primary text-white shadow-lg shadow-primary/30 border border-primary'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
+                    }`}
+                  >
+                    <span className={`text-lg transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User Info & Logout */}
