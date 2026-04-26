@@ -42,6 +42,7 @@ export type Corretor = {
   pref_notif_whatsapp: boolean;
   pref_notif_email: boolean;
   pref_notif_push: boolean;
+  comissao_padrao?: number;
   criado_em: string;
 };
 
@@ -113,6 +114,7 @@ export type Imovel = {
 
   status: StatusImovel;
   fotos: ImovelFoto[];
+  comissao_venda?: number;
   criado_em: string;
 };
 
@@ -221,4 +223,20 @@ export type LeadFormData = {
   quartos_interesse?: number;
   vagas_interesse?: number;
   bairros_interesse?: string[];
+};
+
+// =============================================
+// Vendas (Transactions)
+// =============================================
+
+export type Venda = {
+  id: string;
+  imobiliaria_id: string;
+  imovel_id: string | null;
+  corretor_id: string | null;
+  valor_venda: number;
+  porcentagem_comissao: number;
+  valor_comissao: number;
+  data_venda: string;
+  criado_em: string;
 };

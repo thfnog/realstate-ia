@@ -7,7 +7,8 @@ import { CountryConfig, formatCurrency } from '@/lib/countryConfig';
 import MercadoIndicador from './MercadoIndicador';
 import MapPicker from './MapPicker';
 import ImovelGaleria from './ImovelGaleria';
-import { IoClose } from 'react-icons/io5';
+import { IoClose, IoCalculatorOutline } from 'react-icons/io5';
+import SaleModal from './SaleModal';
 
 interface ImovelDetalhesViewProps {
   imovel: Imovel;
@@ -18,6 +19,7 @@ interface ImovelDetalhesViewProps {
 
 export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin = true }: ImovelDetalhesViewProps) {
   const [activePhoto, setActivePhoto] = useState(0);
+  const [showSaleModal, setShowSaleModal] = useState(false);
 
   const stats = [
     { label: config.terminology.quartosLabel, value: imovel.quartos, icon: '🛏️' },
@@ -140,11 +142,18 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                        {formatCurrency(imovel.valor, config)}
                     </p>
                  </div>
-                 {imovel.aceita_permuta && (
-                    <span className="bg-sky-50 text-sky-700 text-[10px] font-bold px-2 py-1 rounded-lg border border-sky-100">
-                       Aceita Permuta
-                    </span>
-                 )}
+                 <div className="flex flex-col items-end gap-1">
+                   {imovel.comissao_venda && (
+                     <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded-lg border border-primary/20 flex items-center gap-1">
+                        <IoCalculatorOutline /> {imovel.comissao_venda}% Comissão
+                     </span>
+                   )}
+                   {imovel.aceita_permuta && (
+                      <span className="bg-sky-50 text-sky-700 text-[10px] font-bold px-2 py-1 rounded-lg border border-sky-100">
+                         Aceita Permuta
+                      </span>
+                   )}
+                 </div>
               </div>
 
               <div className="space-y-4 pt-6 border-t border-border-light">
@@ -173,6 +182,15 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
 
               {isAdmin && (
                 <div className="mt-8 space-y-3">
+                   {imovel.status !== 'vendido' && (
+                     <button 
+                       onClick={() => setShowSaleModal(true)}
+                       className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 mb-3"
+                     >
+                        🤝 Registrar Venda
+                     </button>
+                   )}
+                   
                    <button 
                      onClick={handleGeneratePDF}
                      className="w-full py-4 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
@@ -204,6 +222,18 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
            </div>
         </div>
       </div>
+
+      {showSaleModal && (
+        <SaleModal 
+          imovel={imovel}
+          config={config}
+          onClose={() => setShowSaleModal(false)}
+          onSuccess={() => {
+            setShowSaleModal(false);
+            window.location.reload(); // Refresh to show 'vendido' status
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
-    const { nome, telefone } = body;
+    const { nome, telefone, comissao_padrao } = body;
 
     if (mock.isMockMode()) {
       mock.seedTestData();
@@ -54,12 +54,13 @@ export async function PATCH(request: Request) {
           ativo: true,
           pref_notif_whatsapp: true,
           pref_notif_email: true,
-          pref_notif_push: true
+          pref_notif_push: true,
+          comissao_padrao: comissao_padrao || 5.0
         });
         corretorId = newCorretor.id;
         user.corretor_id = corretorId; // In-memory update
       } else {
-        mock.updateCorretor(corretorId, { nome, telefone });
+        mock.updateCorretor(corretorId, { nome, telefone, comissao_padrao });
       }
 
       return NextResponse.json({ success: true, corretor_id: corretorId });
@@ -85,7 +86,8 @@ export async function PATCH(request: Request) {
           nome: nome || user.email.split('@')[0],
           telefone: telefone || '—',
           email: user.email,
-          ativo: true
+          ativo: true,
+          comissao_padrao: comissao_padrao || 5.0
         })
         .select()
         .single();
@@ -103,8 +105,9 @@ export async function PATCH(request: Request) {
       const { error: updateError } = await supabaseAdmin
         .from('corretores')
         .update({
-          nome: nome,
-          telefone: telefone
+          nome,
+          telefone,
+          comissao_padrao
         })
         .eq('id', corretorId);
 

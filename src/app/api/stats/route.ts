@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserSupabaseClient } from '@/lib/supabase';
-import { getLeadRepository, getImovelRepository, getCorretorRepository } from '@/lib/repositories/factory';
+import { getLeadRepository, getImovelRepository, getCorretorRepository, getVendaRepository } from '@/lib/repositories/factory';
 import { getAuthFromCookies } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
@@ -16,24 +16,34 @@ export async function GET(request: Request) {
     const leadRepo = getLeadRepository(client);
     const imovelRepo = getImovelRepository(client);
     const corretorRepo = getCorretorRepository(client);
+    const vendaRepo = getVendaRepository(client);
+
+    const { searchParams } = new URL(request.url);
+    const start_date = searchParams.get('start_date') || undefined;
+    const end_date = searchParams.get('end_date') || undefined;
 
     // Fetch data for stats
-    const [leadsData, imoveisData, corretores] = await Promise.all([
+    const [leadsData, imoveisData, corretores, vendas] = await Promise.all([
       leadRepo.findAll({ imobiliaria_id: session.imobiliaria_id, limit: 2000 }),
       imovelRepo.findAll({ imobiliaria_id: session.imobiliaria_id, limit: 2000 }),
-      corretorRepo.findAll(session.imobiliaria_id)
+      corretorRepo.findAll(session.imobiliaria_id),
+      vendaRepo.findAll({ 
+        imobiliaria_id: session.imobiliaria_id, 
+        corretor_id: session.app_role === 'corretor' ? session.corretor_id! : undefined,
+        start_date,
+        end_date
+      })
     ]);
 
     let leads = leadsData.data;
     const imoveis = imoveisData.data;
 
-    // Apply Role Filter for non-admins
+    // Apply Role Filter for non-admins for leads (repository might already do it, but to be sure)
     if (session.app_role === 'corretor' && session.corretor_id) {
       leads = leads.filter(l => l.corretor_id === session.corretor_id);
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const thisMonth = new Date().toISOString().slice(0, 7);
 
     // Basic Counts
     const stats = {
@@ -47,6 +57,9 @@ export async function GET(request: Request) {
       imoveisDisponiveis: imoveis.filter(i => i.status === 'disponivel').length,
       totalCorretores: corretores.length,
       taxaConversao: leads.length > 0 ? (leads.filter(l => l.status === 'fechado').length / leads.length) * 100 : 0,
+      totalComissao: vendas.reduce((acc, v) => acc + (v.valor_comissao || 0), 0),
+      totalVendasValor: vendas.reduce((acc, v) => acc + (v.valor_venda || 0), 0),
+      vendasCount: vendas.length
     };
 
     // Temporal Data (Last 7 days)
@@ -75,12 +88,15 @@ export async function GET(request: Request) {
         const brokerLeads = leads.filter(l => l.corretor_id === c.id);
         const leadsFechados = brokerLeads.filter(l => l.status === 'fechado').length;
         const conversion = brokerLeads.length > 0 ? (leadsFechados / brokerLeads.length) * 100 : 0;
+        const comissao = vendas.filter(v => v.corretor_id === c.id).reduce((acc, v) => acc + (v.valor_comissao || 0), 0);
+        
         return {
           id: c.id,
           nome: c.nome,
           leads: brokerLeads.length,
           fechados: leadsFechados,
-          conversao: conversion
+          conversao: conversion,
+          comissao
         };
       }).sort((a, b) => b.conversao - a.conversao);
     }

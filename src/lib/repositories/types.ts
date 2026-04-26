@@ -1,4 +1,4 @@
-import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes } from '@/lib/database.types';
+import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda } from '@/lib/database.types';
 
 export interface PaginationParams {
   page?: number;
@@ -54,3 +54,7 @@ export interface IEventoRepository {
   delete(id: string, imobiliaria_id: string): Promise<void>;
 }
 
+export interface IVendaRepository {
+  findAll(filters: { imobiliaria_id: string; corretor_id?: string; start_date?: string; end_date?: string }): Promise<Venda[]>;
+  create(data: Partial<Venda>): Promise<Venda>;
+}

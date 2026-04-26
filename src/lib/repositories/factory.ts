@@ -1,6 +1,6 @@
 import { isMockMode } from '@/lib/mockDb';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { ILeadRepository, IImovelRepository, ICorretorRepository, IEventoRepository } from './types';
+import { ILeadRepository, IImovelRepository, ICorretorRepository, IEventoRepository, IVendaRepository } from './types';
 import { MockLeadRepository } from './MockLeadRepository';
 import { SupabaseLeadRepository } from './SupabaseLeadRepository';
 import { MockImovelRepository } from './MockImovelRepository';
@@ -9,6 +9,8 @@ import { MockCorretorRepository } from './MockCorretorRepository';
 import { SupabaseCorretorRepository } from './SupabaseCorretorRepository';
 import { MockEventoRepository } from './MockEventoRepository';
 import { SupabaseEventoRepository } from './SupabaseEventoRepository';
+import { MockVendaRepository } from './MockVendaRepository';
+import { SupabaseVendaRepository } from './SupabaseVendaRepository';
 
 /**
  * Repository Factory
@@ -40,4 +42,11 @@ export function getEventoRepository(client: SupabaseClient): IEventoRepository {
     return new MockEventoRepository();
   }
   return new SupabaseEventoRepository(client);
+}
+
+export function getVendaRepository(client: SupabaseClient): IVendaRepository {
+  if (isMockMode()) {
+    return new MockVendaRepository();
+  }
+  return new SupabaseVendaRepository(client);
 }

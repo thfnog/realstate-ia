@@ -10,7 +10,7 @@
 
 import type { 
   Corretor, Imovel, Lead, LeadComCorretor, Escala, Moeda, LeadSource, Evento, EventoComDetalhes,
-  Imobiliaria, Usuario
+  Imobiliaria, Usuario, Venda
 } from '@/lib/database.types';
 import { getConfig } from '@/lib/countryConfig';
 
@@ -29,6 +29,7 @@ const globalForMock = global as unknown as {
     leads: Lead[];
     escala: (Escala & { corretores?: Corretor })[];
     eventos: Evento[];
+    vendas: Venda[];
   }
 };
 
@@ -41,10 +42,11 @@ if (!globalForMock.__mockDb) {
     leads: [],
     escala: [],
     eventos: [],
+    vendas: [],
   };
 }
 
-const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos } = globalForMock.__mockDb;
+const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos, vendas } = globalForMock.__mockDb;
 
 // ===== Check if we should use mock =====
 export function isMockMode(): boolean {
@@ -598,6 +600,22 @@ function seedBR() {
     local: 'Escritório / Cartório',
     status: 'agendado',
   });
+}
+
+// ===== Vendas & Comissões =====
+
+export function getVendas(): Venda[] {
+  return [...vendas];
+}
+
+export function createVenda(data: Omit<Venda, 'id' | 'criado_em'>): Venda {
+  const venda: Venda = {
+    id: crypto.randomUUID(),
+    criado_em: new Date().toISOString(),
+    ...data,
+  };
+  vendas.push(venda);
+  return venda;
 }
 
 export function seedTestData() {

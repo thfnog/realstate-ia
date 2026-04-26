@@ -42,6 +42,7 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
     aceita_permuta: false,
     aceita_financiamento: true,
     fotos: [],
+    comissao_venda: initialData?.comissao_venda || 5.0,
     ...initialData
   });
 
@@ -53,6 +54,16 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
       .then(setCorretores)
       .catch(console.error);
   }, []);
+
+  // Update commission suggestion when broker changes
+  useEffect(() => {
+    if (!formData.id && formData.corretor_id) {
+      const broker = corretores.find(c => c.id === formData.corretor_id);
+      if (broker && broker.comissao_padrao) {
+        setFormData(prev => ({ ...prev, comissao_venda: broker.comissao_padrao }));
+      }
+    }
+  }, [formData.corretor_id, corretores]);
 
   const nextStep = () => setStep(s => Math.min(s + 1, STEPS.length));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
@@ -352,6 +363,18 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                                value={formData.imi_iptu_anual || ''}
                                onChange={e => setFormData({...formData, imi_iptu_anual: parseFloat(e.target.value)})}
                                className="w-full px-4 py-3 rounded-xl border border-border"
+                            />
+                         </div>
+                         <div className="col-span-2 md:col-span-1">
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Comissão de Venda (%)</label>
+                            <input 
+                               type="number" 
+                               step="0.1"
+                               min="0"
+                               max="100"
+                               value={formData.comissao_venda || ''}
+                               onChange={e => setFormData({...formData, comissao_venda: parseFloat(e.target.value)})}
+                               className="w-full px-4 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 font-bold"
                             />
                          </div>
                       </div>

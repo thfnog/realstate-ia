@@ -23,6 +23,7 @@ interface BrokerPerformance {
   leads: number;
   fechados: number;
   conversao: number;
+  comissao: number;
 }
 
 interface Stats {
@@ -36,6 +37,9 @@ interface Stats {
   leadsSemCorretor: number;
   imoveisDisponiveis: number;
   taxaConversao: number;
+  totalComissao: number;
+  totalVendasValor: number;
+  vendasCount: number;
   leadsTemporal: { date: string; count: number }[];
   countsByOrigem: Record<string, number>;
   brokerPerformance: BrokerPerformance[];
@@ -73,7 +77,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col gap-8 animate-pulse p-4">
         <div className="h-20 w-1/3 bg-slate-200 rounded-2xl" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-           {[1,2,3,4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-2xl" />)}
+           {[1,2,3,4,5,6].map(i => <div key={i} className="h-32 bg-slate-100 rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            <div className="h-64 bg-slate-100 rounded-2xl" />
@@ -95,6 +99,20 @@ export default function AdminDashboard() {
   });
 
   const metricCards = [
+    {
+      label: 'Comissão Acumulada',
+      value: (stats.totalComissao || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' }),
+      icon: '💰',
+      color: 'text-primary',
+      bg: 'bg-primary/5',
+    },
+    {
+      label: 'Vendas Fechadas',
+      value: stats.vendasCount.toString(),
+      icon: '🤝',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50/50',
+    },
     {
       label: 'Leads hoje',
       value: stats.leadsHoje.toString(),
@@ -146,12 +164,12 @@ export default function AdminDashboard() {
       )}
 
       {/* ===== TOP METRICS ===== */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {metricCards.map((card) => (
           <div key={card.label} className={`p-6 rounded-2xl border border-slate-100 ${card.bg} transition-all hover:shadow-sm`}>
             <div className="text-2xl mb-2">{card.icon}</div>
-            <div className="text-sm font-medium text-slate-500 mb-1">{card.label}</div>
-            <div className={`text-3xl font-bold ${card.color}`}>
+            <div className="text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">{card.label}</div>
+            <div className={`text-2xl font-black ${card.color}`}>
               {card.value}
             </div>
           </div>
@@ -251,9 +269,14 @@ export default function AdminDashboard() {
                       style={{ width: `${broker.conversao}%` }} 
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400 text-right">
-                    {broker.fechados} vendas realizadas
-                  </p>
+                  <div className="flex justify-between mt-2">
+                     <p className="text-[10px] text-slate-400">
+                       {broker.fechados} vendas realizadas
+                     </p>
+                     <p className="text-[10px] font-bold text-emerald-600">
+                       {broker.comissao.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                     </p>
+                  </div>
                 </div>
               </div>
             ))}

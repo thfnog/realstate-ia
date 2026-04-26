@@ -7,7 +7,7 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [form, setForm] = useState({ nome: '', telefone: '' });
+  const [form, setForm] = useState({ nome: '', telefone: '', comissao_padrao: 5 });
 
   async function fetchProfile() {
     try {
@@ -17,7 +17,8 @@ export default function PerfilPage() {
         setUser(data);
         setForm({
           nome: data.corretores?.nome || '',
-          telefone: data.corretores?.telefone || ''
+          telefone: data.corretores?.telefone || '',
+          comissao_padrao: data.corretores?.comissao_padrao || 5
         });
       }
     } catch (err) {
@@ -103,6 +104,21 @@ export default function PerfilPage() {
                 placeholder="+351 9xx xxx xxx ou +55 11 9xxxx-xxxx"
                 className="w-full px-4 py-3.5 rounded-xl border-2 border-border-light text-sm focus:outline-none focus:border-primary transition-all bg-surface-alt/30 font-medium"
               />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Comissão Padrão (%)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                required
+                value={form.comissao_padrao}
+                onChange={e => setForm({ ...form, comissao_padrao: parseFloat(e.target.value) })}
+                className="w-full px-4 py-3.5 rounded-xl border-2 border-border-light text-sm focus:outline-none focus:border-primary transition-all bg-surface-alt/30 font-medium"
+              />
+              <p className="text-[10px] text-text-secondary mt-1">Este valor será usado como sugestão ao cadastrar novos imóveis.</p>
             </div>
           </div>
 
