@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { IoMailOutline, IoPersonAddOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoSyncOutline } from 'react-icons/io5';
 import { TableRowSkeleton } from '@/components/LoadingSkeleton';

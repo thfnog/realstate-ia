@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { IoCalendarOutline, IoChevronBackOutline, IoChevronForwardOutline, IoSyncOutline, IoTrashOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoCreateOutline, IoLocationOutline, IoPersonOutline, IoBriefcaseOutline } from 'react-icons/io5';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
