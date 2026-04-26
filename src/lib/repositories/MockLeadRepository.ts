@@ -5,7 +5,7 @@ import { Lead, LeadComCorretor } from '@/lib/database.types';
 export class MockLeadRepository implements ILeadRepository {
   async findAll(filters: LeadFilters): Promise<{ data: LeadComCorretor[]; count: number }> {
     mock.seedTestData();
-    let leads = mock.getLeads(filters.status, filters.corretor_id);
+    let leads = mock.getLeads({ status: filters.status, corretorId: filters.corretor_id });
     if (!filters.status) {
       leads = leads.filter(l => l.status !== 'descartado');
     }

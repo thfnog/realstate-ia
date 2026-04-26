@@ -115,9 +115,19 @@ export function AgendaModal({
               </span>
             </div>
           </div>
-          <button onClick={() => setSelectedLead(null)} className="p-2 text-text-muted hover:text-danger hover:bg-red-50 rounded-lg transition-colors">
-            ✕
-          </button>
+          <div className="flex items-center gap-3">
+            {(selectedLead.status === 'negociacao' || selectedLead.status === 'contrato') && (
+              <Link
+                href={`/admin/contratos/novo?leadId=${selectedLead.id}&imovelId=${selectedLead.imovel_id || ''}`}
+                className="px-4 py-2 bg-primary text-white text-[10px] font-black uppercase rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
+              >
+                📄 Gerar Contrato
+              </Link>
+            )}
+            <button onClick={() => setSelectedLead(null)} className="p-2 text-text-muted hover:text-danger hover:bg-red-50 rounded-lg transition-colors">
+              ✕
+            </button>
+          </div>
         </div>
         
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">

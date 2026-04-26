@@ -10,7 +10,7 @@
 
 import type { 
   Corretor, Imovel, Lead, LeadComCorretor, Escala, Moeda, LeadSource, Evento, EventoComDetalhes,
-  Imobiliaria, Usuario, Venda
+  Imobiliaria, Usuario, Venda, Contrato, PagamentoContrato, ContratoTemplate
 } from '@/lib/database.types';
 import { getConfig } from '@/lib/countryConfig';
 
@@ -30,6 +30,9 @@ const globalForMock = global as unknown as {
     escala: (Escala & { corretores?: Corretor })[];
     eventos: Evento[];
     vendas: Venda[];
+    contratos: Contrato[];
+    pagamentos: PagamentoContrato[];
+    templates: ContratoTemplate[];
   }
 };
 
@@ -43,10 +46,13 @@ if (!globalForMock.__mockDb) {
     escala: [],
     eventos: [],
     vendas: [],
+    contratos: [],
+    pagamentos: [],
+    templates: [],
   };
 }
 
-const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos, vendas } = globalForMock.__mockDb;
+export const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos, vendas, contratos, pagamentos, templates } = globalForMock.__mockDb;
 
 // ===== Check if we should use mock =====
 export function isMockMode(): boolean {
@@ -143,9 +149,11 @@ export function deleteCorretor(id: string): boolean {
 
 // ===== Imóveis =====
 
-export function getImoveis(status?: string): Imovel[] {
+export function getImoveis(filters?: { imobId?: string; status?: string }): Imovel[] {
   let result = [...imoveis];
-  if (status) result = result.filter((i) => i.status === status);
+  if (filters?.imobId) result = result.filter((i) => i.imobiliaria_id === filters.imobId);
+  if (filters?.status) result = result.filter((i) => i.status === filters.status);
+  
   return result.sort(
     (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
   );
@@ -153,6 +161,27 @@ export function getImoveis(status?: string): Imovel[] {
 
 export function getImovelById(id: string): Imovel | undefined {
   return imoveis.find((i) => i.id === id);
+}
+
+// ===== Leads =====
+
+export function getLeads(filters?: { imobId?: string; status?: string; corretorId?: string }): LeadComCorretor[] {
+  let result = [...leads];
+  if (filters?.imobId) result = result.filter((l) => l.imobiliaria_id === filters.imobId);
+  if (filters?.status) result = result.filter((l) => l.status === filters.status);
+  if (filters?.corretorId) result = result.filter((l) => l.corretor_id === filters.corretorId);
+  
+  return result
+    .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
+    .map((l) => ({
+      ...l,
+      corretores: l.corretor_id ? getCorretorById(l.corretor_id) || null : null,
+      imoveis: l.imovel_id ? getImovelById(l.imovel_id) || null : null,
+    }));
+}
+
+export function getLeadById(id: string): Lead | undefined {
+  return leads.find((l) => l.id === id);
 }
 
 export function getImovelByReferencia(referencia: string): Imovel | undefined {
@@ -189,23 +218,7 @@ export function deleteImovel(id: string): boolean {
 
 // ===== Leads =====
 
-export function getLeads(status?: string, corretorId?: string): LeadComCorretor[] {
-  let result = [...leads];
-  if (status) result = result.filter((l) => l.status === status);
-  if (corretorId) result = result.filter((l) => l.corretor_id === corretorId);
-  
-  return result
-    .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
-    .map((l) => ({
-      ...l,
-      corretores: l.corretor_id ? getCorretorById(l.corretor_id) || null : null,
-      imoveis: l.imovel_id ? getImovelById(l.imovel_id) || null : null,
-    }));
-}
-
-export function getLeadById(id: string): Lead | undefined {
-  return leads.find((l) => l.id === id);
-}
+// Replaced by merged version above
 
 export function getLeadByTelefone(telefone: string, imobId?: string): Lead | undefined {
   return leads.find((l) => l.telefone === telefone && (!imobId || l.imobiliaria_id === imobId));
@@ -616,6 +629,66 @@ export function createVenda(data: Omit<Venda, 'id' | 'criado_em'>): Venda {
   };
   vendas.push(venda);
   return venda;
+}
+
+// ===== Contratos =====
+
+export function getContratos(imobiliaria_id: string): Contrato[] {
+  return contratos.filter(c => c.imobiliaria_id === imobiliaria_id);
+}
+
+export function getContratoById(id: string): Contrato | undefined {
+  return contratos.find(c => c.id === id);
+}
+
+export function createContrato(data: Omit<Contrato, 'id' | 'criado_em' | 'atualizado_em'>): Contrato {
+  const contrato: Contrato = {
+    id: crypto.randomUUID(),
+    criado_em: new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+    ...data,
+  };
+  contratos.push(contrato);
+  return contrato;
+}
+
+export function updateContrato(id: string, data: Partial<Contrato>): Contrato | null {
+  const idx = contratos.findIndex(c => c.id === id);
+  if (idx === -1) return null;
+  contratos[idx] = { ...contratos[idx], ...data, atualizado_em: new Date().toISOString() };
+  return contratos[idx];
+}
+
+// ===== Pagamentos =====
+
+export function getPagamentos(contrato_id: string): PagamentoContrato[] {
+  return pagamentos.filter(p => p.contrato_id === contrato_id);
+}
+
+export function createPagamento(data: Omit<PagamentoContrato, 'id' | 'criado_em'>): PagamentoContrato {
+  const pag: PagamentoContrato = {
+    id: crypto.randomUUID(),
+    criado_em: new Date().toISOString(),
+    ...data,
+  };
+  pagamentos.push(pag);
+  return pag;
+}
+
+// ===== Templates =====
+
+export function getTemplates(imobiliaria_id: string): ContratoTemplate[] {
+  return templates.filter(t => t.imobiliaria_id === imobiliaria_id);
+}
+
+export function createTemplate(data: Omit<ContratoTemplate, 'id' | 'criado_em'>): ContratoTemplate {
+  const temp: ContratoTemplate = {
+    id: crypto.randomUUID(),
+    criado_em: new Date().toISOString(),
+    ...data,
+  };
+  templates.push(temp);
+  return temp;
 }
 
 export function seedTestData() {

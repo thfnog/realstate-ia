@@ -1,4 +1,4 @@
-import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda } from '@/lib/database.types';
+import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda, Contrato, ContratoComDetalhes, ContratoStatus, ContratoTipo, PagamentoContrato, ContratoTemplate } from '@/lib/database.types';
 
 export interface PaginationParams {
   page?: number;
@@ -57,4 +57,20 @@ export interface IEventoRepository {
 export interface IVendaRepository {
   findAll(filters: { imobiliaria_id: string; corretor_id?: string; start_date?: string; end_date?: string }): Promise<Venda[]>;
   create(data: Partial<Venda>): Promise<Venda>;
+}
+
+export interface IContratoRepository {
+  findAll(filters: { imobiliaria_id: string; status?: ContratoStatus; tipo?: ContratoTipo }): Promise<ContratoComDetalhes[]>;
+  findById(id: string): Promise<ContratoComDetalhes | null>;
+  create(data: Omit<Contrato, 'id' | 'criado_em' | 'atualizado_em'>): Promise<Contrato>;
+  update(id: string, data: Partial<Contrato>): Promise<Contrato | null>;
+  
+  // Financeiro
+  getPagamentos(contrato_id: string): Promise<PagamentoContrato[]>;
+  createPagamento(data: Omit<PagamentoContrato, 'id' | 'criado_em'>): Promise<PagamentoContrato>;
+  updatePagamento(id: string, data: Partial<PagamentoContrato>): Promise<PagamentoContrato | null>;
+  
+  // Templates
+  getTemplates(imobiliaria_id: string): Promise<ContratoTemplate[]>;
+  createTemplate(data: Omit<ContratoTemplate, 'id' | 'criado_em'>): Promise<ContratoTemplate>;
 }

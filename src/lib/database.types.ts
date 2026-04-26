@@ -240,3 +240,59 @@ export type Venda = {
   data_venda: string;
   criado_em: string;
 };
+
+// =============================================
+// Contratos (Contracts)
+// =============================================
+
+export type ContratoStatus = 'rascunho' | 'assinatura_pendente' | 'ativo' | 'vencido' | 'encerrado' | 'cancelado';
+export type ContratoTipo = 'venda' | 'aluguel';
+
+export type Contrato = {
+  id: string;
+  imobiliaria_id: string;
+  imovel_id: string | null;
+  lead_id: string | null;
+  corretor_id: string | null;
+  tipo: ContratoTipo;
+  status: ContratoStatus;
+  valor_total: number;
+  valor_entrada_caucao: number;
+  data_inicio: string;
+  data_fim: string | null;
+  dia_vencimento: number | null;
+  clausulas_extras: string | null;
+  documento_url: string | null;
+  criado_em: string;
+  atualizado_em: string;
+};
+
+export type PagamentoStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado';
+export type PagamentoTipo = 'entrada' | 'parcela' | 'aluguel_mensal' | 'comissao';
+
+export type PagamentoContrato = {
+  id: string;
+  contrato_id: string;
+  tipo: PagamentoTipo;
+  valor_esperado: number;
+  valor_pago: number;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  status: PagamentoStatus;
+  criado_em: string;
+};
+
+export type ContratoTemplate = {
+  id: string;
+  imobiliaria_id: string;
+  titulo: string;
+  conteudo_base: string;
+  criado_em: string;
+};
+
+export type ContratoComDetalhes = Contrato & {
+  imovel: Imovel | null;
+  lead: Lead | null;
+  corretor: Corretor | null;
+  pagamentos: PagamentoContrato[];
+};

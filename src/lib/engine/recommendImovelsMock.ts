@@ -11,7 +11,7 @@ import type { ScoredImovel } from './recommendImoveis';
 
 export function recommendImovelsMock(lead: Lead, configIn?: any): ScoredImovel[] {
   const config = configIn || getConfig();
-  let imoveis = mock.getImoveis('disponivel');
+  let imoveis = mock.getImoveis({ status: 'disponivel' });
 
   // v2: Filter by compatible currency
   imoveis = imoveis.filter((i) => i.moeda === lead.moeda);
