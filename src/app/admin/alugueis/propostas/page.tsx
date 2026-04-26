@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { PropostaAluguel, Imovel } from '@/lib/database.types';
 import { formatCurrency, getConfig } from '@/lib/countryConfig';
 import { toast } from 'sonner';
-import { IoCheckmarkCircleOutline, IoCloseCircleOutline, IoDocumentTextOutline, IoTimeOutline, IoCheckmarkDoneOutline } from 'react-icons/io5';
+import { IoCheckmarkCircleOutline, IoCloseCircleOutline, IoDocumentTextOutline, IoTimeOutline, IoCheckmarkDoneOutline, IoEyeOutline } from 'react-icons/io5';
+import PropostaDetalhesModal from '@/components/admin/alugueis/PropostaDetalhesModal';
 
 export default function AdminPropostasPage() {
   const [propostas, setPropostas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProposta, setSelectedProposta] = useState<any>(null);
   const config = getConfig();
 
   useEffect(() => {
@@ -116,6 +118,13 @@ export default function AdminPropostasPage() {
                 </td>
                 <td className="px-8 py-6">
                   <div className="flex justify-end gap-2">
+                    <button 
+                      onClick={() => setSelectedProposta(p)}
+                      className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-primary hover:text-white transition-all shadow-sm"
+                      title="Ver Detalhes e Análise"
+                    >
+                      <IoEyeOutline size={18} />
+                    </button>
                     {p.status === 'pendente' && (
                       <button 
                         onClick={() => updateStatus(p.id, 'em_analise')}
@@ -168,6 +177,18 @@ export default function AdminPropostasPage() {
           </tbody>
         </table>
       </div>
+
+      {selectedProposta && (
+        <PropostaDetalhesModal 
+          proposta={selectedProposta}
+          config={config}
+          onClose={() => setSelectedProposta(null)}
+          onUpdate={() => {
+            fetchPropostas();
+            setSelectedProposta(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -179,6 +200,7 @@ function StatusBadge({ status }: { status: string }) {
     aprovada: { label: 'Aprovada', bg: 'bg-emerald-50', text: 'text-emerald-600' },
     rejeitada: { label: 'Rejeitada', bg: 'bg-rose-50', text: 'text-rose-600' },
     aguardando_documentos: { label: 'Docs Pendentes', bg: 'bg-purple-50', text: 'text-purple-600' },
+    finalizada: { label: 'Finalizada', bg: 'bg-slate-100', text: 'text-slate-600' },
   };
 
   const c = configs[status] || configs.pendente;

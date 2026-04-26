@@ -315,6 +315,10 @@ export interface PropostaAluguel {
   observacoes?: string;
   criado_em: string;
   atualizado_em: string;
+  analise_credito_check_serasa?: boolean;
+  analise_credito_check_renda?: boolean;
+  analise_credito_check_antecedentes?: boolean;
+  analise_credito_parecer?: string;
   // Joins
   imovel?: any;
   documentos?: PropostaDocumento[];
