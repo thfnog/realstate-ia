@@ -28,7 +28,7 @@ export async function signIn(email: string, password: string): Promise<string | 
     if (isTestAdmin || isTestBroker) {
        const { DEFAULT_IMOBILIARIA_ID } = await import('@/lib/mockDb');
        return await new SignJWT({
-         usuario_id: isTestAdmin ? 'user-0000-admin' : 'user-0001-thiago',
+         usuario_id: isTestAdmin ? 'user-0000-default-admin' : 'user-0001-thiago',
          imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
          email: email,
          app_role: isTestAdmin ? 'admin' : 'corretor',

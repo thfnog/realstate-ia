@@ -96,10 +96,10 @@ export function getUsuarioById(id: string): Usuario | undefined {
 
 export function createUsuario(data: Omit<Usuario, 'id' | 'criado_em'>): Usuario {
   const user: Usuario = {
-    id: crypto.randomUUID(),
+    id: (data as any).id || crypto.randomUUID(),
     criado_em: new Date().toISOString(),
     ...data,
-  };
+  } as Usuario;
   usuarios.push(user);
   return user;
 }
@@ -622,13 +622,14 @@ export function seedTestData() {
   // 2. Create Default Users (Admin & Corretor) if missing
   if (!usuarios.some(u => u.email === 'admin@imobia.com')) {
     createUsuario({
+      id: DEFAULT_USUARIO_ID,
       imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
       email: 'admin@imobia.com',
       hash_senha: 'admin123', // In mock mode we use plain or handled by bypass
       role: 'admin',
       corretor_id: null,
       auth_id: null,
-    });
+    } as any);
   }
 
   if (!usuarios.some(u => u.email === 'thiago@imobia.com')) {
