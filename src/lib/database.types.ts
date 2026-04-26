@@ -293,13 +293,41 @@ export interface PagamentoContrato {
   criado_em: string;
 }
 
-export type ContratoTemplate = {
+export interface ContratoTemplate {
   id: string;
   imobiliaria_id: string;
-  titulo: string;
-  conteudo_base: string;
+  nome: string;
+  conteudo: string;
   criado_em: string;
-};
+}
+
+export interface PropostaAluguel {
+  id: string;
+  imobiliaria_id: string;
+  imovel_id: string;
+  inquilino_nome: string;
+  inquilino_email: string;
+  inquilino_telefone: string;
+  valor_proposto: number;
+  garantia_pretendida: 'seguro_fianca' | 'titulo_capitalizacao' | 'fiador' | 'caucao';
+  status: 'pendente' | 'em_analise' | 'aprovada' | 'rejeitada' | 'cancelada' | 'aguardando_documentos';
+  data_pretendida_inicio?: string;
+  observacoes?: string;
+  criado_em: string;
+  atualizado_em: string;
+  // Joins
+  imovel?: any;
+  documentos?: PropostaDocumento[];
+}
+
+export interface PropostaDocumento {
+  id: string;
+  proposta_id: string;
+  tipo_documento: string;
+  arquivo_url: string;
+  status: 'pendente' | 'aprovado' | 'rejeitado';
+  criado_em: string;
+}
 
 export type ContratoComDetalhes = Contrato & {
   imovel: Imovel | null;

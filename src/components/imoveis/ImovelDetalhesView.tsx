@@ -7,8 +7,9 @@ import { CountryConfig, formatCurrency } from '@/lib/countryConfig';
 import MercadoIndicador from './MercadoIndicador';
 import MapPicker from './MapPicker';
 import ImovelGaleria from './ImovelGaleria';
-import { IoClose, IoCalculatorOutline } from 'react-icons/io5';
+import { IoClose, IoCalculatorOutline, IoPaperPlaneOutline } from 'react-icons/io5';
 import SaleModal from './SaleModal';
+import PropostaModal from './PropostaModal';
 
 interface ImovelDetalhesViewProps {
   imovel: Imovel;
@@ -20,6 +21,7 @@ interface ImovelDetalhesViewProps {
 export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin = true }: ImovelDetalhesViewProps) {
   const [activePhoto, setActivePhoto] = useState(0);
   const [showSaleModal, setShowSaleModal] = useState(false);
+  const [showPropostaModal, setShowPropostaModal] = useState(false);
 
   const stats = [
     { label: config.terminology.quartosLabel, value: imovel.quartos, icon: '🛏️' },
@@ -180,7 +182,7 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                  />
               </div>
 
-              {isAdmin && (
+              {isAdmin ? (
                 <div className="mt-8 space-y-3">
                    {imovel.status !== 'vendido' && (
                      <button 
@@ -204,7 +206,22 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                       Compartilhar via WhatsApp
                    </button>
                 </div>
-              )}
+               ) : (
+                <div className="mt-8 space-y-4">
+                   {imovel.status === 'disponivel' && imovel.finalidade !== 'venda' && (
+                     <button 
+                       onClick={() => setShowPropostaModal(true)}
+                       className="w-full py-5 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 group"
+                     >
+                        <IoPaperPlaneOutline size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        Fazer Proposta de Aluguel
+                     </button>
+                   )}
+                   <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest px-4">
+                      Análise de crédito rápida e sem burocracia
+                   </p>
+                </div>
+               )}
            </div>
 
            {/* Small Map Card */}
@@ -232,6 +249,14 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
             setShowSaleModal(false);
             window.location.reload(); // Refresh to show 'vendido' status
           }}
+        />
+      )}
+
+      {showPropostaModal && (
+        <PropostaModal 
+          imovel={imovel}
+          config={config}
+          onClose={() => setShowPropostaModal(false)}
         />
       )}
     </div>
