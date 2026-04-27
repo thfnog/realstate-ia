@@ -56,8 +56,12 @@ export const { imobiliarias, usuarios, corretores, imoveis, leads, escala, event
 
 // ===== Check if we should use mock =====
 export function isMockMode(): boolean {
+  // If we have a real DB configured, NEVER use mock mode unless explicitly forced
+  const hasDb = process.env.SUPABASE_URL && process.env.SUPABASE_URL.trim() !== '';
+  if (hasDb && process.env.NEXT_PUBLIC_MOCK_MODE !== 'true') return false;
+  
   if (process.env.NEXT_PUBLIC_MOCK_MODE === 'true') return true;
-  return !process.env.SUPABASE_URL || process.env.SUPABASE_URL.trim() === '';
+  return !hasDb;
 }
 
 // ===== Imobiliárias =====
