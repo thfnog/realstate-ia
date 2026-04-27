@@ -45,13 +45,53 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .gte('criado_em', thirtyDaysAgo.toISOString());
 
+    // 5. Plan Distribution
+    const { data: planDistributionRaw } = await supabaseAdmin
+      .from('assinaturas')
+      .select('plano_id, status, planos(nome, slug)');
+
+    const distribution: Record<string, any> = {};
+    const totalActive = (planDistributionRaw || []).filter(p => p.status === 'ativo').length;
+
+    (planDistributionRaw || []).forEach(sub => {
+      if (sub.status !== 'ativo') return;
+      const name = sub.planos?.nome || 'Outros';
+      if (!distribution[name]) {
+        distribution[name] = { label: name, count: 0, percentage: 0 };
+      }
+      distribution[name].count++;
+      distribution[name].percentage = Math.round((distribution[name].count / totalActive) * 100);
+    });
+
+    // 6. Recent Payments
+    const { data: recentPayments } = await supabaseAdmin
+      .from('faturas')
+      .select(`
+        valor,
+        created_at,
+        status,
+        imobiliarias (nome),
+        assinaturas (planos (nome))
+      `)
+      .eq('status', 'pago')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
     return NextResponse.json({
       agenciesCount: agenciesCount || 0,
       monthlyRevenue,
       annualRevenue: monthlyRevenue * 12,
       leadsCount: leadsCount || 0,
       newAgenciesCount: newAgenciesCount || 0,
-      globalConversion: 18.5 // Placeholder for now until we have more complex analytics
+      globalConversion: 18.5,
+      planDistribution: Object.values(distribution),
+      recentPayments: (recentPayments || []).map((p: any) => ({
+        company: p.imobiliarias?.nome || 'N/A',
+        plan: p.assinaturas?.planos?.nome || 'N/A',
+        value: p.valor,
+        date: new Date(p.created_at).toLocaleString('pt-BR'),
+        status: p.status
+      }))
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
