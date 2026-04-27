@@ -16,20 +16,38 @@ export async function GET() {
       .from('imobiliarias')
       .select('*', { count: 'exact', head: true });
 
-    // 2. Aggregate Revenue (Sum of active subscriptions)
-    const { data: subscriptions } = await supabaseAdmin
-      .from('assinaturas')
+    // 2. Aggregate Revenue (Sum of active subscriptions + legacy plan fields)
+    const { data: allImobs } = await supabaseAdmin
+      .from('imobiliarias')
       .select(`
-        status,
-        planos (
-          preco_mensal
+        id,
+        plano,
+        assinaturas (
+          status,
+          planos (
+            preco_mensal
+          )
         )
-      `)
-      .eq('status', 'ativo');
+      `);
 
-    const monthlyRevenue = (subscriptions || []).reduce((acc, sub: any) => {
-      return acc + (sub.planos?.preco_mensal || 0);
-    }, 0);
+    let monthlyRevenue = 0;
+    (allImobs || []).forEach((imob: any) => {
+      // Priority 1: Active subscription from the new module
+      const activeSub = Array.isArray(imob.assinaturas) 
+        ? imob.assinaturas.find((s: any) => s.status === 'ativo')
+        : (imob.assinaturas?.status === 'ativo' ? imob.assinaturas : null);
+
+      if (activeSub) {
+        const plano = Array.isArray(activeSub.planos) ? activeSub.planos[0] : activeSub.planos;
+        monthlyRevenue += (plano?.preco_mensal || 0);
+      } else {
+        // Priority 2: Legacy plan field
+        const planoSlug = imob.plano || 'free';
+        if (planoSlug === 'premium' || planoSlug === 'enterprise') monthlyRevenue += 999;
+        else if (planoSlug === 'pro' || planoSlug === 'profissional') monthlyRevenue += 499;
+        else if (planoSlug === 'essencial') monthlyRevenue += 199;
+      }
+    });
 
     // 3. Leads (Total & Conversion)
     const { count: leadsCount } = await supabaseAdmin
@@ -41,8 +59,14 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .in('status', ['fechado', 'contrato']);
 
-    const globalConversion = leadsCount && leadsCount > 0 
-      ? Math.round(((convertedLeadsCount || 0) / leadsCount) * 1000) / 10 
+    // Also check vendas table for conversion if leads status is not updated
+    const { count: salesCount } = await supabaseAdmin
+      .from('vendas')
+      .select('*', { count: 'exact', head: true });
+
+    const totalConversions = Math.max(convertedLeadsCount || 0, salesCount || 0);
+    const globalConversion = (leadsCount && leadsCount > 0)
+      ? Math.round((totalConversions / leadsCount) * 1000) / 10 
       : 0;
 
     // 4. New agencies (last 30 days)
