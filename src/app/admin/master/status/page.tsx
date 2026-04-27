@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  IoPulseOutline, 
+  IoPulse, 
   IoCheckmarkCircle, 
   IoCloseCircle, 
   IoAlertCircle, 
-  IoCloudOutline, 
-  IoTerminalOutline,
+  IoCloud, 
+  IoTerminal,
   IoLogoVercel,
-  IoReloadOutline,
-  IoDatabaseOutline,
+  IoReload,
+  IoDatabase,
   IoLogoWhatsapp,
-  IoSparklesOutline
+  IoSparkles
 } from 'react-icons/io5';
 
 interface HealthStatus {
@@ -64,10 +64,10 @@ export default function MasterStatusPage() {
 
   const ServiceIcon = ({ name }: { name: string }) => {
     if (name.includes('Vercel')) return <IoLogoVercel size={24} />;
-    if (name.includes('Supabase')) return <IoDatabaseOutline size={24} />;
+    if (name.includes('Supabase')) return <IoDatabase size={24} />;
     if (name.includes('Evolution')) return <IoLogoWhatsapp size={24} />;
-    if (name.includes('OpenAI')) return <IoSparklesOutline size={24} />;
-    return <IoCloudOutline size={24} />;
+    if (name.includes('OpenAI')) return <IoSparkles size={24} />;
+    return <IoCloud size={24} />;
   };
 
   return (
@@ -76,7 +76,7 @@ export default function MasterStatusPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <span className="p-2 bg-rose-500/10 text-rose-600 rounded-xl">
-              <IoPulseOutline size={24} />
+              <IoPulse size={24} />
             </span>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Status do Sistema</h1>
           </div>
@@ -87,7 +87,7 @@ export default function MasterStatusPage() {
           disabled={loading}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200/50 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
         >
-          <IoReloadOutline className={loading ? 'animate-spin' : ''} />
+          <IoReload className={loading ? 'animate-spin' : ''} />
           Recarregar Status
         </button>
       </div>
@@ -123,7 +123,7 @@ export default function MasterStatusPage() {
 
       <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-slate-900/30">
         <div className="absolute top-0 right-0 p-10 opacity-5">
-           <IoTerminalOutline size={180} />
+           <IoTerminal size={180} />
         </div>
         <div className="relative z-10 space-y-4">
            <h3 className="text-xl font-black tracking-tight">Logs de Integridade</h3>
