@@ -79,10 +79,10 @@ export async function DELETE(request: Request) {
     }
 
     // REAL MODE: 
-    // 1. Get the user to find the auth_id
+    // 1. Get the user to find the auth_id and corretor_id
     const { data: user, error: getError } = await supabaseAdmin
       .from('usuarios')
-      .select('auth_id')
+      .select('auth_id, corretor_id')
       .eq('id', userId)
       .single();
 
@@ -91,11 +91,27 @@ export async function DELETE(request: Request) {
     // 2. Delete from auth.users (if it exists)
     if (user?.auth_id) {
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user.auth_id);
-      // We don't throw if auth user is already gone, just log it
       if (authError) console.warn('[USERS DELETE] Auth user not found or error:', authError.message);
     }
 
-    // 3. Delete from public.usuarios explicitly (even if it's supposed to cascade)
+    // 3. Delete associated broker (if it exists)
+    if (user?.corretor_id) {
+      const { error: brokerError } = await supabaseAdmin
+        .from('corretores')
+        .delete()
+        .eq('id', user.corretor_id);
+      
+      if (brokerError) {
+        console.warn('[USERS DELETE] Failed to delete linked broker (maybe has leads?):', brokerError.message);
+        // If it fails due to FK constraints, we at least inactivate it
+        await supabaseAdmin
+          .from('corretores')
+          .update({ ativo: false })
+          .eq('id', user.corretor_id);
+      }
+    }
+
+    // 4. Delete from public.usuarios
     const { error: dbError } = await supabaseAdmin
       .from('usuarios')
       .delete()
