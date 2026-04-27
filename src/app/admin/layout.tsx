@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import { CommandPalette } from '@/components/CommandPalette';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 
 const navGroups = [
   {
@@ -241,33 +242,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mock Mode Banner */}
         {process.env.NEXT_PUBLIC_MOCK_MODE === 'true' && (
-          <div className="bg-amber-500 text-amber-950 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-center shadow-inner flex items-center justify-center gap-2">
+          <div className="bg-amber-500 text-amber-950 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-center shadow-inner flex items-center justify-center gap-2 z-[60]">
             <span>⚠️ MOCK MODE ATIVO</span>
             <span className="opacity-60 font-medium">Dados não persistentes • Apenas para testes locais</span>
           </div>
         )}
 
-        {/* Mobile Header */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-sidebar-bg border-b border-white/10 shrink-0">
-          <Link href="/admin" className="flex items-center gap-2">
-            <span className="text-xl">🏠</span>
-            <span className="text-white font-bold text-base tracking-tight">ImobIA</span>
-          </Link>
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-white bg-white/5 rounded-lg hover:bg-white/10"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+        {/* Unified Top Header */}
+        <header className="flex items-center justify-between px-6 py-4 bg-white/70 backdrop-blur-md border-b border-slate-100 shrink-0 z-30">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="hidden sm:block">
+               <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">ImobIA</h2>
+               <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] mt-1">Real Estate Management</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            
+            <div className="w-px h-6 bg-slate-100 mx-1 hidden sm:block" />
+            
+            <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-2xl border border-slate-100 bg-slate-50/50">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary">
+                {user?.email?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-slate-900 leading-none truncate max-w-[100px]">{user?.email?.split('@')[0]}</span>
+                <span className="text-[8px] font-black text-primary uppercase tracking-widest mt-0.5">{user?.app_role}</span>
+              </div>
+            </div>
+          </div>
         </header>
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth bg-background">
+        <main className="flex-1 overflow-y-auto scroll-smooth bg-slate-50/30">
           <div className="p-4 md:p-8 max-w-7xl mx-auto">
             <Toaster position="top-right" richColors closeButton />
             {children}
