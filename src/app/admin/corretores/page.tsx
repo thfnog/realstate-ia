@@ -20,7 +20,7 @@ export default function CorretoresPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false });
+  const [form, setForm] = useState({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false, comissao_padrao: 5 });
 
   async function fetchCorretores() {
     try {
@@ -38,13 +38,13 @@ export default function CorretoresPage() {
   useEffect(() => { fetchCorretores(); }, []);
 
   function openNew() {
-    setForm({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false });
+    setForm({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false, comissao_padrao: 5 });
     setEditingId(null);
     setShowModal(true);
   }
 
   function openEdit(c: Corretor) {
-    setForm({ nome: c.nome, telefone: c.telefone, email: c.email || '', ativo: c.ativo, liberarAcesso: false });
+    setForm({ nome: c.nome, telefone: c.telefone, email: c.email || '', ativo: c.ativo, liberarAcesso: false, comissao_padrao: c.comissao_padrao || 0 });
     setEditingId(c.id);
     setShowModal(true);
   }
@@ -62,7 +62,8 @@ export default function CorretoresPage() {
           nome: form.nome,
           telefone: form.telefone,
           email: form.email,
-          ativo: form.ativo
+          ativo: form.ativo,
+          comissao_padrao: form.comissao_padrao
         }),
       });
     } else {
@@ -73,7 +74,8 @@ export default function CorretoresPage() {
           nome: form.nome,
           telefone: form.telefone,
           email: form.email,
-          ativo: form.ativo
+          ativo: form.ativo,
+          comissao_padrao: form.comissao_padrao
         }),
       });
       const data = await res.json();
@@ -182,6 +184,7 @@ export default function CorretoresPage() {
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-xs font-black uppercase tracking-widest text-slate-400">
                       <span className="flex items-center gap-1.5"><IoCallOutline className="text-slate-300" /> {c.telefone}</span>
                       {c.email && <span className="flex items-center gap-1.5"><IoMailOutline className="text-slate-300" /> {c.email}</span>}
+                      {c.comissao_padrao !== undefined && <span className="flex items-center gap-1.5 text-primary"><span className="opacity-40">COMISSÃO:</span> {c.comissao_padrao}%</span>}
                     </div>
                   </div>
                 </div>
@@ -249,6 +252,17 @@ export default function CorretoresPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
                 <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Comissão Padrão (%)</label>
+                <input 
+                  type="number" 
+                  step="0.1" 
+                  value={form.comissao_padrao} 
+                  onChange={(e) => setForm({ ...form, comissao_padrao: parseFloat(e.target.value) })} 
+                  className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" 
+                />
               </div>
 
               <div className="space-y-4">

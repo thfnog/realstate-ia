@@ -6,7 +6,7 @@ import { isMockMode } from '@/lib/mockDb';
 export async function POST(request: Request) {
   try {
     const session = await getAuthFromCookies();
-    if (!session || session.app_role !== 'admin') {
+    if (!session || (session.app_role !== 'admin' && session.app_role !== 'master')) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 

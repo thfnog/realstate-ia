@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
-    const { nome, telefone, comissao_padrao } = body;
+    const { nome, telefone } = body;
 
     if (mock.isMockMode()) {
       mock.seedTestData();
@@ -55,12 +55,12 @@ export async function PATCH(request: Request) {
           pref_notif_whatsapp: true,
           pref_notif_email: true,
           pref_notif_push: true,
-          comissao_padrao: comissao_padrao || 5.0
+          comissao_padrao: 5.0
         });
         corretorId = newCorretor.id;
         user.corretor_id = corretorId; // In-memory update
       } else {
-        mock.updateCorretor(corretorId, { nome, telefone, comissao_padrao });
+        mock.updateCorretor(corretorId, { nome, telefone });
       }
 
       return NextResponse.json({ success: true, corretor_id: corretorId });
@@ -87,7 +87,7 @@ export async function PATCH(request: Request) {
           telefone: telefone || '—',
           email: user.email,
           ativo: true,
-          comissao_padrao: comissao_padrao || 5.0
+          comissao_padrao: 5.0
         })
         .select()
         .single();
@@ -106,8 +106,7 @@ export async function PATCH(request: Request) {
         .from('corretores')
         .update({
           nome,
-          telefone,
-          comissao_padrao
+          telefone
         })
         .eq('id', corretorId);
 
