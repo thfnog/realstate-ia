@@ -1,19 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  IoPulse, 
-  IoCheckmarkCircle, 
-  IoCloseCircle, 
-  IoAlertCircle, 
-  IoCloud, 
-  IoTerminal,
-  IoLogoVercel,
-  IoReload,
-  IoDatabase,
-  IoLogoWhatsapp,
-  IoSparkles
-} from 'react-icons/io5';
 
 interface HealthStatus {
   name: string;
@@ -53,21 +40,12 @@ export default function MasterStatusPage() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'operational': return <IoCheckmarkCircle size={20} />;
-      case 'degraded': return <IoAlertCircle size={20} />;
-      case 'down': return <IoCloseCircle size={20} />;
-      default: return <IoAlertCircle size={20} />;
-    }
-  };
-
   const ServiceIcon = ({ name }: { name: string }) => {
-    if (name.includes('Vercel')) return <IoLogoVercel size={24} />;
-    if (name.includes('Supabase')) return <IoDatabase size={24} />;
-    if (name.includes('Evolution')) return <IoLogoWhatsapp size={24} />;
-    if (name.includes('OpenAI')) return <IoSparkles size={24} />;
-    return <IoCloud size={24} />;
+    if (name.includes('Vercel')) return <span className="text-xl">▲</span>;
+    if (name.includes('Supabase')) return <span className="text-xl">⚡</span>;
+    if (name.includes('Evolution')) return <span className="text-xl">📱</span>;
+    if (name.includes('OpenAI')) return <span className="text-xl">🤖</span>;
+    return <span className="text-xl">☁️</span>;
   };
 
   return (
@@ -76,7 +54,7 @@ export default function MasterStatusPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <span className="p-2 bg-rose-500/10 text-rose-600 rounded-xl">
-              <IoPulse size={24} />
+              📊
             </span>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Status do Sistema</h1>
           </div>
@@ -87,8 +65,7 @@ export default function MasterStatusPage() {
           disabled={loading}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200/50 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
         >
-          <IoReload className={loading ? 'animate-spin' : ''} />
-          Recarregar Status
+          {loading ? '⏳' : '🔄'} Recarregar Status
         </button>
       </div>
 
@@ -104,7 +81,7 @@ export default function MasterStatusPage() {
                 <ServiceIcon name={item.name} />
               </div>
               <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(item.status)}`}>
-                {getStatusIcon(item.status)}
+                {item.status === 'operational' ? '✅' : '⚠️'}
                 {item.status === 'not_configured' ? 'Não Conf.' : item.status}
               </div>
             </div>
@@ -122,8 +99,8 @@ export default function MasterStatusPage() {
       </div>
 
       <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-slate-900/30">
-        <div className="absolute top-0 right-0 p-10 opacity-5">
-           <IoTerminal size={180} />
+        <div className="absolute top-0 right-0 p-10 opacity-5 text-8xl">
+           💻
         </div>
         <div className="relative z-10 space-y-4">
            <h3 className="text-xl font-black tracking-tight">Logs de Integridade</h3>
