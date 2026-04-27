@@ -67,7 +67,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getAuthFromCookies();
-    if (!session || session.app_role !== 'admin') {
+    if (!session || (session.app_role !== 'admin' && session.app_role !== 'master')) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 

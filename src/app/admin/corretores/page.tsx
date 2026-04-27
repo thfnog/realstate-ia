@@ -12,6 +12,7 @@ interface Corretor {
   email: string;
   ativo: boolean;
   liberarAcesso?: boolean;
+  comissao_padrao?: number;
 }
 
 export default function CorretoresPage() {
