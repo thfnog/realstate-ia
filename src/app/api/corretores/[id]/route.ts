@@ -76,24 +76,24 @@ export async function DELETE(
     const token = cookieStore.get('auth-token')?.value || '';
     const client = getUserSupabaseClient(token);
     
-    // 1. Find linked users
-    const { data: users } = await client
+    // 1. Find linked users by corretor_id
+    const { data: usersByLink } = await client
       .from('usuarios')
-      .select('id, auth_id, role')
+      .select('id, auth_id, role, email')
       .eq('corretor_id', id);
 
-    if (users && users.length > 0) {
-      const { supabaseAdmin } = await import('@/lib/supabase');
-      
-      for (const u of users) {
+    const { supabaseAdmin } = await import('@/lib/supabase');
+
+    if (usersByLink && usersByLink.length > 0) {
+      for (const u of usersByLink) {
         if (u.role === 'admin') {
-          // Just unlink
+          // Just unlink Admin users (they are platform users first)
           await supabaseAdmin
             .from('usuarios')
             .update({ corretor_id: null })
             .eq('id', u.id);
         } else {
-          // Delete broker-only user
+          // Delete Broker users from Auth and DB
           if (u.auth_id) {
             await supabaseAdmin.auth.admin.deleteUser(u.auth_id);
           }
@@ -101,6 +101,25 @@ export async function DELETE(
             .from('usuarios')
             .delete()
             .eq('id', u.id);
+        }
+      }
+    }
+
+    // 2. Backup check: If the broker has an email, try to find a user by that email 
+    // that belongs to this agency and delete them too (if they are NOT admin)
+    const { data: brokerData } = await client.from('corretores').select('email').eq('id', id).single();
+    if (brokerData?.email) {
+      const { data: usersByEmail } = await supabaseAdmin
+        .from('usuarios')
+        .select('id, auth_id, role')
+        .eq('email', brokerData.email)
+        .eq('imobiliaria_id', session.imobiliaria_id)
+        .eq('role', 'corretor'); // Only auto-delete if they are strictly brokers
+
+      if (usersByEmail && usersByEmail.length > 0) {
+        for (const u of usersByEmail) {
+          if (u.auth_id) await supabaseAdmin.auth.admin.deleteUser(u.auth_id);
+          await supabaseAdmin.from('usuarios').delete().eq('id', u.id);
         }
       }
     }
