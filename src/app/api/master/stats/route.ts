@@ -31,12 +31,21 @@ export async function GET() {
       return acc + (sub.planos?.preco_mensal || 0);
     }, 0);
 
-    // 3. Total Leads across all instances
+    // 3. Leads (Total & Conversion)
     const { count: leadsCount } = await supabaseAdmin
       .from('leads')
       .select('*', { count: 'exact', head: true });
 
-    // 4. Growth (agencies created in the last 30 days)
+    const { count: convertedLeadsCount } = await supabaseAdmin
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['fechado', 'contrato']);
+
+    const globalConversion = leadsCount && leadsCount > 0 
+      ? Math.round(((convertedLeadsCount || 0) / leadsCount) * 1000) / 10 
+      : 0;
+
+    // 4. New agencies (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -85,7 +94,7 @@ export async function GET() {
       annualRevenue: monthlyRevenue * 12,
       leadsCount: leadsCount || 0,
       newAgenciesCount: newAgenciesCount || 0,
-      globalConversion: 18.5,
+      globalConversion,
       planDistribution: Object.values(distribution),
       recentPayments: (recentPayments || []).map((p: any) => {
         const imob = Array.isArray(p.imobiliarias) ? p.imobiliarias[0] : p.imobiliarias;
