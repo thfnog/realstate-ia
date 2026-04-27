@@ -48,15 +48,6 @@ const navGroups = [
     ]
   },
   {
-    label: 'MASTER PLATFORM',
-    module: 'master',
-    items: [
-      { href: '/admin/master/planos', label: 'Gestão de Planos', icon: '💎' },
-      { href: '/admin/master/imobiliarias', label: 'Imobiliárias', icon: '🏢' },
-      { href: '/admin/master/financeiro', label: 'Receita Global', icon: '📈' },
-    ]
-  },
-  {
     label: 'Sistema',
     module: 'sistema',
     items: [
@@ -67,29 +58,51 @@ const navGroups = [
   }
 ];
 
+const masterNavGroups = [
+  {
+    label: 'Plataforma',
+    module: 'master',
+    items: [
+      { href: '/admin/master', label: 'Painel Global', icon: '🌐' },
+      { href: '/admin/master/imobiliarias', label: 'Imobiliárias', icon: '🏢' },
+      { href: '/admin/master/planos', label: 'Planos & Módulos', icon: '💎' },
+    ]
+  },
+  {
+    label: 'Financeiro',
+    module: 'master',
+    items: [
+      { href: '/admin/master/financeiro', label: 'Receita Global', icon: '📈' },
+    ]
+  },
+  {
+    label: 'Infraestrutura',
+    module: 'master',
+    items: [
+      { href: '/admin/master/status', label: 'Status do Sistema', icon: '⚡' },
+    ]
+  }
+];
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [countryMode, setCountryMode] = useState<string>('PT');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ email: string; app_role: string } | null>(null);
-  const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'sistema']); // Default basic modules
+  const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'sistema']);
+
+  const isMasterPath = pathname.startsWith('/admin/master');
 
   useEffect(() => {
-    // Fetch imobiliaria info
     fetch('/api/imobiliaria')
       .then(res => res.json())
       .then(data => {
-        if (data && data.config_pais) {
-          setCountryMode(data.config_pais);
-        }
-        if (data.active_modules) {
-          setActivePlanModules(data.active_modules);
-        }
+        if (data && data.config_pais) setCountryMode(data.config_pais);
+        if (data.active_modules) setActivePlanModules(data.active_modules);
       })
       .catch(() => {});
 
-    // Fetch user session
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
@@ -99,35 +112,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           router.push('/login');
         }
       })
-      .catch(() => {
-        router.push('/login');
-      });
+      .catch(() => router.push('/login'));
   }, [router]);
 
-  const countryFlag = countryMode === 'PT' ? '🇵🇹' : '🇧🇷';
   const isMaster = user?.email === 'admin@imobia.com' || user?.app_role === 'master';
 
-  // Filter nav groups and items based on role AND plan modules
-  const filteredNavGroups = navGroups.map(group => {
-    // 1. Check module access
-    if (group.module === 'master' && !isMaster) return null;
-    if (group.module !== 'master' && group.module !== 'dashboard' && group.module !== 'sistema' && !activePlanModules.includes(group.module)) return null;
+  const filteredNavGroups = (isMasterPath ? masterNavGroups : navGroups.map(group => {
+    if (group.module === 'master') return null;
+    if (group.module !== 'dashboard' && group.module !== 'sistema' && !activePlanModules.includes(group.module)) return null;
 
     return {
       ...group,
       items: group.items.filter(item => {
-        // Master sees everything in their module
-        if (group.module === 'master') return true;
-
-        // Admin role sees everything in their enabled modules
         if (user?.app_role === 'admin') return true;
-
-        // Broker role restriction
         const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
         return !restricted.includes(item.href);
       })
     };
-  }).filter(group => group !== null && group.items.length > 0) as typeof navGroups;
+  })).filter(group => group !== null && group?.items?.length > 0) as typeof navGroups;
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -136,19 +138,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const SidebarContent = () => (
     <>
-      {/* Brand */}
       <div className="px-6 py-5 border-b border-white/5">
         <Link href="/admin" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-3">
-          <span className="text-2xl">🏠</span>
+          <span className="text-2xl">{isMasterPath ? '💎' : '🏠'}</span>
           <div>
-            <h1 className="text-white font-bold text-lg leading-none">ImobIA</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Painel {user?.app_role === 'admin' ? 'Admin' : 'Corretor'} {countryFlag}</p>
+            <h1 className="text-white font-bold text-lg leading-none">
+              {isMasterPath ? 'Master ImobIA' : 'ImobIA'}
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {isMasterPath ? 'Administração Global' : `Painel ${user?.app_role === 'admin' ? 'Admin' : 'Corretor'} ${countryMode === 'PT' ? '🇵🇹' : '🇧🇷'}`}
+            </p>
           </div>
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-8 overflow-y-auto custom-scrollbar">
+        {isMasterPath && (
+           <div className="px-4 mb-4">
+             <Link 
+               href="/admin" 
+               className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-black text-slate-300 uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-lg"
+             >
+               ↩ Voltar para Imobiliária
+             </Link>
+           </div>
+        )}
+
         {filteredNavGroups.map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-2">
             <h3 className="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">
@@ -168,7 +183,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
                     }`}
                   >
-                    <span className={`text-lg transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    <span className={`text-lg transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
                       {item.icon}
                     </span>
                     {item.label}

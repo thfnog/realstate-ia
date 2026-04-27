@@ -166,7 +166,12 @@ export default function AdminDashboard() {
           </h1>
           <p className="text-slate-500 mt-1 font-medium">Aqui está o resumo em tempo real da sua operação imobiliária.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+           {user?.app_role === 'master' && (
+             <Link href="/admin/master" className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200/50 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2">
+               <span className="text-sm">💎</span> Acessar Painel Master
+             </Link>
+           )}
            <Link href="/admin/leads" className="px-6 py-3 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200/50 border border-slate-100 hover:bg-slate-50 transition-all active:scale-95">
              Ver Leads
            </Link>

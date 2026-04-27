@@ -13,42 +13,55 @@ import {
   IoPeopleOutline
 } from 'react-icons/io5';
 
-const masterModules = [
-  {
-    title: 'Imobiliárias & Clientes',
-    description: 'Gestão de contas, ativação de planos e suporte técnico aos inquilinos.',
-    icon: <IoBusinessOutline size={32} />,
-    href: '/admin/master/imobiliarias',
-    color: 'bg-indigo-500',
-    stats: '12 Ativas'
-  },
-  {
-    title: 'Planos & Módulos',
-    description: 'Configuração de preços, limites e funcionalidades de cada nível de assinatura.',
-    icon: <IoDiamondOutline size={32} />,
-    href: '/admin/master/planos',
-    color: 'bg-amber-500',
-    stats: '3 Planos'
-  },
-  {
-    title: 'Receita & Financeiro',
-    description: 'Dashboard financeiro global, controle de faturas e inadimplência.',
-    icon: <IoCashOutline size={32} />,
-    href: '/admin/master/financeiro',
-    color: 'bg-emerald-500',
-    stats: 'R$ 45k/mês'
-  },
-  {
-    title: 'Performance do Sistema',
-    description: 'Monitoramento de APIs, Webhooks e integridade dos serviços de IA.',
-    icon: <IoPulseOutline size={32} />,
-    href: '/admin/master/status',
-    color: 'bg-rose-500',
-    stats: '99.9% Uptime'
-  }
-];
-
 export default function MasterDashboardPage() {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/master/stats')
+      .then(res => res.json())
+      .then(data => {
+        setStats(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const masterModules = [
+    {
+      title: 'Imobiliárias & Clientes',
+      description: 'Gestão de contas, ativação de planos e suporte técnico aos inquilinos.',
+      icon: <IoBusinessOutline size={32} />,
+      href: '/admin/master/imobiliarias',
+      color: 'bg-indigo-500',
+      stats: loading ? '...' : `${stats?.agenciesCount || 0} Ativas`
+    },
+    {
+      title: 'Planos & Módulos',
+      description: 'Configuração de preços, limites e funcionalidades de cada nível de assinatura.',
+      icon: <IoDiamondOutline size={32} />,
+      href: '/admin/master/planos',
+      color: 'bg-amber-500',
+      stats: '3 Planos'
+    },
+    {
+      title: 'Receita & Financeiro',
+      description: 'Dashboard financeiro global, controle de faturas e inadimplência.',
+      icon: <IoCashOutline size={32} />,
+      href: '/admin/master/financeiro',
+      color: 'bg-emerald-500',
+      stats: loading ? '...' : `R$ ${(stats?.monthlyRevenue || 0).toLocaleString('pt-BR')}/mês`
+    },
+    {
+      title: 'Performance do Sistema',
+      description: 'Monitoramento de APIs, Webhooks e integridade dos serviços de IA.',
+      icon: <IoPulseOutline size={32} />,
+      href: '/admin/master/status',
+      color: 'bg-rose-500',
+      stats: '99.9% Uptime'
+    }
+  ];
+
   return (
     <div className="animate-fade-in space-y-12 pb-20">
       {/* Header Section */}
@@ -75,19 +88,27 @@ export default function MasterDashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-6">
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Receita Anual</p>
-              <p className="text-2xl font-black tracking-tighter text-emerald-400">R$ 540.200</p>
+              <p className="text-2xl font-black tracking-tighter text-emerald-400">
+                {loading ? '...' : `R$ ${(stats?.annualRevenue || 0).toLocaleString('pt-BR')}`}
+              </p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Leads IA</p>
-              <p className="text-2xl font-black tracking-tighter text-indigo-400">12.4k</p>
+              <p className="text-2xl font-black tracking-tighter text-indigo-400">
+                {loading ? '...' : (stats?.leadsCount > 1000 ? `${(stats.leadsCount / 1000).toFixed(1)}k` : stats?.leadsCount)}
+              </p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Novas Contas</p>
-              <p className="text-2xl font-black tracking-tighter text-primary-light">+4 este mês</p>
+              <p className="text-2xl font-black tracking-tighter text-primary-light">
+                {loading ? '...' : `+${stats?.newAgenciesCount || 0} este mês`}
+              </p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Conversão Global</p>
-              <p className="text-2xl font-black tracking-tighter text-amber-400">18.5%</p>
+              <p className="text-2xl font-black tracking-tighter text-amber-400">
+                {loading ? '...' : `${stats?.globalConversion || 0}%`}
+              </p>
             </div>
           </div>
         </div>

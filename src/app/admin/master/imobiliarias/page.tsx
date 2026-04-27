@@ -115,19 +115,27 @@ export default function MasterImobiliariasPage() {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Reg: {imob.numero_registro}</p>
                   </td>
                   <td className="px-8 py-6 border-b border-slate-50">
-                    {imob.assinaturas ? (
+                    {imob.assinaturas && Array.isArray(imob.assinaturas) && imob.assinaturas.length > 0 ? (
                       <div>
-                        <p className="text-xs font-black text-slate-900 uppercase tracking-widest">{imob.assinaturas.planos.nome}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">R$ {imob.assinaturas.planos.preco_mensal.toLocaleString('pt-BR')}/mês</p>
+                        <p className="text-xs font-black text-slate-900 uppercase tracking-widest">
+                          {imob.assinaturas[0].planos?.nome || 'Plano Personalizado'}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                          R$ {(imob.assinaturas[0].planos?.preco_mensal || 0).toLocaleString('pt-BR')}/mês
+                        </p>
                       </div>
                     ) : (
                       <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest italic">Sem Assinatura</span>
                     )}
                   </td>
                   <td className="px-8 py-6 border-b border-slate-50 text-center">
-                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${imob.assinaturas?.status === 'ativo' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
-                      {imob.assinaturas?.status === 'ativo' ? <IoCheckmarkCircle size={14} /> : <IoInformationCircleOutline size={14} />}
-                      {imob.assinaturas?.status === 'ativo' ? 'Ativo' : 'Pendente'}
+                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${
+                      (Array.isArray(imob.assinaturas) && imob.assinaturas[0]?.status === 'ativo') 
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                        : 'bg-slate-100 text-slate-400 border border-slate-200'
+                    }`}>
+                      {(Array.isArray(imob.assinaturas) && imob.assinaturas[0]?.status === 'ativo') ? <IoCheckmarkCircle size={14} /> : <IoInformationCircleOutline size={14} />}
+                      {(Array.isArray(imob.assinaturas) && imob.assinaturas[0]?.status === 'ativo') ? 'Ativo' : 'Pendente'}
                     </span>
                   </td>
                   <td className="px-8 py-6 border-b border-slate-50 text-right">
