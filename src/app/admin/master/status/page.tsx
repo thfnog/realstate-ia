@@ -11,7 +11,7 @@ import {
   IoLogoVercel,
   IoReloadOutline
 } from 'react-icons/io5';
-import { SiSupabase, SiAmazonaws, SiOpenai } from 'react-icons/si';
+import { SiSupabase, SiOpenai, SiAmazon } from 'react-icons/si';
 
 interface HealthStatus {
   name: string;
@@ -63,7 +63,7 @@ export default function MasterStatusPage() {
   const ServiceIcon = ({ name }: { name: string }) => {
     if (name.includes('Vercel')) return <IoLogoVercel size={24} />;
     if (name.includes('Supabase')) return <SiSupabase size={24} />;
-    if (name.includes('Evolution')) return <SiAmazonaws size={24} />;
+    if (name.includes('Evolution')) return <SiAmazon size={24} />;
     if (name.includes('OpenAI')) return <SiOpenai size={24} />;
     return <IoCloudOutline size={24} />;
   };
