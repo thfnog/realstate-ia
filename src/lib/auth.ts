@@ -80,6 +80,20 @@ export async function signIn(email: string, password: string): Promise<string | 
     } else {
       user = profile;
     }
+
+    // SECURITY CHECK: If user is a broker, check if they are active
+    if (user.role === 'corretor' && user.corretor_id) {
+      const { data: broker } = await supabaseAdmin
+        .from('corretores')
+        .select('ativo')
+        .eq('id', user.corretor_id)
+        .single();
+      
+      if (broker && !broker.ativo) {
+        console.warn(`🛑 Tentativa de login de corretor inativo: ${email}`);
+        return null; // Block login
+      }
+    }
   }
 
   const payload: SessionPayload = {
