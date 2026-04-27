@@ -86,7 +86,7 @@ export async function DELETE(
 
     if (usersByLink && usersByLink.length > 0) {
       for (const u of usersByLink) {
-        if (u.role === 'admin') {
+        if (u.role === 'admin' || u.role === 'master') {
           // Just unlink Admin users (they are platform users first)
           await supabaseAdmin
             .from('usuarios')
