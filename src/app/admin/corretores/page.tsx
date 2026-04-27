@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { IoAddOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline, IoLogoWhatsapp, IoMailOutline, IoCallOutline } from 'react-icons/io5';
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
 import WhatsAppConnector from '@/components/corretores/WhatsAppConnector';
+import { toast } from 'sonner';
 
 interface Corretor {
   id: string;
@@ -52,6 +53,7 @@ export default function CorretoresPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    let brokerId = editingId;
 
     try {
       if (editingId) {

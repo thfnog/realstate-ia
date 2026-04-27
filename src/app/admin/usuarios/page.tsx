@@ -10,7 +10,7 @@ export default function UsuariosPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ email: '', role: 'corretor' });
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'corretor', nome: '', vincular_corretor: false });
   const [submitting, setSubmitting] = useState(false);
 
   async function fetchCurrentUser() {
@@ -58,7 +58,7 @@ export default function UsuariosPage() {
       if (res.ok) {
         toast.success('Convite enviado com sucesso!');
         setShowInviteModal(false);
-        setInviteForm({ email: '', role: 'corretor' });
+        setInviteForm({ email: '', role: 'corretor', nome: '', vincular_corretor: false });
         fetchUsuarios();
       } else {
         toast.error(data.error || 'Erro ao enviar convite');
@@ -92,8 +92,9 @@ export default function UsuariosPage() {
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identidade</th>
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nível de Acesso</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Entidade Vinculada</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações de Segurança</th>
+                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vínculo</th>
+                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -103,7 +104,7 @@ export default function UsuariosPage() {
                 ))
               ) : usuarios.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-10 py-24 text-center">
+                  <td colSpan={5} className="px-10 py-24 text-center">
                      <p className="text-6xl mb-6 opacity-20">👥</p>
                      <p className="text-slate-400 font-black uppercase tracking-widest text-sm">Nenhum usuário cadastrado</p>
                   </td>
@@ -143,18 +144,19 @@ export default function UsuariosPage() {
                         <div className="flex flex-col">
                           <span className="text-xs text-slate-700 font-black uppercase tracking-widest">
                             {u.corretores?.nome || (
-                              <span className="text-slate-300 font-medium italic">Sem vínculo direto</span>
+                              <span className="text-slate-300 font-medium italic">Sem vínculo</span>
                             )}
                           </span>
-                          {u.role === 'admin' && !u.corretor_id && (
-                             <button 
-                               onClick={() => alert('Em breve: Vincular admin a um perfil de corretor para uso do WhatsApp.')}
-                               className="text-[10px] text-primary hover:underline font-black uppercase tracking-widest mt-2"
-                             >
-                               + Vincular Perfil de Corretor
-                             </button>
-                          )}
                         </div>
+                      </td>
+                      <td className="px-10 py-8 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                          u.status === 'active' 
+                            ? 'bg-emerald-100 text-emerald-700' 
+                            : 'bg-amber-100 text-amber-700 animate-pulse'
+                        }`}>
+                          {u.status === 'active' ? 'Ativado' : 'Pendente'}
+                        </span>
                       </td>
                       <td className="px-10 py-8">
                         <div className="flex items-center justify-end gap-3">
@@ -227,6 +229,18 @@ export default function UsuariosPage() {
             
             <form onSubmit={handleInvite} className="p-12 space-y-10">
               <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={inviteForm.nome}
+                  onChange={e => setInviteForm({ ...inviteForm, nome: e.target.value })}
+                  placeholder="Ex: João Silva"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" 
+                />
+              </div>
+
+              <div className="space-y-3">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
                 <div className="relative">
                    <IoMailOutline className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 text-xl" />
@@ -268,6 +282,21 @@ export default function UsuariosPage() {
                   </button>
                 </div>
               </div>
+
+              {inviteForm.role === 'admin' && (
+                <div className="flex items-center gap-4 p-6 bg-primary/5 rounded-2xl border border-primary/10">
+                  <input 
+                    type="checkbox" 
+                    id="vincular"
+                    checked={inviteForm.vincular_corretor}
+                    onChange={e => setInviteForm({ ...inviteForm, vincular_corretor: e.target.checked })}
+                    className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="vincular" className="text-xs font-bold text-slate-700 cursor-pointer">
+                    Também atua como Consultor? <span className="text-slate-400 font-medium">(Cria perfil para WhatsApp e Agenda)</span>
+                  </label>
+                </div>
+              )}
 
               <div className="pt-6 flex items-center justify-between gap-6">
                 <button 

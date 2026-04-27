@@ -6,13 +6,12 @@ import { isMockMode } from '@/lib/mockDb';
 export async function GET() {
   try {
     const session = await getAuthFromCookies();
-    if (!session || session.app_role !== 'admin') {
+    if (!session || (session.app_role !== 'admin' && session.app_role !== 'master')) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
     if (isMockMode()) {
       const { getCorretores } = await import('@/lib/mockDb');
-      // In mock, we don't have a specific user list for imob, we simulate
       const corretores = getCorretores(session.imobiliaria_id);
       const mockUsers = corretores.map(c => ({
         id: `user-${c.id}`,
@@ -20,14 +19,14 @@ export async function GET() {
         role: 'corretor',
         corretor_id: c.id,
         nome: c.nome,
-        ativo: true,
+        status: 'active',
         criado_em: c.criado_em,
       }));
       return NextResponse.json(mockUsers);
     }
 
     // REAL MODE: Fetch from public.usuarios with Corretores join
-    const { data, error } = await supabaseAdmin
+    const { data: dbUsers, error } = await supabaseAdmin
       .from('usuarios')
       .select('*, corretores(nome)')
       .eq('imobiliaria_id', session.imobiliaria_id)
@@ -35,7 +34,25 @@ export async function GET() {
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    // Fetch auth status for these users
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (authError) {
+      console.warn('[USERS GET] Error listing auth users:', authError.message);
+      return NextResponse.json(dbUsers);
+    }
+
+    const authUsersMap = new Map(authData.users.map(u => [u.id, u]));
+
+    const usersWithStatus = dbUsers.map(u => {
+      const authUser = u.auth_id ? authUsersMap.get(u.auth_id) : null;
+      return {
+        ...u,
+        status: (authUser?.email_confirmed_at || authUser?.last_sign_in_at) ? 'active' : 'pending'
+      };
+    });
+
+    return NextResponse.json(usersWithStatus);
   } catch (err: any) {
     console.error('[USERS GET] Erro:', err);
     return NextResponse.json({ error: 'Erro ao carregar usuários' }, { status: 500 });
@@ -45,7 +62,7 @@ export async function GET() {
 export async function DELETE(request: Request) {
   try {
     const session = await getAuthFromCookies();
-    if (!session || session.app_role !== 'admin') {
+    if (!session || (session.app_role !== 'admin' && session.app_role !== 'master')) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
@@ -100,7 +117,7 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   try {
     const session = await getAuthFromCookies();
-    if (!session || session.app_role !== 'admin') {
+    if (!session || (session.app_role !== 'admin' && session.app_role !== 'master')) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 

@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    const { email, role, corretor_id, nome } = await request.json();
+    const { email, role, corretor_id, nome, vincular_corretor } = await request.json();
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email e Role são obrigatórios' }, { status: 400 });
@@ -31,18 +31,17 @@ export async function POST(request: Request) {
     }
 
     // REAL MODE: Supabase Auth Invitation
-    // If role is corretor, we should ensure a corretor record exists
     let finalCorretorId = corretor_id;
     
-    if (role === 'corretor' && !finalCorretorId) {
-      // Create a broker record first to get an ID
+    // Create a broker record if specifically requested or if it's a broker role without an ID
+    if ((vincular_corretor || role === 'corretor') && !finalCorretorId) {
       const { data: newBroker, error: brokerError } = await supabaseAdmin
         .from('corretores')
         .insert({
           imobiliaria_id: session.imobiliaria_id,
           nome: nome || email.split('@')[0],
           email: email,
-          telefone: '—', // Placeholder to be updated by the user
+          telefone: '—',
           ativo: true
         })
         .select()
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
         
       if (brokerError) {
         console.error('[INVITE] Erro ao criar corretor:', brokerError);
-        return NextResponse.json({ error: 'Erro ao pré-cadastrar corretor' }, { status: 500 });
+        return NextResponse.json({ error: 'Erro ao pré-cadastrar perfil de corretor' }, { status: 500 });
       }
       finalCorretorId = newBroker.id;
     }
