@@ -32,8 +32,23 @@ export async function POST(request: Request) {
 
     // REAL MODE: Supabase Auth Invitation
     let finalCorretorId = corretor_id;
+
+    // 1. If no ID provided, check if a broker with this email already exists
+    if (!finalCorretorId && email) {
+      const { data: existingBroker } = await supabaseAdmin
+        .from('corretores')
+        .select('id')
+        .eq('email', email)
+        .eq('imobiliaria_id', session.imobiliaria_id)
+        .maybeSingle();
+      
+      if (existingBroker) {
+        finalCorretorId = existingBroker.id;
+        console.log(`[INVITE] Found existing broker for email ${email}: ${finalCorretorId}`);
+      }
+    }
     
-    // Create a broker record if specifically requested or if it's a broker role without an ID
+    // 2. Create a broker record if specifically requested or if it's a broker role without an ID
     if ((vincular_corretor || role === 'corretor') && !finalCorretorId) {
       const { data: newBroker, error: brokerError } = await supabaseAdmin
         .from('corretores')
