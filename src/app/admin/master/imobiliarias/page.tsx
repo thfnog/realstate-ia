@@ -19,8 +19,10 @@ interface Imobiliaria {
     planos: {
       nome: string;
       preco_mensal: number;
+      limite_usuarios: number;
     };
   };
+  user_count: number;
 }
 
 export default function MasterImobiliariasPage() {
@@ -88,6 +90,7 @@ export default function MasterImobiliariasPage() {
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Imobiliária</th>
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Documentação</th>
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Plano Atual</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Usuários</th>
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Status</th>
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Cadastrada em</th>
               </tr>
@@ -130,6 +133,29 @@ export default function MasterImobiliariasPage() {
                         );
                       }
                       return <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest italic">Sem Assinatura</span>;
+                    })()}
+                  </td>
+                  <td className="px-8 py-6 border-b border-slate-50">
+                    {(() => {
+                      const sub = Array.isArray(imob.assinaturas) ? imob.assinaturas[0] : imob.assinaturas;
+                      const limit = sub?.planos?.limite_usuarios || 0;
+                      const usage = imob.user_count || 0;
+                      const percentage = limit > 0 ? (usage / limit) * 100 : 0;
+
+                      return (
+                        <div className="space-y-2 max-w-[120px]">
+                          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                            <span className={usage >= limit ? 'text-rose-500' : 'text-slate-900'}>{usage}</span>
+                            <span className="text-slate-400">/ {limit}</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${usage >= limit ? 'bg-rose-500' : 'bg-primary'}`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
                     })()}
                   </td>
                   <td className="px-8 py-6 border-b border-slate-50 text-center">

@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   // Fetch imobiliarias with their active subscription and plan details
-  const { data, error } = await supabaseAdmin
+  const { data: imobiliarias, error } = await supabaseAdmin
     .from('imobiliarias')
     .select(`
       *,
@@ -21,14 +21,31 @@ export async function GET() {
         planos (
           id,
           nome,
-          preco_mensal
+          preco_mensal,
+          limite_usuarios
         )
       )
     `)
     .order('criado_em', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // 2. Fetch user counts to optimize (one query instead of one per row)
+  const { data: userRecords } = await supabaseAdmin
+    .from('usuarios')
+    .select('imobiliaria_id');
+
+  const countsMap = (userRecords || []).reduce((acc: Record<string, number>, curr: any) => {
+    acc[curr.imobiliaria_id] = (acc[curr.imobiliaria_id] || 0) + 1;
+    return acc;
+  }, {});
+
+  const result = imobiliarias.map(i => ({
+    ...i,
+    user_count: countsMap[i.id] || 0
+  }));
+
+  return NextResponse.json(result);
 }
 
 export async function PATCH(req: Request) {

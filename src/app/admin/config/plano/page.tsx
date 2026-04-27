@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { IoCheckmarkCircle, IoDiamondOutline, IoRocketOutline, IoBriefcaseOutline, IoInformationCircleOutline, IoCardOutline, IoReceiptOutline, IoPeopleCircleOutline, IoWarningOutline } from 'react-icons/io5';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { toast } from 'sonner';
@@ -191,13 +192,26 @@ export default function AgencyPlansPage() {
                     className={`w-full py-5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${
                       isCurrent 
                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                        : isEnterprise 
-                          ? 'bg-slate-900 text-white hover:bg-primary shadow-xl shadow-slate-900/10' 
-                          : 'bg-primary text-white hover:bg-slate-900 shadow-xl shadow-primary/20'
+                        : (billing?.userCount || 0) > plano.limite_usuarios
+                          ? 'bg-rose-50 text-rose-300 border border-rose-100 cursor-not-allowed'
+                          : isEnterprise 
+                            ? 'bg-slate-900 text-white hover:bg-primary shadow-xl shadow-slate-900/10' 
+                            : 'bg-primary text-white hover:bg-slate-900 shadow-xl shadow-primary/20'
                     }`}
                   >
-                    {isCurrent ? 'Utilizando este Plano' : 'Alterar para este Plano'}
+                    {isCurrent 
+                      ? 'Utilizando este Plano' 
+                      : (billing?.userCount || 0) > plano.limite_usuarios
+                        ? 'Limite de Usuários Excedido'
+                        : 'Alterar para este Plano'
+                    }
                   </button>
+                  
+                  {(billing?.userCount || 0) > plano.limite_usuarios && !isCurrent && (
+                    <p className="text-[10px] text-rose-500 font-bold text-center mt-4">
+                      Você possui {billing?.userCount} usuários ativos. Este plano permite apenas {plano.limite_usuarios}.
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -320,6 +334,16 @@ export default function AgencyPlansPage() {
           <p className="text-indigo-900 font-black text-sm uppercase tracking-widest mb-2">Segurança dos Dados</p>
           <p className="text-indigo-700/70 text-sm font-medium leading-relaxed">
             Não armazenamos os dados completos do seu cartão em nossos servidores. Todas as transações são processadas com criptografia de ponta a ponta seguindo o padrão PCI-DSS.
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-amber-50 p-8 rounded-[2rem] border border-amber-100 flex items-start gap-6">
+        <IoWarningOutline className="text-amber-600 shrink-0" size={28} />
+        <div>
+          <p className="text-amber-900 font-black text-sm uppercase tracking-widest mb-2">Regras de Downgrade</p>
+          <p className="text-amber-700/70 text-sm font-medium leading-relaxed">
+            Para mudar para um plano inferior, certifique-se de que a sua imobiliária possui um número de usuários ativos igual ou menor ao limite permitido pelo novo plano. Se necessário, inative usuários na tela de <Link href="/admin/usuarios" className="underline font-bold hover:text-amber-900">Gestão de Usuários</Link> antes de solicitar a troca.
           </p>
         </div>
       </div>

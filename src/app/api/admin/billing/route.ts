@@ -65,7 +65,29 @@ export async function POST(request: Request) {
   if (action === 'change_plan') {
     const { plano_id } = data;
     
-    // Check if subscription exists
+    // 1. Get new plan details
+    const { data: newPlano } = await supabaseAdmin
+      .from('planos')
+      .select('id, limite_usuarios, modulos, nome')
+      .eq('id', plano_id)
+      .single();
+
+    if (!newPlano) return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 });
+
+    // 2. Count current users
+    const { count: userCount } = await supabaseAdmin
+      .from('usuarios')
+      .select('*', { count: 'exact', head: true })
+      .eq('imobiliaria_id', session.imobiliaria_id);
+
+    // 3. Validate limit (Downgrade Guard)
+    if (userCount && userCount > newPlano.limite_usuarios) {
+      return NextResponse.json({ 
+        error: `Não é possível migrar para o plano ${newPlano.nome}. Sua imobiliária possui ${userCount} usuários ativos, mas este plano permite apenas ${newPlano.limite_usuarios}. Inative ou remova alguns usuários na tela de Gestão de Usuários antes de prosseguir.` 
+      }, { status: 400 });
+    }
+
+    // 4. Update or Create subscription
     const { data: existing } = await supabaseAdmin
       .from('assinaturas')
       .select('id')
@@ -87,19 +109,11 @@ export async function POST(request: Request) {
         });
     }
 
-    // Update imobiliaria active modules based on plan
-    const { data: plano } = await supabaseAdmin
-      .from('planos')
-      .select('modulos')
-      .eq('id', plano_id)
-      .single();
-
-    if (plano) {
-       await supabaseAdmin
-         .from('imobiliarias')
-         .update({ active_modules: plano.modulos })
-         .eq('id', session.imobiliaria_id);
-    }
+    // 5. Update imobiliaria active modules
+    await supabaseAdmin
+      .from('imobiliarias')
+      .update({ active_modules: newPlano.modulos })
+      .eq('id', session.imobiliaria_id);
 
     return NextResponse.json({ success: true });
   }

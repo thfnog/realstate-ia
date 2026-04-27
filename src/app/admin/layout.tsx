@@ -54,6 +54,7 @@ const navGroups = [
     items: [
       { href: '/admin/usuarios', label: 'Usuários', icon: '👤' },
       { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
+      { href: '/admin/config/plano', label: 'Assinatura', icon: '💎' },
       { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
     ]
   }
