@@ -8,29 +8,40 @@ import { toast } from 'sonner';
 export default function FinanceiroAlugueisPage() {
   const [pagamentos, setPagamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const config = getConfig();
+  const [config, setConfig] = useState<any>(getConfig());
 
   useEffect(() => {
-    fetch('/api/contratos')
-      .then(res => res.json())
-      .then(contratos => {
-        // Flatten all payments from rental contracts
-        const allPagamentos: any[] = [];
-        contratos.forEach((c: any) => {
-          if (c.tipo === 'aluguel' && c.pagamentos) {
-            c.pagamentos.forEach((p: any) => {
-              allPagamentos.push({
-                ...p,
-                contrato: c,
-                imovel: c.imovel,
-                lead: c.lead
-              });
+    // Fetch config and contracts
+    Promise.all([
+      fetch('/api/imobiliaria'),
+      fetch('/api/contratos')
+    ])
+    .then(async ([imobRes, contratosRes]) => {
+      const imobData = await imobRes.json();
+      const contratos = await contratosRes.json();
+
+      if (imobData && imobData.config_pais) {
+        const { getConfigByCode } = require('@/lib/countryConfig');
+        setConfig(getConfigByCode(imobData.config_pais));
+      }
+
+      // Flatten all payments from rental contracts
+      const allPagamentos: any[] = [];
+      contratos.forEach((c: any) => {
+        if (c.tipo === 'aluguel' && c.pagamentos) {
+          c.pagamentos.forEach((p: any) => {
+            allPagamentos.push({
+              ...p,
+              contrato: c,
+              imovel: c.imovel,
+              lead: c.lead
             });
-          }
-        });
-        setPagamentos(allPagamentos.sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()));
-        setLoading(false);
+          });
+        }
       });
+      setPagamentos(allPagamentos.sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()));
+      setLoading(false);
+    });
   }, []);
 
   const stats = {

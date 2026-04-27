@@ -11,7 +11,19 @@ export default function MonthlyFinancialPage() {
   const [loading, setLoading] = useState(true);
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [ano, setAno] = useState(new Date().getFullYear());
-  const config = getConfig();
+  const [config, setConfig] = useState<any>(getConfig());
+
+  useEffect(() => {
+    // Fetch imobiliaria config
+    fetch('/api/imobiliaria')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.config_pais) {
+          const { getConfigByCode } = require('@/lib/countryConfig');
+          setConfig(getConfigByCode(data.config_pais));
+        }
+      });
+  }, []);
 
   useEffect(() => {
     fetchCobrancas();

@@ -8,11 +8,21 @@ import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 export default function ContratosPage() {
   const [contratos, setContratos] = useState<any[]>([]);
-  const config = getConfig();
+  const [config, setConfig] = useState<any>(getConfig());
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<any | 'all'>('all');
 
   useEffect(() => {
+    // Fetch imobiliaria config
+    fetch('/api/imobiliaria')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.config_pais) {
+          const { getConfigByCode } = require('@/lib/countryConfig');
+          setConfig(getConfigByCode(data.config_pais));
+        }
+      });
+
     const url = filter === 'all' ? '/api/contratos' : `/api/contratos?status=${filter}`;
     fetch(url)
       .then(res => res.json())

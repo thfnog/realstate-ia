@@ -8,18 +8,30 @@ import { toast } from 'sonner';
 import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 export default function ContratoDetalhesPage({ params }: { params: { id: string } }) {
-  const config = getConfig();
+  const [config, setConfig] = useState<any>(getConfig());
   const router = useRouter();
   const [contrato, setContrato] = useState<ContratoComDetalhes | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/contratos/${params.id}`)
-      .then(res => res.json())
-      .then(data => {
-        setContrato(data);
-        setLoading(false);
-      });
+    // Fetch imobiliaria and contract in parallel
+    Promise.all([
+      fetch(`/api/contratos/${params.id}`),
+      fetch('/api/imobiliaria')
+    ])
+    .then(async ([contratoRes, imobRes]) => {
+      const contrattoData = await contratoRes.json();
+      const imobData = await imobRes.json();
+      
+      setContrato(contrattoData);
+      
+      if (imobData && imobData.config_pais) {
+        const { getConfigByCode } = require('@/lib/countryConfig');
+        setConfig(getConfigByCode(imobData.config_pais));
+      }
+      
+      setLoading(false);
+    });
   }, [params.id]);
 
   const updateStatus = async (newStatus: ContratoStatus) => {

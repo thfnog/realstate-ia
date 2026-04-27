@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 function NovoContratoForm() {
-  const config = getConfig();
+  const [config, setConfig] = useState<any>(getConfig());
   const router = useRouter();
   const searchParams = useSearchParams();
   const leadId = searchParams.get('leadId');
@@ -31,13 +31,25 @@ function NovoContratoForm() {
   });
 
   useEffect(() => {
-    fetch('/api/leads')
-      .then(res => res.json())
-      .then(data => setLeads(data.data || []));
-    
-    fetch('/api/imoveis?status=disponivel')
-      .then(res => res.json())
-      .then(data => setImoveis(data.data || []));
+    // Fetch everything in parallel
+    Promise.all([
+      fetch('/api/leads'),
+      fetch('/api/imoveis?status=disponivel'),
+      fetch('/api/imobiliaria')
+    ])
+    .then(async ([leadsRes, imoveisRes, imobRes]) => {
+      const leadsData = await leadsRes.json();
+      const imoveisData = await imoveisRes.json();
+      const imobData = await imobRes.json();
+
+      setLeads(leadsData.data || []);
+      setImoveis(imoveisData.data || []);
+
+      if (imobData && imobData.config_pais) {
+        const { getConfigByCode } = require('@/lib/countryConfig');
+        setConfig(getConfigByCode(imobData.config_pais));
+      }
+    });
   }, []);
 
   useEffect(() => {

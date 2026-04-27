@@ -49,7 +49,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 export default function AdminDashboard() {
-  const config = getConfig();
+  const [config, setConfig] = useState<any>(getConfig());
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ app_role: string; email: string; corretor_id: string | null } | null>(null);
@@ -57,9 +57,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [meRes, statsRes] = await Promise.all([
+        const [meRes, statsRes, imobRes] = await Promise.all([
           fetch('/api/auth/me'),
           fetch('/api/stats'),
+          fetch('/api/imobiliaria')
         ]);
 
         const session = await meRes.json();
@@ -67,6 +68,12 @@ export default function AdminDashboard() {
 
         const statsData = await statsRes.json();
         setStats(statsData);
+
+        const imobData = await imobRes.json();
+        if (imobData && imobData.config_pais) {
+          const { getConfigByCode } = require('@/lib/countryConfig');
+          setConfig(getConfigByCode(imobData.config_pais));
+        }
       } catch (err) {
         console.error('Erro ao carregar dados do dashboard:', err);
       } finally {
