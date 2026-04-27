@@ -8,6 +8,7 @@ import { KanbanBoard } from '@/components/leads/KanbanBoard';
 import { TableView } from '@/components/leads/TableView';
 import { AgendaModal } from '@/components/leads/AgendaModal';
 import { LeadsHeader } from '@/components/leads/LeadsHeader';
+import { ManualLeadModal } from '@/components/leads/ManualLeadModal';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   novo: { label: 'Novo', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
@@ -34,6 +35,7 @@ export default function LeadsPage() {
   const [resending, setResending] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [showManualModal, setShowManualModal] = useState(false);
   const limit = 50;
   
   // Agenda Modal
@@ -273,6 +275,7 @@ export default function LeadsPage() {
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         corretores={corretores}
+        onAddLead={() => setShowManualModal(true)}
       />
 
       {loading ? (
@@ -357,6 +360,14 @@ export default function LeadsPage() {
           setSendingMsg={setSendingMsg}
           setMsgStatus={setMsgStatus}
           updateStatus={updateStatus}
+          corretores={corretores}
+        />
+      )}
+
+      {showManualModal && (
+        <ManualLeadModal 
+          onClose={() => setShowManualModal(false)}
+          onSuccess={() => fetchLeads()}
           corretores={corretores}
         />
       )}

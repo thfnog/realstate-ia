@@ -14,6 +14,7 @@ interface LeadsHeaderProps {
   statusFilter: string;
   setStatusFilter: (f: string) => void;
   corretores: Corretor[];
+  onAddLead: () => void;
 }
 
 export function LeadsHeader({
@@ -28,7 +29,8 @@ export function LeadsHeader({
   setOrigemFilter,
   statusFilter,
   setStatusFilter,
-  corretores
+  corretores,
+  onAddLead
 }: LeadsHeaderProps) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
@@ -71,6 +73,13 @@ export function LeadsHeader({
             📊 Funil
           </button>
         </div>
+
+        <button 
+          onClick={onAddLead}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-lg shadow-slate-200"
+        >
+          <span>➕</span> Novo Lead
+        </button>
 
         <div className="flex items-center gap-2">
           <select

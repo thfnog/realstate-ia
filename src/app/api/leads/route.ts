@@ -71,6 +71,7 @@ const leadSchema = z.object({
   quartos_interesse: z.number().optional(),
   vagas_interesse: z.number().optional(),
   bairros_interesse: z.array(z.string()).optional(),
+  corretor_id: z.string().uuid().optional().nullable(),
 });
 
 // POST: Create a new lead (public) and trigger processing engine
@@ -98,23 +99,12 @@ export async function POST(request: Request) {
     const moeda = data.moeda || (config.currency.code as 'EUR' | 'BRL');
     const portal_origem = data.portal_origem || null;
     
-    // In V2 SaaS, public form should append ?imob_id in the URL.
+    // 3. Imobiliaria identification
+    const session = await getAuthFromCookies();
     const url = new URL(request.url);
     let imobId = url.searchParams.get('imob_id');
 
-    if (!isMockMode() && (!imobId || imobId === DEFAULT_IMOBILIARIA_ID)) {
-      const { data: firstImob } = await supabaseAdmin
-        .from('imobiliarias')
-        .select('id')
-        .limit(1)
-        .single();
-      
-      if (firstImob) {
-        imobId = firstImob.id;
-      }
-    }
-
-    const imobiliaria_id = imobId || DEFAULT_IMOBILIARIA_ID;
+    const imobiliaria_id = session?.imobiliaria_id || imobId || DEFAULT_IMOBILIARIA_ID;
     const repository = getLeadRepository(supabaseAdmin);
 
     // De-duplication Logic
@@ -179,6 +169,7 @@ export async function POST(request: Request) {
       quartos_interesse: data.quartos_interesse || null,
       vagas_interesse: data.vagas_interesse || null,
       bairros_interesse: data.bairros_interesse || null,
+      corretor_id: data.corretor_id || null,
       status: 'novo',
     });
 
