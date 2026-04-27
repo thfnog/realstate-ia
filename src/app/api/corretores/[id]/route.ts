@@ -46,11 +46,34 @@ export async function PUT(
     const client = getUserSupabaseClient(token);
     const repository = getCorretorRepository(client);
 
+    // 1. Get current state before update
+    const currentBroker = await repository.findById(id, session.imobiliaria_id);
+    const phoneChanged = currentBroker && body.telefone && currentBroker.telefone !== body.telefone;
+
+    // 2. If phone changed and there's a WhatsApp instance, logout to force re-connection
+    if (phoneChanged && currentBroker.whatsapp_instance) {
+      try {
+        console.log(`[BROKER UPDATE] Phone changed from ${currentBroker.telefone} to ${body.telefone}. Logging out WhatsApp instance ${currentBroker.whatsapp_instance}`);
+        await fetch(`${process.env.EVOLUTION_URL}/instance/logout/${currentBroker.whatsapp_instance}`, {
+          method: 'POST',
+          headers: { 'apikey': process.env.EVOLUTION_API_KEY! }
+        });
+        // Clear number and status in the update payload
+        body.whatsapp_number = null;
+        body.whatsapp_status = 'close';
+      } catch (err) {
+        console.warn('[BROKER UPDATE] Failed to logout WhatsApp instance during phone change:', err);
+      }
+    }
+
     const updated = await repository.update(id, session.imobiliaria_id, {
       nome: body.nome,
       telefone: body.telefone,
       email: body.email || null,
       ativo: body.ativo ?? true,
+      whatsapp_number: body.whatsapp_number ?? (phoneChanged ? null : undefined),
+      whatsapp_status: body.whatsapp_status ?? (phoneChanged ? 'close' : undefined),
+      comissao_padrao: body.comissao_padrao,
     });
 
     return NextResponse.json(updated);
