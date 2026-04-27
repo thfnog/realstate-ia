@@ -53,51 +53,63 @@ export default function CorretoresPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    let brokerId = editingId;
-    
-    if (editingId) {
-      await fetch(`/api/corretores/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: form.nome,
-          telefone: form.telefone,
-          email: form.email,
-          ativo: form.ativo,
-          comissao_padrao: form.comissao_padrao
-        }),
-      });
-    } else {
-      const res = await fetch('/api/corretores', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: form.nome,
-          telefone: form.telefone,
-          email: form.email,
-          ativo: form.ativo,
-          comissao_padrao: form.comissao_padrao
-        }),
-      });
-      const data = await res.json();
-      brokerId = data.id;
-    }
+    try {
+      if (editingId) {
+        const res = await fetch(`/api/corretores/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: form.nome,
+            telefone: form.telefone,
+            email: form.email,
+            ativo: form.ativo,
+            comissao_padrao: form.comissao_padrao
+          }),
+        });
+        if (!res.ok) throw new Error('Erro ao atualizar corretor');
+        toast.success('Corretor atualizado!');
+      } else {
+        const res = await fetch('/api/corretores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: form.nome,
+            telefone: form.telefone,
+            email: form.email,
+            ativo: form.ativo,
+            comissao_padrao: form.comissao_padrao
+          }),
+        });
+        if (!res.ok) throw new Error('Erro ao criar corretor');
+        const data = await res.json();
+        brokerId = data.id;
+        toast.success('Corretor criado!');
+      }
 
-    if (form.liberarAcesso && form.email && brokerId) {
-      await fetch('/api/admin/users/invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          role: 'corretor',
-          corretor_id: brokerId,
-          nome: form.nome
-        }),
-      });
-    }
+      if (form.liberarAcesso && form.email && brokerId) {
+        const inviteRes = await fetch('/api/admin/users/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: form.email,
+            role: 'corretor',
+            corretor_id: brokerId,
+            nome: form.nome
+          }),
+        });
+        if (!inviteRes.ok) {
+          const errorData = await inviteRes.json();
+          toast.error(`Corretor criado, mas falhou ao enviar convite: ${errorData.error || 'Erro desconhecido'}`);
+        } else {
+          toast.success('Convite de acesso enviado por e-mail!');
+        }
+      }
 
-    setShowModal(false);
-    fetchCorretores();
+      setShowModal(false);
+      fetchCorretores();
+    } catch (err: any) {
+      toast.error(err.message || 'Ocorreu um erro inesperado');
+    }
   }
 
   async function toggleAtivo(c: Corretor) {
@@ -111,8 +123,18 @@ export default function CorretoresPage() {
 
   async function handleDelete(id: string) {
     if (!confirm('Excluir este corretor?')) return;
-    await fetch(`/api/corretores/${id}`, { method: 'DELETE' });
-    fetchCorretores();
+    try {
+      const res = await fetch(`/api/corretores/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Corretor excluído com sucesso');
+        fetchCorretores();
+      } else {
+        const data = await res.json();
+        toast.error(`Erro ao excluir: ${data.error || 'Erro desconhecido'}`);
+      }
+    } catch (err) {
+      toast.error('Erro de conexão ao excluir corretor');
+    }
   }
 
   function copyWebcalLink(id: string) {
