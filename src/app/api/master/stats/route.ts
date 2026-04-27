@@ -53,9 +53,11 @@ export async function GET() {
     const distribution: Record<string, any> = {};
     const totalActive = (planDistributionRaw || []).filter(p => p.status === 'ativo').length;
 
-    (planDistributionRaw || []).forEach(sub => {
+    (planDistributionRaw || []).forEach((sub: any) => {
       if (sub.status !== 'ativo') return;
-      const name = sub.planos?.nome || 'Outros';
+      // Handle the case where planos might be an array or an object
+      const plano = Array.isArray(sub.planos) ? sub.planos[0] : sub.planos;
+      const name = plano?.nome || 'Outros';
       if (!distribution[name]) {
         distribution[name] = { label: name, count: 0, percentage: 0 };
       }
@@ -85,13 +87,19 @@ export async function GET() {
       newAgenciesCount: newAgenciesCount || 0,
       globalConversion: 18.5,
       planDistribution: Object.values(distribution),
-      recentPayments: (recentPayments || []).map((p: any) => ({
-        company: p.imobiliarias?.nome || 'N/A',
-        plan: p.assinaturas?.planos?.nome || 'N/A',
-        value: p.valor,
-        date: new Date(p.created_at).toLocaleString('pt-BR'),
-        status: p.status
-      }))
+      recentPayments: (recentPayments || []).map((p: any) => {
+        const imob = Array.isArray(p.imobiliarias) ? p.imobiliarias[0] : p.imobiliarias;
+        const assinat = Array.isArray(p.assinaturas) ? p.assinaturas[0] : p.assinaturas;
+        const plano = Array.isArray(assinat?.planos) ? assinat.planos[0] : assinat?.planos;
+        
+        return {
+          company: imob?.nome || 'N/A',
+          plan: plano?.nome || 'N/A',
+          value: p.valor,
+          date: new Date(p.created_at).toLocaleString('pt-BR'),
+          status: p.status
+        };
+      })
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
