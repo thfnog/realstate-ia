@@ -8,6 +8,7 @@ import MapPicker from './MapPicker';
 import MercadoIndicador from './MercadoIndicador';
 import PhotoUploadZone from './PhotoUploadZone';
 import { IoTrash, IoStar, IoStarOutline } from 'react-icons/io5';
+import { formatCurrency, parseCurrency } from '@/lib/utils/format';
 
 interface ImovelFormProps {
   initialData?: Partial<Imovel>;
@@ -339,9 +340,10 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                       <div>
                         <label className="block text-sm font-semibold text-text-primary mb-2">Valor Pedido ({config.currency.symbol})</label>
                         <input 
-                           type="number" 
-                           value={formData.valor || ''}
-                           onChange={e => setFormData({...formData, valor: parseFloat(e.target.value)})}
+                           type="text" 
+                           placeholder="0,00"
+                           value={formatCurrency(formData.valor)}
+                           onChange={e => setFormData({...formData, valor: parseCurrency(e.target.value)})}
                            className="w-full text-3xl font-bold px-4 py-6 rounded-2xl border-2 border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-primary"
                         />
                       </div>
@@ -350,18 +352,20 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                          <div>
                             <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Condomínio /mês</label>
                             <input 
-                               type="number" 
-                               value={formData.condominio_mensal || ''}
-                               onChange={e => setFormData({...formData, condominio_mensal: parseFloat(e.target.value)})}
+                               type="text" 
+                               placeholder="0,00"
+                               value={formatCurrency(formData.condominio_mensal)}
+                               onChange={e => setFormData({...formData, condominio_mensal: parseCurrency(e.target.value)})}
                                className="w-full px-4 py-3 rounded-xl border border-border"
                             />
                          </div>
                          <div>
                             <label className="block text-xs font-bold text-text-secondary uppercase mb-2">IMI ou IPTU /ano</label>
                             <input 
-                               type="number" 
-                               value={formData.imi_iptu_anual || ''}
-                               onChange={e => setFormData({...formData, imi_iptu_anual: parseFloat(e.target.value)})}
+                               type="text" 
+                               placeholder="0,00"
+                               value={formatCurrency(formData.imi_iptu_anual)}
+                               onChange={e => setFormData({...formData, imi_iptu_anual: parseCurrency(e.target.value)})}
                                className="w-full px-4 py-3 rounded-xl border border-border"
                             />
                          </div>
