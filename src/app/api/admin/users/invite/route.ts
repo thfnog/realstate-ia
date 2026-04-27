@@ -54,8 +54,7 @@ export async function POST(request: Request) {
       finalCorretorId = newBroker.id;
     }
 
-    // We call invite FIRST. If it succeeds, the DB trigger 'on_auth_user_created' 
-    // will automatically create the profile in 'public.usuarios'.
+    // Attempt to invite. If user already exists, we still want to ensure the DB record is linked.
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: {
         imobiliaria_id: session.imobiliaria_id,
@@ -66,29 +65,43 @@ export async function POST(request: Request) {
       redirectTo: `${new URL(request.url).origin}/auth/confirm`,
     });
 
+    let authUserId = inviteData?.user?.id;
+
     if (inviteError) {
-      console.error('[INVITE] Erro Supabase:', inviteError);
-      return NextResponse.json({ error: inviteError.message }, { status: 500 });
+      // If user already exists, we try to find their ID to perform the upsert anyway
+      if (inviteError.message.includes('already registered') || inviteError.status === 422) {
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = listData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        if (existingUser) {
+          authUserId = existingUser.id;
+        } else {
+          return NextResponse.json({ error: 'Usuário já existe mas não pôde ser vinculado.' }, { status: 400 });
+        }
+      } else {
+        console.error('[INVITE] Erro Supabase:', inviteError);
+        return NextResponse.json({ error: inviteError.message }, { status: 500 });
+      }
     }
 
     // MANUAL INSERT (Backup to trigger): Ensure the user record exists in public.usuarios
-    // This solves the issue of users not appearing immediately if the trigger delays.
-    try {
-      await supabaseAdmin
-        .from('usuarios')
-        .upsert({
-          id: inviteData.user.id, // Auth ID as primary ID for consistency
-          auth_id: inviteData.user.id,
-          email: email,
-          imobiliaria_id: session.imobiliaria_id,
-          role: role,
-          corretor_id: finalCorretorId || null
-        }, { onConflict: 'email' });
-    } catch (dbErr) {
-      console.warn('[INVITE] Failed manual DB insert (trigger might have handled it):', dbErr);
+    if (authUserId) {
+      try {
+        await supabaseAdmin
+          .from('usuarios')
+          .upsert({
+            id: authUserId,
+            auth_id: authUserId,
+            email: email,
+            imobiliaria_id: session.imobiliaria_id,
+            role: role,
+            corretor_id: finalCorretorId || null
+          }, { onConflict: 'email' });
+      } catch (dbErr) {
+        console.warn('[INVITE] Failed manual DB insert:', dbErr);
+      }
     }
 
-    return NextResponse.json({ success: true, user: inviteData.user });
+    return NextResponse.json({ success: true, user: inviteData?.user || { id: authUserId, email } });
   } catch (err: any) {
     console.error('[INVITE] Erro crítico:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
