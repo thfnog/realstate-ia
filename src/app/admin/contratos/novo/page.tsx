@@ -4,8 +4,10 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LeadComCorretor, Imovel, ContratoTipo } from '@/lib/database.types';
 import { toast } from 'sonner';
+import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 function NovoContratoForm() {
+  const config = getConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
   const leadId = searchParams.get('leadId');
@@ -192,7 +194,7 @@ function NovoContratoForm() {
                   </div>
                   <div className="flex justify-between pt-4 border-t border-slate-200">
                      <span className="text-xs text-slate-500 font-bold uppercase">Valor Negócio</span>
-                     <span className="text-lg font-black text-primary">{formData.valor_total.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</span>
+                     <span className="text-lg font-black text-primary">{formatCurrency(formData.valor_total, config)}</span>
                   </div>
                </div>
                <p className="text-[10px] text-slate-400 text-center px-8 italic">

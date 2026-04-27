@@ -33,11 +33,19 @@ export async function GET(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   
+  // Map legacy plan names to module sets
+  let activeModules = data.assinaturas?.[0]?.planos?.modulos;
+  if (!activeModules) {
+    if (data.plano === 'premium') activeModules = ['crm', 'dashboard', 'inventario', 'operacao', 'locacao', 'sistema'];
+    else if (data.plano === 'pro') activeModules = ['crm', 'dashboard', 'inventario', 'operacao'];
+    else activeModules = ['crm', 'dashboard', 'sistema'];
+  }
+
   // Flatten plan data for easier frontend consumption
   const responseData = {
     ...data,
     active_plan: data.assinaturas?.[0]?.planos?.nome || data.plano || 'Essencial',
-    active_modules: data.assinaturas?.[0]?.planos?.modulos || ['dashboard', 'crm', 'sistema']
+    active_modules: activeModules
   };
 
   return NextResponse.json(responseData);

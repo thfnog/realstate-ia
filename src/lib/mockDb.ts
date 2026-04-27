@@ -726,33 +726,39 @@ export function seedTestData() {
       id: DEFAULT_USUARIO_ID,
       imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
       email: 'admin@imobia.com',
-      hash_senha: 'admin123', // In mock mode we use plain or handled by bypass
+      hash_senha: 'admin123',
       role: 'admin',
       corretor_id: null,
       auth_id: null,
     } as any);
   }
 
-  if (!usuarios.some(u => u.email === 'thiago@imobia.com')) {
-    const c1 = corretores.find(c => c.email === 'thiago@imobia.com') || createCorretor({
-      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
-      nome: 'Thiago Corretor',
-      telefone: '+5511912345678',
-      email: 'thiago@imobia.com',
-      ativo: true,
-      pref_notif_whatsapp: true,
-      pref_notif_email: true,
-      pref_notif_push: true
-    });
-
+  // Master User for Testing
+  if (!usuarios.some(u => u.email === 'thfnog@gmail.com')) {
     createUsuario({
-      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
-      email: 'thiago@imobia.com',
+      id: 'user-master-thfnog',
+      imobiliaria_id: 'c29bdff8-a01f-4406-8e0a-18536bd2dc88',
+      email: 'thfnog@gmail.com',
       hash_senha: 'admin123',
-      role: 'corretor',
-      corretor_id: c1.id,
+      role: 'master', // Add to role type if needed, but the code checks for the string
+      corretor_id: null,
       auth_id: null,
-    });
+    } as any);
+  }
+
+  // Ensure Martinatti Imob exists in mock
+  if (!imobiliarias.some(i => i.id === 'c29bdff8-a01f-4406-8e0a-18536bd2dc88')) {
+    createImobiliaria({
+      id: 'c29bdff8-a01f-4406-8e0a-18536bd2dc88',
+      nome_fantasia: 'Martinatti Imobiliária',
+      identificador_fiscal: '00000000000',
+      numero_registro: 'CRECI 00000-J',
+      plano: 'premium',
+      config_pais: 'BR',
+      delay_auto_reply_sec: 20,
+      config_lembrete_1_horas: 24,
+      config_lembrete_2_horas: 48,
+    } as any);
   }
   
   // 3. Ensure we have sufficient properties

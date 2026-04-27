@@ -46,8 +46,10 @@ interface Stats {
 }
 
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 export default function AdminDashboard() {
+  const config = getConfig();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ app_role: string; email: string; corretor_id: string | null } | null>(null);
@@ -106,7 +108,7 @@ export default function AdminDashboard() {
   const metricCards = [
     {
       label: 'Comissão Acumulada',
-      value: (stats.totalComissao || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' }),
+      value: formatCurrency(stats.totalComissao || 0, config),
       icon: '💰',
       color: 'text-primary',
       bg: 'bg-primary/5',
@@ -288,7 +290,7 @@ export default function AdminDashboard() {
                      <div className="text-right">
                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Geração de Receita</p>
                        <p className="text-lg font-black text-emerald-600 tracking-tight">
-                         {broker.comissao.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                         {formatCurrency(broker.comissao, config)}
                        </p>
                      </div>
                   </div>

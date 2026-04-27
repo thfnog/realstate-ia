@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { IoAddOutline, IoDocumentTextOutline, IoDownloadOutline, IoPersonOutline, IoKeyOutline, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
-import { getConfig } from '@/lib/countryConfig';
+import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 export default function ContratosPage() {
   const [contratos, setContratos] = useState<any[]>([]);
@@ -100,7 +100,7 @@ export default function ContratosPage() {
                    <div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vencimento Mensal</p>
                       <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                        {c.valor_total?.toLocaleString(config.currency.locale, { style: 'currency', currency: config.currency.code })}
+                        {formatCurrency(c.valor_total || 0, config)}
                       </p>
                    </div>
                 </div>

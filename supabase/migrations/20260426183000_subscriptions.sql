@@ -1,3 +1,12 @@
+-- Function to handle updated_at timestamps
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Subscriptions and Plans Management
 
 -- 1. Create Plans table

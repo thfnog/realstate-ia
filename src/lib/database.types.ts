@@ -15,7 +15,7 @@ export type Imobiliaria = {
   criado_em: string;
 };
 
-export type Role = 'admin' | 'corretor';
+export type Role = 'master' | 'admin' | 'corretor';
 
 export type Usuario = {
   id: string;

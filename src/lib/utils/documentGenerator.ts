@@ -1,9 +1,7 @@
-/**
- * Document Template Engine
- * Handles variable replacement in Markdown templates
- */
+import { formatCurrency, CountryConfig, getConfig } from './countryConfig';
 
-export function processTemplate(template: string, data: Record<string, any>): string {
+export function processTemplate(template: string, data: Record<string, any>, config?: CountryConfig): string {
+  const c = config || getConfig();
   let processed = template;
 
   const variables = {
@@ -11,10 +9,10 @@ export function processTemplate(template: string, data: Record<string, any>): st
     'lead_cpf_nif': data.lead?.identificador_fiscal || '—',
     'imovel_titulo': data.imovel?.titulo || '—',
     'imovel_endereco': `${data.imovel?.rua || ''}, ${data.imovel?.numero || ''} - ${data.imovel?.freguesia || ''}`,
-    'valor_total': data.valor_total?.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' }) || '—',
-    'data_inicio': data.data_inicio ? new Date(data.data_inicio).toLocaleDateString('pt-PT') : '—',
+    'valor_total': data.valor_total ? formatCurrency(data.valor_total, c) : '—',
+    'data_inicio': data.data_inicio ? new Date(data.data_inicio).toLocaleDateString(c.currency.locale) : '—',
     'corretor_nome': data.corretor?.nome || '—',
-    'data_hoje': new Date().toLocaleDateString('pt-PT'),
+    'data_hoje': new Date().toLocaleDateString(c.currency.locale),
     ...data.custom_vars
   };
 

@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ContratoComDetalhes, ContratoStatus } from '@/lib/database.types';
 import { toast } from 'sonner';
+import { getConfig, formatCurrency } from '@/lib/countryConfig';
 
 export default function ContratoDetalhesPage({ params }: { params: { id: string } }) {
+  const config = getConfig();
   const router = useRouter();
   const [contrato, setContrato] = useState<ContratoComDetalhes | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,8 +128,8 @@ export default function ContratoDetalhesPage({ params }: { params: { id: string 
                        {contrato.pagamentos?.length > 0 ? contrato.pagamentos.map(p => (
                          <tr key={p.id}>
                             <td className="px-4 py-4 text-xs font-bold text-slate-700 capitalize">{p.tipo.replace('_', ' ')}</td>
-                            <td className="px-4 py-4 text-xs text-slate-500">{new Date(p.data_vencimento).toLocaleDateString('pt-PT')}</td>
-                            <td className="px-4 py-4 text-xs font-black text-slate-900 text-right">{p.valor_esperado.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</td>
+                            <td className="px-4 py-4 text-xs text-slate-500">{new Date(p.data_vencimento).toLocaleDateString(config.currency.locale)}</td>
+                            <td className="px-4 py-4 text-xs font-black text-slate-900 text-right">{formatCurrency(p.valor_esperado, config)}</td>
                             <td className="px-4 py-4 text-center">
                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${p.status === 'pago' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                  {p.status}
@@ -151,13 +153,13 @@ export default function ContratoDetalhesPage({ params }: { params: { id: string 
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full -mr-16 -mt-16"></div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total do Contrato</p>
               <h2 className="text-4xl font-black text-primary mb-6">
-                {contrato.valor_total.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                {formatCurrency(contrato.valor_total, config)}
               </h2>
               
               <div className="space-y-4">
                  <div className="flex justify-between text-xs">
                     <span className="text-slate-400">Data de Início</span>
-                    <span className="font-black">{new Date(contrato.data_inicio).toLocaleDateString('pt-PT')}</span>
+                    <span className="font-black">{new Date(contrato.data_inicio).toLocaleDateString(config.currency.locale)}</span>
                  </div>
                  <div className="flex justify-between text-xs">
                     <span className="text-slate-400">Consultor</span>

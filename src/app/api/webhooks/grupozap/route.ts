@@ -33,6 +33,16 @@ export async function POST(request: Request) {
 
     const repository = getLeadRepository(supabaseAdmin);
 
+    // Fetch imobiliaria to get country config
+    const { data: imob } = await supabaseAdmin
+      .from('imobiliarias')
+      .select('config_pais')
+      .eq('id', imobiliaria_id)
+      .single();
+    
+    const configPais = imob?.config_pais || 'BR';
+    const moeda = configPais === 'BR' ? 'BRL' : 'EUR';
+
     // Create the lead
     const lead = await repository.create({
       imobiliaria_id,
@@ -40,9 +50,8 @@ export async function POST(request: Request) {
       telefone: phone,
       origem: 'webhook_grupozap',
       portal_origem: body.origin || 'ZAP/VivaReal',
+      moeda: moeda as any,
       descricao_interesse: message,
-      // If we have listingId, we could potentially link to a property here
-      // lead_id: ...
       status: 'novo',
     });
 

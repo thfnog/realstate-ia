@@ -73,7 +73,7 @@ export default function MonthlyFinancialPage() {
            >
              {Array.from({ length: 12 }, (_, i) => (
                <option key={i + 1} value={i + 1}>
-                 {new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}
+                 {new Date(0, i).toLocaleString(config.currency.locale, { month: 'long' })}
                </option>
              ))}
            </select>
@@ -142,7 +142,7 @@ export default function MonthlyFinancialPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-sm font-bold text-slate-600">{new Date(c.data_vencimento).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-sm font-bold text-slate-600">{new Date(c.data_vencimento).toLocaleDateString(config.currency.locale)}</p>
                     </td>
                     <td className="px-8 py-6 text-right">
                       <p className="text-sm font-black text-slate-900">{formatCurrency(c.valor_esperado, config)}</p>

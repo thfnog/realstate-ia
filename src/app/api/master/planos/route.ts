@@ -4,7 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   const session = await getAuthFromCookies();
-  if (!session || session.app_role !== 'master' && session.email !== 'admin@imobia.com') {
+  // Allow master OR any authenticated admin/broker to see plans (public catalog)
+  if (!session) {
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
   }
 
