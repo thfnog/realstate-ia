@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IoMailOutline, IoPersonAddOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoSyncOutline } from 'react-icons/io5';
+import { IoMailOutline, IoPersonAddOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoSyncOutline, IoInformationCircleOutline } from 'react-icons/io5';
 import { TableRowSkeleton } from '@/components/LoadingSkeleton';
 import { toast } from 'sonner';
 
@@ -10,6 +10,7 @@ export default function UsuariosPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [manualLink, setManualLink] = useState<string | null>(null);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'corretor', nome: '', vincular_corretor: false });
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,10 +57,16 @@ export default function UsuariosPage() {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success('Convite enviado com sucesso!');
-        setShowInviteModal(false);
-        setInviteForm({ email: '', role: 'corretor', nome: '', vincular_corretor: false });
-        fetchUsuarios();
+        if (data.manualLink) {
+          setManualLink(data.manualLink);
+          toast.info('E-mail limitado. Use o link manual abaixo.');
+          fetchUsuarios();
+        } else {
+          toast.success('Convite enviado com sucesso!');
+          setShowInviteModal(false);
+          setInviteForm({ email: '', role: 'corretor', nome: '', vincular_corretor: false });
+          fetchUsuarios();
+        }
       } else {
         toast.error(data.error || 'Erro ao enviar convite');
       }
@@ -222,12 +229,57 @@ export default function UsuariosPage() {
             <div className="bg-slate-900 px-10 py-12 text-white relative">
               <h2 className="text-3xl font-black tracking-tight mb-2">Convidar Operador</h2>
               <p className="text-slate-400 font-medium">Um convite oficial de acesso será enviado para o endereço abaixo.</p>
-              <button onClick={() => setShowInviteModal(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white transition-all">
+              <button 
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setManualLink(null);
+                }} 
+                className="absolute top-10 right-10 text-slate-500 hover:text-white transition-all"
+              >
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             
-            <form onSubmit={handleInvite} className="p-12 space-y-10">
+            {manualLink ? (
+              <div className="p-12 space-y-8 animate-fade-in">
+                <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-8 space-y-4">
+                  <div className="flex items-center gap-3 text-amber-700">
+                    <IoInformationCircleOutline size={24} />
+                    <span className="font-black uppercase text-xs tracking-widest">Limite de E-mail Atingido</span>
+                  </div>
+                  <p className="text-sm text-amber-800 font-medium leading-relaxed">
+                    O Supabase limitou o envio de e-mails automáticos temporariamente. 
+                    <strong> Copie o link abaixo e envie manualmente para o colaborador</strong> (via WhatsApp ou e-mail próprio):
+                  </p>
+                  <div className="flex items-center gap-2 bg-white border border-amber-200 rounded-2xl p-4 mt-4 shadow-sm group">
+                    <input 
+                      readOnly 
+                      value={manualLink} 
+                      className="flex-1 bg-transparent border-none text-[10px] font-mono font-bold outline-none text-slate-600"
+                    />
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(manualLink);
+                        toast.success('Link copiado!');
+                      }}
+                      className="p-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-all active:scale-95 shadow-lg shadow-amber-200"
+                    >
+                      Copiar Link
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowInviteModal(false);
+                    setManualLink(null);
+                  }}
+                  className="w-full py-6 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                >
+                  Concluir e Fechar
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleInvite} className="p-12 space-y-10">
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
                 <input 
@@ -315,9 +367,10 @@ export default function UsuariosPage() {
                 </button>
               </div>
             </form>
-          </div>
+          )}
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

@@ -55,17 +55,51 @@ export async function POST(request: Request) {
     }
 
     // Attempt to invite. If user already exists, we still want to ensure the DB record is linked.
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: {
-        imobiliaria_id: session.imobiliaria_id,
-        role: role,
-        corretor_id: finalCorretorId || null,
-        display_name: nome || email.split('@')[0],
-      },
-      redirectTo: `${new URL(request.url).origin}/auth/confirm`,
-    });
+    let inviteData = null;
+    let inviteError = null;
+    let manualLink = null;
+
+    try {
+      const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        data: {
+          imobiliaria_id: session.imobiliaria_id,
+          role: role,
+          corretor_id: finalCorretorId || null,
+          display_name: nome || email.split('@')[0],
+        },
+        redirectTo: `${new URL(request.url).origin}/auth/confirm`,
+      });
+      inviteData = data;
+      inviteError = error;
+    } catch (err: any) {
+      inviteError = err;
+    }
 
     let authUserId = inviteData?.user?.id;
+
+    // FALLBACK: If invite fails due to Rate Limit, generate a manual link
+    if (inviteError && (inviteError.status === 429 || inviteError.message.toLowerCase().includes('rate limit'))) {
+      console.warn('[INVITE] Email rate limit hit. Generating manual link...');
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'invite',
+        email: email,
+        options: {
+          data: {
+            imobiliaria_id: session.imobiliaria_id,
+            role: role,
+            corretor_id: finalCorretorId || null,
+            display_name: nome || email.split('@')[0],
+          },
+          redirectTo: `${new URL(request.url).origin}/auth/confirm`,
+        }
+      });
+
+      if (!linkError && linkData) {
+        manualLink = linkData.properties.action_link;
+        authUserId = linkData.user.id;
+        inviteError = null; // Clear error as we have a fallback
+      }
+    }
 
     if (inviteError) {
       // If user already exists, we try to find their ID to perform the upsert anyway
@@ -101,7 +135,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, user: inviteData?.user || { id: authUserId, email } });
+    return NextResponse.json({ 
+      success: true, 
+      user: inviteData?.user || { id: authUserId, email },
+      manualLink: manualLink // Return the link if email failed
+    });
   } catch (err: any) {
     console.error('[INVITE] Erro crítico:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
