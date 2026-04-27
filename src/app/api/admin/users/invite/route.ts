@@ -71,6 +71,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: inviteError.message }, { status: 500 });
     }
 
+    // MANUAL INSERT (Backup to trigger): Ensure the user record exists in public.usuarios
+    // This solves the issue of users not appearing immediately if the trigger delays.
+    try {
+      await supabaseAdmin
+        .from('usuarios')
+        .upsert({
+          id: inviteData.user.id, // Auth ID as primary ID for consistency
+          auth_id: inviteData.user.id,
+          email: email,
+          imobiliaria_id: session.imobiliaria_id,
+          role: role,
+          corretor_id: finalCorretorId || null
+        }, { onConflict: 'email' });
+    } catch (dbErr) {
+      console.warn('[INVITE] Failed manual DB insert (trigger might have handled it):', dbErr);
+    }
+
     return NextResponse.json({ success: true, user: inviteData.user });
   } catch (err: any) {
     console.error('[INVITE] Erro crítico:', err);

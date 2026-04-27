@@ -34,23 +34,19 @@ export async function GET() {
 
     if (error) throw error;
 
-    // Fetch auth status for these users
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (authError) {
-      console.warn('[USERS GET] Error listing auth users:', authError.message);
-      return NextResponse.json(dbUsers);
-    }
-
-    const authUsersMap = new Map(authData.users.map(u => [u.id, u]));
-
-    const usersWithStatus = dbUsers.map(u => {
-      const authUser = u.auth_id ? authUsersMap.get(u.auth_id) : null;
-      return {
-        ...u,
-        status: (authUser?.email_confirmed_at || authUser?.last_sign_in_at) ? 'active' : 'pending'
-      };
-    });
+    // Fetch auth status for these users individually to handle multi-tenant scale
+    const usersWithStatus = await Promise.all(dbUsers.map(async (u) => {
+      let status = 'pending';
+      
+      if (u.auth_id) {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(u.auth_id);
+        if (authUser?.user?.email_confirmed_at || authUser?.user?.last_sign_in_at) {
+          status = 'active';
+        }
+      }
+      
+      return { ...u, status };
+    }));
 
     return NextResponse.json(usersWithStatus);
   } catch (err: any) {
