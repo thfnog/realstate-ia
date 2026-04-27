@@ -130,6 +130,15 @@ html {
   animation: shimmer 2s infinite;
 }
 
+/* Background Gradients */
+.bg-gradient-hero {
+  background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 100%);
+}
+
+.bg-gradient-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
 .card-premium {
   @apply bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 transition-all duration-300;
 }

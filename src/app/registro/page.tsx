@@ -12,7 +12,7 @@ export default function RegistroPage() {
   const [numeroRegistro, setNumeroRegistro] = useState('');
   const [email, setEmail] = useState('');
   const [pswd, setPswd] = useState('');
-  const [configPais, setConfigPais] = useState<'PT' | 'BR'>('PT');
+  const [configPais, setConfigPais] = useState<'PT' | 'BR'>('BR');
   
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -112,29 +112,13 @@ export default function RegistroPage() {
           <div className="bg-slate-50 border-b border-slate-200 px-8 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Novo Registro</h1>
-              <p className="text-slate-500 text-sm">Configure sua agência em menos de 1 minuto.</p>
+              <p className="text-slate-500 text-sm">Configure sua agência e comece em minutos.</p>
             </div>
             
-            {/* Country Selector Tabs */}
             <div className="flex bg-slate-200 p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setConfigPais('BR')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                  configPais === 'BR' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <span className="text-lg">🇧🇷</span> Brasil
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfigPais('PT')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                  configPais === 'PT' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <span className="text-lg">🇵🇹</span> Portugal
-              </button>
+              <div className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-black text-primary bg-white shadow-sm">
+                <span className="text-lg">🇧🇷</span> Brasil (Piloto)
+              </div>
             </div>
           </div>
 
@@ -163,28 +147,28 @@ export default function RegistroPage() {
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  {configPais === 'BR' ? 'CNPJ' : 'NIF / NIPC'}
+                  CNPJ
                 </label>
                 <input
                   type="text"
                   required
                   value={identificadorFiscal}
                   onChange={(e) => applyMask(e.target.value, 'ID')}
-                  placeholder={configPais === 'BR' ? '00.000.000/0000-00' : '000 000 000'}
+                  placeholder="00.000.000/0000-00"
                   className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  {configPais === 'BR' ? 'CRECI PJ' : 'Licença AMI'}
+                  CRECI PJ
                 </label>
                 <input
                   type="text"
                   required
                   value={numeroRegistro}
                   onChange={(e) => applyMask(e.target.value, 'REG')}
-                  placeholder={configPais === 'BR' ? 'Ex: 12345-J' : 'Ex: AMI-12345'}
+                  placeholder="Ex: 12345-J"
                   className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
                 />
               </div>
