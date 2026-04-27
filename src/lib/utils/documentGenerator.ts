@@ -1,4 +1,4 @@
-import { formatCurrency, CountryConfig, getConfig } from './countryConfig';
+import { formatCurrency, CountryConfig, getConfig } from '../countryConfig';
 
 export function processTemplate(template: string, data: Record<string, any>, config?: CountryConfig): string {
   const c = config || getConfig();
