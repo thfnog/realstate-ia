@@ -38,7 +38,10 @@ export async function GET() {
     const usersWithStatus = await Promise.all(dbUsers.map(async (u) => {
       let status = 'pending';
       
-      if (u.auth_id) {
+      // If it's the current user, it's definitely active
+      if (u.id === session.usuario_id) {
+        status = 'active';
+      } else if (u.auth_id) {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(u.auth_id);
         if (authUser?.user?.email_confirmed_at || authUser?.user?.last_sign_in_at) {
           status = 'active';

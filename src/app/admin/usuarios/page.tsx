@@ -139,12 +139,14 @@ export default function UsuariosPage() {
                       </td>
                       <td className="px-10 py-8">
                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm flex items-center w-fit gap-2 ${
-                          u.role === 'admin' 
-                            ? 'bg-amber-50 text-amber-600 border-amber-100' 
-                            : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                          u.role === 'master'
+                            ? 'bg-purple-50 text-purple-600 border-purple-100'
+                            : u.role === 'admin' 
+                              ? 'bg-amber-50 text-amber-600 border-amber-100' 
+                              : 'bg-indigo-50 text-indigo-600 border-indigo-100'
                         }`}>
                           <IoShieldCheckmarkOutline size={14} />
-                          {u.role === 'admin' ? 'Administrador' : 'Consultor'}
+                          {u.role === 'master' ? 'Master' : u.role === 'admin' ? 'Administrador' : 'Consultor'}
                         </span>
                       </td>
                       <td className="px-10 py-8">

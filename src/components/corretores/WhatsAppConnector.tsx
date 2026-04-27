@@ -116,6 +116,20 @@ export default function WhatsAppConnector({ instanceName, brokerId, onStatusChan
     }
   }
 
+  async function handleCancel() {
+    setQrCode(null);
+    setPolling(false);
+    // Cleanup the instance if it was created but not connected yet
+    if (status !== 'open') {
+      try {
+        await fetch(`/api/whatsapp/instance?instance=${instanceName}`, { method: 'DELETE' });
+        setStatus('close');
+      } catch (err) {
+        console.error('Erro ao limpar instância ao cancelar:', err);
+      }
+    }
+  }
+
   return (
     <div className="bg-surface-alt rounded-2xl p-6 border border-border-light">
       <div className="flex items-center justify-between mb-6">
@@ -177,7 +191,7 @@ export default function WhatsAppConnector({ instanceName, brokerId, onStatusChan
             vá em <strong>Aparelhos Conectados</strong> e escaneie o código.
           </p>
           <button 
-            onClick={() => { setQrCode(null); setPolling(false); }}
+            onClick={handleCancel}
             className="mt-4 text-slate-400 hover:text-slate-600 text-[10px] font-bold uppercase"
           >
             Cancelar
