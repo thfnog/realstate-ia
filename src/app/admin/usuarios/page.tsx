@@ -5,7 +5,7 @@ import { IoMailOutline, IoPersonAddOutline, IoShieldCheckmarkOutline, IoTrashOut
 import { TableRowSkeleton } from '@/components/LoadingSkeleton';
 import { toast } from 'sonner';
 
-export default function UsuariosPage() {
+export default function UsuariosPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -78,19 +78,32 @@ export default function UsuariosPage() {
   }
 
   return (
-    <div className="animate-fade-in pb-20 space-y-10 max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Gestão de Usuários</h1>
-          <p className="text-slate-500 font-medium mt-1">Controle de acesso e permissões administrativas da plataforma.</p>
+    <div className="animate-fade-in pb-20 space-y-10">
+      {!hideHeader && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Gestão de Usuários</h1>
+            <p className="text-slate-500 font-medium mt-1">Controle de acesso e permissões administrativas da plataforma.</p>
+          </div>
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95"
+          >
+            <IoPersonAddOutline size={20} /> Convidar Usuário
+          </button>
         </div>
-        <button
-          onClick={() => setShowInviteModal(true)}
-          className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95"
-        >
-          <IoPersonAddOutline size={20} /> Convidar Usuário
-        </button>
-      </div>
+      )}
+
+      {hideHeader && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95"
+          >
+            <IoPersonAddOutline size={20} /> Convidar Usuário
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-xl shadow-slate-200/50">
         <div className="overflow-x-auto">

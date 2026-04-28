@@ -20,7 +20,7 @@ const navGroups = [
     module: 'crm',
     items: [
       { href: '/admin/leads', label: 'Leads', icon: '👤' },
-      { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
+      { href: '/admin/equipe', label: 'Equipe', icon: '👥' },
       { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
     ]
   },
@@ -52,7 +52,6 @@ const navGroups = [
     label: 'Sistema',
     module: 'sistema',
     items: [
-      { href: '/admin/usuarios', label: 'Usuários', icon: '👤' },
       { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
       { href: '/admin/config/plano', label: 'Assinatura', icon: '💎' },
       { href: '/admin/config', label: 'Configurações', icon: '⚙️' },

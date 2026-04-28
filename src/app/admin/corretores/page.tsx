@@ -16,7 +16,7 @@ interface Corretor {
   comissao_padrao?: number;
 }
 
-export default function CorretoresPage() {
+export default function CorretoresPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -150,19 +150,32 @@ export default function CorretoresPage() {
   }
 
   return (
-    <div className="animate-fade-in pb-20 space-y-10 max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Consultores</h1>
-          <p className="text-slate-500 font-medium mt-1">Gerencie seu time de corretores e integrações WhatsApp.</p>
+    <div className="animate-fade-in pb-20 space-y-10">
+      {!hideHeader && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Consultores</h1>
+            <p className="text-slate-500 font-medium mt-1">Gerencie seu time de corretores e integrações WhatsApp.</p>
+          </div>
+          <button
+            onClick={openNew}
+            className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95"
+          >
+            <IoAddOutline size={20} /> Novo consultor
+          </button>
         </div>
-        <button
-          onClick={openNew}
-          className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95"
-        >
-          <IoAddOutline size={20} /> Novo consultor
-        </button>
-      </div>
+      )}
+
+      {hideHeader && (
+        <div className="flex justify-end">
+          <button
+            onClick={openNew}
+            className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95"
+          >
+            <IoAddOutline size={20} /> Novo consultor
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid gap-6">
