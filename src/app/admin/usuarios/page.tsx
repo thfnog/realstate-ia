@@ -183,6 +183,7 @@ export default function UsuariosPage({ hideHeader = false }: { hideHeader?: bool
                       <td className="px-10 py-8">
                         <div className="flex items-center justify-end gap-3">
                           <button
+                            disabled={isSelf}
                             onClick={async () => {
                               if (confirm('Reenviar convite de ativação para este usuário?')) {
                                 try {
@@ -196,8 +197,12 @@ export default function UsuariosPage({ hideHeader = false }: { hideHeader?: bool
                                 } catch { toast.error('Erro de conexão crítica'); }
                               }
                             }}
-                            className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-100"
-                            title="Reenviar Convite"
+                            className={`p-3 rounded-xl transition-all border ${
+                              isSelf 
+                                ? 'opacity-10 border-slate-100 bg-slate-50 cursor-not-allowed' 
+                                : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-indigo-50 hover:text-indigo-600'
+                            }`}
+                            title={isSelf ? 'Você já está ativado e logado' : 'Reenviar Convite'}
                           >
                             <IoSyncOutline size={18} />
                           </button>
