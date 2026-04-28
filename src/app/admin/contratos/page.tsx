@@ -58,9 +58,12 @@ export default function ContratosPage() {
           </div>
 
           <div className="flex items-center gap-4 relative z-10">
-            <button className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95">
+            <Link 
+              href="/admin/contratos/novo"
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+            >
               <IoAddOutline size={18} /> Novo Contrato
-            </button>
+            </Link>
           </div>
         </div>
 
