@@ -72,22 +72,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authError.message }, { status: 500 });
     }
 
-    // 4. Create Public User Record
-    const { error: userError } = await supabaseAdmin
-      .from('usuarios')
-      .insert({
-        id: authData.user.id,
-        imobiliaria_id: imob.id,
-        email: email,
-        app_role: 'admin',
-        status: 'ativo'
-      });
-
-    if (userError) {
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      await supabaseAdmin.from('imobiliarias').delete().eq('id', imob.id);
-      return NextResponse.json({ error: userError.message }, { status: 500 });
-    }
+    // 4. Create Public User Record (Handled by DB Trigger automatically)
+    // We just need to check if the Auth creation was successful, which is done above.
 
     // 5. Inject Demo Data (Optional but recommended for onboarding)
     const moeda: Moeda = configPais === 'PT' ? 'EUR' : 'BRL';
