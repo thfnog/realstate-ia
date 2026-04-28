@@ -219,13 +219,31 @@ export function TableView({
                         🔇
                       </button>
 
-                      <button
-                        onClick={() => deleteLead(lead.id, lead.nome)}
-                        title="Excluir Permanentemente"
-                        className="p-1.5 rounded-lg text-text-muted hover:text-red-600 hover:bg-red-50 transition-all"
-                      >
-                        🗑️
-                      </button>
+                       <button
+                         onClick={async (e) => { 
+                           e.stopPropagation(); 
+                           if (confirm('Marcar como "Não é Lead"? Isso ajudará a IA a aprender e o lead será removido.')) {
+                             try {
+                               const res = await fetch(`/api/leads/${lead.id}/feedback`, { method: 'POST' });
+                               if (res.ok) window.location.reload();
+                             } catch (err) {
+                               console.error('Erro ao enviar feedback:', err);
+                             }
+                           }
+                         }}
+                         title="Não é Lead (IA Feedback)"
+                         className="p-1.5 rounded-lg text-text-muted hover:text-orange-600 hover:bg-orange-50 transition-all"
+                       >
+                         🚫
+                       </button>
+
+                       <button
+                         onClick={() => deleteLead(lead.id, lead.nome)}
+                         title="Excluir Permanentemente"
+                         className="p-1.5 rounded-lg text-text-muted hover:text-red-600 hover:bg-red-50 transition-all"
+                       >
+                         🗑️
+                       </button>
                     </div>
                   </td>
                 </tr>

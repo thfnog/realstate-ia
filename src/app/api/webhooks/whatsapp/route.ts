@@ -142,13 +142,7 @@ export async function POST(request: Request) {
         return;
       }
 
-      const extracted = await extractLeadWithAI(text);
-
-      if (extracted.is_lead === false) {
-        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia})`);
-        return;
-      }
-
+      // --- IMOBILIARIA RESOLUTION ---
       let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
       let fallback_corretor_id: string | null = null;
       
@@ -173,6 +167,14 @@ export async function POST(request: Request) {
          const { data: imobs } = await supabaseAdmin.from('imobiliarias').select('id').limit(1);
          if (imobs && imobs.length > 0) imobiliaria_id = imobs[0].id;
       }
+
+      const extracted = await extractLeadWithAI(text, imobiliaria_id);
+
+      if (extracted.is_lead === false) {
+        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia})`);
+        return;
+      }
+
        
       let config_pais: 'PT' | 'BR' = 'BR';
       if (mock.isMockMode()) {
@@ -198,7 +200,7 @@ export async function POST(request: Request) {
          // Check if lead name needs capture (starts with 'Lead #')
          if (lead.nome?.startsWith('Lead #')) {
            // Try to extract name from this new message
-           const nameExtraction = await extractLeadWithAI(text);
+           const nameExtraction = await extractLeadWithAI(text, lead.imobiliaria_id);
            if (nameExtraction.nome && nameExtraction.nome.length > 1) {
              console.log(`✅ Nome capturado de lead pendente: "${nameExtraction.nome}"`);
              if (mock.isMockMode()) {

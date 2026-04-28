@@ -118,6 +118,23 @@ function SortableLeadCard({
            🔇
          </button>
          <button 
+           onClick={async (e) => { 
+             e.stopPropagation(); 
+             if (confirm('Marcar como "Não é Lead"? Isso ajudará a IA a aprender e o lead será removido.')) {
+               try {
+                 const res = await fetch(`/api/leads/${lead.id}/feedback`, { method: 'POST' });
+                 if (res.ok) window.location.reload();
+               } catch (err) {
+                 console.error('Erro ao enviar feedback:', err);
+               }
+             }
+           }}
+           className="p-1.5 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white transition-all"
+           title="Não é um Lead (IA Feedback)"
+         >
+           🚫
+         </button>
+         <button 
            onClick={(e) => { e.stopPropagation(); onDelete(lead.id, lead.nome); }}
            className="p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
            title="Excluir Permanentemente"

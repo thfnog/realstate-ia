@@ -19,12 +19,35 @@ export interface AILeadProfile {
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-export async function extractLeadWithAI(text: string): Promise<AILeadProfile> {
+import { supabaseAdmin } from '@/lib/supabase';
+
+export async function extractLeadWithAI(text: string, imobiliaria_id?: string): Promise<AILeadProfile> {
   console.log('🤖 Consultando Groq para extração de dados...');
 
   if (!GROQ_API_KEY) {
     console.warn('⚠️ GROQ_API_KEY não configurada. Usando fallback seguro (ignorar).');
     return { is_lead: false };
+  }
+
+  // Fetch recent feedback examples to improve accuracy (Few-Shot Learning)
+  let feedbackExamples = '';
+  try {
+    if (imobiliaria_id) {
+      const { data: examples } = await supabaseAdmin
+        .from('ai_feedback')
+        .select('text, is_lead_actual')
+        .eq('imobiliaria_id', imobiliaria_id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (examples && examples.length > 0) {
+        feedbackExamples = examples.map(ex => 
+          `- MENSAGEM: "${ex.text}" -> CLASSIFICAÇÃO CORRETA: ${ex.is_lead_actual ? 'LEAD' : 'NÃO É LEAD'}`
+        ).join('\n');
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Falha ao buscar exemplos de feedback:', err);
   }
 
   const prompt = `
@@ -38,7 +61,8 @@ REGRAS DE CLASSIFICAÇÃO (is_lead):
 - Marque "is_lead": true se houver intenção clara de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, agendamento de visitas, ou interesse em vender/alugar seu próprio imóvel).
 - Marque "is_lead": false para RELATOS DE STATUS, conversas sociais ou saudações genéricas sem contexto (ex: "estava atendendo o cliente", "estou em reunião", "já te ligo", "tô no trânsito", "correndo", "semana corrida", "semana corrida man", "correria braba", "ok", "beleza", "combinado").
 - IMPORTANTE: Mensagens que são apenas saudações ("Oi", "Bom dia") ou status ("Tô correndo") NÃO são leads.
-- EXCEÇÃO: Se a mensagem contém APENAS um nome próprio (ex: "Pedro", "Maria Silva", "Sou o Carlos") e nada mais, pode marcar como "is_lead": true para capturarmos o nome, mas seja criterioso.
+
+${feedbackExamples ? `EXEMPLOS DE APRENDIZADO (FEEDBACK DO USUÁRIO):\n${feedbackExamples}\n` : ''}
 
 REGRAS DE EXTRAÇÃO:
 1. Extraia o nome se mencionado de forma clara (ex: "Sou o Carlos").
