@@ -123,7 +123,7 @@ export default function PerfilPage() {
         </form>
       </div>
 
-      {user?.corretores?.id && (
+      {user?.corretores?.id ? (
         <div className="mt-8 bg-white rounded-3xl border border-border-light shadow-sm p-8 space-y-8 animate-fade-in">
           <div className="flex items-center gap-3">
             <IoLogoWhatsapp className="text-emerald-500 text-3xl" />
@@ -146,6 +146,18 @@ export default function PerfilPage() {
               <strong>Segurança Garantida:</strong> Por questões de privacidade, a conexão do bot deve ser feita exclusivamente pelo proprietário do número. Nenhum administrador tem acesso às suas conversas privadas.
             </p>
           </div>
+        </div>
+      ) : (
+        <div className="mt-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-12 text-center space-y-6 animate-fade-in">
+           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mx-auto">
+             <IoLogoWhatsapp className="text-slate-300 text-3xl" />
+           </div>
+           <div className="max-w-sm mx-auto">
+             <h3 className="text-lg font-black text-slate-900 tracking-tight">Ativar Ferramentas de IA</h3>
+             <p className="text-slate-500 text-xs font-medium mt-2">
+               Para habilitar a integração com o WhatsApp e o Motor de IA, primeiro preencha seu Nome e Telefone acima e clique em <strong>"Guardar Alterações"</strong>.
+             </p>
+           </div>
         </div>
       )}
 

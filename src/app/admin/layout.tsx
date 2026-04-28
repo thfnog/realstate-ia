@@ -52,7 +52,6 @@ const navGroups = [
     label: 'Sistema',
     module: 'sistema',
     items: [
-      { href: '/admin/perfil', label: 'Meu Perfil', icon: '🆔' },
       { href: '/admin/config/plano', label: 'Assinatura', icon: '💎' },
       { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
     ]
@@ -257,24 +256,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             
             <div className="w-px h-6 bg-slate-100 mx-1 hidden sm:block" />
             
-            <div className="flex items-center gap-4 px-3 py-1.5 rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <Link 
+              href="/admin/perfil"
+              className="flex items-center gap-4 px-3 py-1.5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-primary transition-all group"
+              title="Ver meu perfil"
+            >
               <div className="hidden md:flex flex-col text-right">
-                <span className="text-[10px] font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.email}</span>
+                <span className="text-[10px] font-black text-slate-900 leading-none truncate max-w-[150px] group-hover:text-primary transition-colors">{user?.email}</span>
                 <span className="text-[8px] font-black text-primary uppercase tracking-widest mt-0.5">{user?.app_role}</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-white transition-all">
                 {user?.email?.charAt(0).toUpperCase()}
               </div>
-              <button 
-                onClick={handleLogout}
-                className="ml-2 p-2 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all"
-                title="Sair da Conta"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-            </div>
+            </Link>
+            <button 
+              onClick={handleLogout}
+              className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all"
+              title="Sair da Conta"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
         </header>
 
