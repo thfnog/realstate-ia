@@ -14,6 +14,7 @@ interface Corretor {
   ativo: boolean;
   liberarAcesso?: boolean;
   comissao_padrao?: number;
+  whatsapp_status?: 'open' | 'close' | 'connecting';
 }
 
 export default function CorretoresPage({ hideHeader = false }: { hideHeader?: boolean }) {
@@ -228,6 +229,22 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
+                  {/* WhatsApp Bot Status */}
+                  <div className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                    c.whatsapp_status === 'open'
+                      ? 'bg-primary/5 text-primary border-primary/20'
+                      : c.whatsapp_status === 'connecting'
+                      ? 'bg-amber-50 text-amber-600 border-amber-100'
+                      : 'bg-slate-50 text-slate-400 border-slate-100 opacity-60'
+                  }`}>
+                    <IoLogoWhatsapp size={14} className={c.whatsapp_status === 'open' ? 'animate-pulse' : ''} />
+                    {c.whatsapp_status === 'open' 
+                      ? 'Bot Integrado' 
+                      : c.whatsapp_status === 'connecting' 
+                      ? 'Conectando...' 
+                      : 'Sem Integração'}
+                  </div>
+
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleAtivo(c); }}
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
@@ -237,7 +254,7 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
                     }`}
                   >
                     {c.ativo ? <IoCheckmarkCircleOutline size={16} /> : <IoCloseCircleOutline size={16} />}
-                    {c.ativo ? 'Ativo' : 'Inativo'}
+                    {c.ativo ? 'Acesso Ativo' : 'Acesso Inativo'}
                   </button>
                   
                   <button
