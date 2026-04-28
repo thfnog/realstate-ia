@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { IoStatsChartOutline, IoWalletOutline, IoTrendingUpOutline, IoPeopleOutline, IoTimeOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
+import Link from 'next/link';
+import { IoStatsChartOutline, IoWalletOutline, IoTrendingUpOutline, IoPeopleOutline, IoTimeOutline, IoCheckmarkCircleOutline, IoArrowBackOutline } from 'react-icons/io5';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
 export default function MasterFinanceiroPage() {
@@ -31,6 +31,14 @@ export default function MasterFinanceiroPage() {
 
   return (
     <div className="animate-fade-in space-y-10 pb-20">
+      <Link 
+        href="/admin/master" 
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black text-[10px] uppercase tracking-widest group"
+      >
+        <IoArrowBackOutline className="group-hover:-translate-x-1 transition-transform" size={16} />
+        Voltar ao Painel Master
+      </Link>
+
       <div>
         <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Receita Global</h1>
         <p className="text-slate-500 font-medium">Visão executiva do faturamento e saúde financeira do SaaS.</p>

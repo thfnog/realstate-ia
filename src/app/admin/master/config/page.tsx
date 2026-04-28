@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IoSettingsOutline, IoMailOutline, IoLogoSlack, IoSaveOutline, IoShieldCheckmarkOutline } from 'react-icons/io5';
+import Link from 'next/link';
+import { IoSettingsOutline, IoMailOutline, IoLogoSlack, IoSaveOutline, IoShieldCheckmarkOutline, IoArrowBackOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
@@ -68,6 +69,14 @@ export default function MasterConfigPage() {
 
   return (
     <div className="animate-fade-in p-10 max-w-6xl mx-auto space-y-12 pb-20">
+      <Link 
+        href="/admin/master" 
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black text-[10px] uppercase tracking-widest group"
+      >
+        <IoArrowBackOutline className="group-hover:-translate-x-1 transition-transform" size={16} />
+        Voltar ao Painel Master
+      </Link>
+
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-12">
         <div className="space-y-4">
           <div className="flex items-center gap-3 text-indigo-600">

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { IoAddOutline, IoCheckmarkCircle, IoCloseCircle, IoCreateOutline, IoListOutline, IoSettingsOutline, IoDiamondOutline } from 'react-icons/io5';
+import Link from 'next/link';
+import { IoAddOutline, IoCheckmarkCircle, IoCloseCircle, IoCreateOutline, IoListOutline, IoSettingsOutline, IoDiamondOutline, IoArrowBackOutline } from 'react-icons/io5';
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
 import { toast } from 'sonner';
 
@@ -76,6 +76,14 @@ export default function MasterPlanosPage() {
 
   return (
     <div className="animate-fade-in space-y-8 pb-20">
+      <Link 
+        href="/admin/master" 
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black text-[10px] uppercase tracking-widest group"
+      >
+        <IoArrowBackOutline className="group-hover:-translate-x-1 transition-transform" size={16} />
+        Voltar ao Painel Master
+      </Link>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">

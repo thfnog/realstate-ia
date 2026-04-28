@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { IoArrowBackOutline } from 'react-icons/io5';
 import { useState, useEffect } from 'react';
 
 interface HealthStatus {
@@ -50,6 +52,14 @@ export default function MasterStatusPage() {
 
   return (
     <div className="animate-fade-in space-y-12 pb-20">
+      <Link 
+        href="/admin/master" 
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-primary transition-all font-black text-[10px] uppercase tracking-widest group"
+      >
+        <IoArrowBackOutline className="group-hover:-translate-x-1 transition-transform" size={16} />
+        Voltar ao Painel Master
+      </Link>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">

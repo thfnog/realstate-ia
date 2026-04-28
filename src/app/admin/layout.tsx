@@ -80,6 +80,7 @@ const masterNavGroups = [
     module: 'master',
     items: [
       { href: '/admin/master/status', label: 'Status do Sistema', icon: '⚡' },
+      { href: '/admin/master/config', label: 'Configuração Global', icon: '⚙️' },
     ]
   }
 ];
