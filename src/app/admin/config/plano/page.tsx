@@ -91,8 +91,10 @@ export default function AgencyPlansPage() {
         body: JSON.stringify({ action: 'change_plan', plano_id: plano.id })
       });
       if (res.ok) {
-        toast.success(`Plano alterado para ${plano.nome}!`);
-        fetchBilling();
+        toast.success(`Plano alterado para ${plano.nome}! Atualizando permissões...`);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
     } catch {
       toast.error('Erro ao alterar plano');
@@ -102,7 +104,8 @@ export default function AgencyPlansPage() {
   const getIcon = (slug: string) => {
     if (slug.includes('enterprise')) return <IoDiamondOutline size={32} />;
     if (slug.includes('profissional')) return <IoRocketOutline size={32} />;
-    return <IoBriefcaseOutline size={32} />;
+    if (slug.includes('essencial')) return <IoBriefcaseOutline size={32} />;
+    return <IoInformationCircleOutline size={32} />;
   };
 
   return (
