@@ -78,7 +78,7 @@ export default function UsuariosPage() {
   }
 
   return (
-    <div className="animate-fade-in pb-20 space-y-10">
+    <div className="animate-fade-in pb-20 space-y-10 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Gestão de Usuários</h1>

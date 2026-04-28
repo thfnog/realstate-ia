@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { IoLogoWhatsapp } from 'react-icons/io5';
+import WhatsAppConnector from '@/components/corretores/WhatsAppConnector';
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
@@ -120,6 +122,32 @@ export default function PerfilPage() {
           </div>
         </form>
       </div>
+
+      {user?.corretores?.id && (
+        <div className="mt-8 bg-white rounded-3xl border border-border-light shadow-sm p-8 space-y-8 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <IoLogoWhatsapp className="text-emerald-500 text-3xl" />
+            <div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Integração WhatsApp Bot</h3>
+              <p className="text-slate-500 text-xs font-medium">Conecte seu WhatsApp para que o Motor de IA possa responder leads em seu nome.</p>
+            </div>
+          </div>
+          
+          <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+            <WhatsAppConnector 
+              instanceName={`realstate-iabroker-${user.corretores.id}`} 
+              brokerId={user.corretores.id}
+            />
+          </div>
+          
+          <div className="flex items-start gap-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+            <span className="text-xl">🔒</span>
+            <p className="text-[10px] text-emerald-800 font-medium leading-relaxed">
+              <strong>Segurança Garantida:</strong> Por questões de privacidade, a conexão do bot deve ser feita exclusivamente pelo proprietário do número. Nenhum administrador tem acesso às suas conversas privadas.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 p-6 bg-amber-50 rounded-2xl border border-amber-100">
         <div className="flex gap-4">

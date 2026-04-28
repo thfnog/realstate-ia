@@ -150,7 +150,7 @@ export default function CorretoresPage() {
   }
 
   return (
-    <div className="animate-fade-in pb-20 space-y-10">
+    <div className="animate-fade-in pb-20 space-y-10 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Consultores</h1>
@@ -319,18 +319,7 @@ export default function CorretoresPage() {
                 )}
               </div>
 
-              {editingId && (
-                <div className="pt-8 border-t border-slate-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <IoLogoWhatsapp className="text-emerald-500 text-2xl" />
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Integração WhatsApp Profissional</h3>
-                  </div>
-                  <WhatsAppConnector 
-                    instanceName={`realstate-iabroker-${editingId}`} 
-                    brokerId={editingId}
-                  />
-                </div>
-              )}
+              {/* WhatsApp Connector Removed - Moved to Personal Profile for security */}
 
               <div className="flex justify-end gap-4 pt-4">
                 <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
