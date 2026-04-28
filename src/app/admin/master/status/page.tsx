@@ -12,25 +12,33 @@ interface HealthStatus {
 
 export default function MasterStatusPage() {
   const [health, setHealth] = useState<Record<string, HealthStatus> | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
 
-  const fetchHealth = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/master/health');
-      const data = await res.json();
-      setHealth(data);
+      const [hRes, sRes] = await Promise.all([
+        fetch('/api/master/health'),
+        fetch('/api/master/stats')
+      ]);
+      
+      const hData = await hRes.json();
+      const sData = await sRes.json();
+      
+      setHealth(hData);
+      setStats(sData);
       setLastCheck(new Date());
     } catch (err) {
-      console.error('Erro ao buscar saúde do sistema:', err);
+      console.error('Erro ao buscar dados:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHealth();
+    fetchData();
   }, []);
 
   const getStatusColor = (status: string) => {
@@ -71,41 +79,93 @@ export default function MasterStatusPage() {
           <p className="text-slate-500 font-medium">Monitoramento em tempo real da infraestrutura e integrações externas.</p>
         </div>
         <button 
-          onClick={fetchHealth}
+          onClick={fetchData}
           disabled={loading}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200/50 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
         >
-          {loading ? '⏳' : '🔄'} Recarregar Status
+          {loading ? '⏳' : '🔄'} Recarregar Painel
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {loading && !health ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-48 bg-white rounded-[2rem] border border-slate-100 animate-pulse" />
-          ))
-        ) : health && Object.entries(health).map(([key, item]) => (
-          <div key={key} className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 space-y-6 relative overflow-hidden group">
-            <div className="flex justify-between items-start">
-              <div className="p-3 bg-slate-50 rounded-2xl text-slate-400 group-hover:text-primary transition-colors">
-                <ServiceIcon name={item.name} />
+      <div className="space-y-6">
+        <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Monitoramento de Infraestrutura</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {loading && !health ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-48 bg-white rounded-[2rem] border border-slate-100 animate-pulse" />
+            ))
+          ) : health && Object.entries(health).map(([key, item]) => (
+            <div key={key} className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 space-y-6 relative overflow-hidden group">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-slate-50 rounded-2xl text-slate-400 group-hover:text-primary transition-colors">
+                  <ServiceIcon name={item.name} />
+                </div>
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(item.status)}`}>
+                  {item.status === 'operational' ? '✅' : '⚠️'}
+                  {item.status === 'not_configured' ? 'Não Conf.' : item.status}
+                </div>
               </div>
-              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(item.status)}`}>
-                {item.status === 'operational' ? '✅' : '⚠️'}
-                {item.status === 'not_configured' ? 'Não Conf.' : item.status}
+              
+              <div>
+                <h3 className="font-black text-slate-900 text-lg tracking-tight mb-1">{item.name}</h3>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">{item.message}</p>
               </div>
-            </div>
-            
-            <div>
-              <h3 className="font-black text-slate-900 text-lg tracking-tight mb-1">{item.name}</h3>
-              <p className="text-xs text-slate-400 font-medium leading-relaxed">{item.message}</p>
-            </div>
 
-            <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
-               <div className={`h-full transition-all duration-1000 ${item.status === 'operational' ? 'bg-emerald-500 w-full' : item.status === 'degraded' ? 'bg-amber-500 w-2/3' : 'bg-rose-500 w-1/4'}`} />
+              <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                <div className={`h-full transition-all duration-1000 ${item.status === 'operational' ? 'bg-emerald-500 w-full' : item.status === 'degraded' ? 'bg-amber-500 w-2/3' : 'bg-rose-500 w-1/4'}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Métricas de Uso e Volume</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+            <div className="flex items-center gap-3 text-emerald-600">
+               <span className="text-2xl">📱</span>
+               <p className="text-[10px] font-black uppercase tracking-widest">Evolution API</p>
+            </div>
+            <div>
+               <p className="text-3xl font-black text-slate-900 tracking-tighter">{(stats?.technicalStats?.totalMessages || 0).toLocaleString()}</p>
+               <p className="text-xs text-slate-400 font-medium">Mensagens processadas</p>
             </div>
           </div>
-        ))}
+
+          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+            <div className="flex items-center gap-3 text-indigo-600">
+               <span className="text-2xl">🤖</span>
+               <p className="text-[10px] font-black uppercase tracking-widest">Groq / OpenAI</p>
+            </div>
+            <div>
+               <p className="text-3xl font-black text-slate-900 tracking-tighter">{(stats?.technicalStats?.botMessages || 0).toLocaleString()}</p>
+               <p className="text-xs text-slate-400 font-medium">Respostas por IA</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+               <span className="text-2xl">📧</span>
+               <p className="text-[10px] font-black uppercase tracking-widest">Resend</p>
+            </div>
+            <div>
+               <p className="text-3xl font-black text-slate-900 tracking-tighter">{(stats?.technicalStats?.totalUsers || 0).toLocaleString()}</p>
+               <p className="text-xs text-slate-400 font-medium">Convites / Ativações</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+            <div className="flex items-center gap-3 text-slate-600">
+               <span className="text-2xl">⚡</span>
+               <p className="text-[10px] font-black uppercase tracking-widest">Supabase</p>
+            </div>
+            <div>
+               <p className="text-3xl font-black text-slate-900 tracking-tighter">{(stats?.agenciesCount || 0).toLocaleString()}</p>
+               <p className="text-xs text-slate-400 font-medium">Instâncias / Imobiliárias</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-slate-900/30">

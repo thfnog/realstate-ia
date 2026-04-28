@@ -132,7 +132,13 @@ export async function GET() {
           date: new Date(p.created_at).toLocaleString('pt-BR'),
           status: p.status
         };
-      })
+      }),
+      technicalStats: {
+        totalMessages: (await supabaseAdmin.from('mensagens_historico').select('*', { count: 'exact', head: true })).count || 0,
+        botMessages: (await supabaseAdmin.from('mensagens_historico').select('*', { count: 'exact', head: true }).eq('is_bot', true)).count || 0,
+        totalUsers: (await supabaseAdmin.from('usuarios').select('*', { count: 'exact', head: true })).count || 0,
+        databaseSize: 'N/A', // PG specific query needed for real size
+      }
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
