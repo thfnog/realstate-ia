@@ -181,9 +181,11 @@ export default function AdminDashboard() {
            <Link href="/admin/leads" className="px-6 py-3 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200/50 border border-slate-100 hover:bg-slate-50 transition-all active:scale-95">
              Ver Leads
            </Link>
-           <Link href="/admin/imoveis/novo" className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:bg-primary transition-all active:scale-95">
-             Captar Imóvel
-           </Link>
+            {activeModules.includes('inventario') && (
+             <Link href="/admin/imoveis/novo" className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:bg-primary transition-all active:scale-95">
+               Captar Imóvel
+             </Link>
+            )}
         </div>
       </div>
 
