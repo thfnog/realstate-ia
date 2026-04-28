@@ -91,6 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ email: string; app_role: string } | null>(null);
   const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'sistema']);
+  const [activePlan, setActivePlan] = useState<string>('Essencial');
   const [imobiliariaName, setImobiliariaName] = useState<string>('ImobIA');
 
   const isMasterPath = pathname.startsWith('/admin/master');
@@ -101,6 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then(data => {
         if (data && data.config_pais) setCountryMode(data.config_pais);
         if (data.active_modules) setActivePlanModules(data.active_modules);
+        if (data.active_plan) setActivePlan(data.active_plan);
         if (data.nome_fantasia) setImobiliariaName(data.nome_fantasia);
       })
       .catch(() => {});
@@ -126,6 +128,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return {
       ...group,
       items: group.items.filter(item => {
+        if (item.href === '/admin/equipe' && activePlan.toLowerCase() === 'essencial') return false;
+        
         if (user?.app_role === 'admin' || user?.app_role === 'master') return true;
         const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
         return !restricted.includes(item.href);
