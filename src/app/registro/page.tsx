@@ -28,8 +28,8 @@ export default function RegistroPage() {
       .then(data => {
         if (Array.isArray(data)) {
           setPlanos(data);
-          const trial = data.find(p => p.slug === 'trial');
-          if (trial) setSelectedPlanId(trial.id);
+          const freePlan = data.find(p => p.slug === 'essencial');
+          if (freePlan) setSelectedPlanId(freePlan.id);
         }
       });
   }, []);
@@ -230,7 +230,7 @@ export default function RegistroPage() {
                         </div>
                       )}
                       <div className="flex items-center gap-4 mb-2">
-                        <span className="text-2xl">{plano.slug === 'trial' ? '🌱' : plano.slug === 'essencial' ? '💼' : plano.slug === 'profissional' ? '🚀' : '💎'}</span>
+                        <span className="text-2xl">{plano.preco_mensal === 0 ? '🌱' : plano.slug === 'profissional' ? '🚀' : '💎'}</span>
                         <div>
                           <h3 className="font-black text-slate-900 uppercase tracking-tight">{plano.nome}</h3>
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{plano.limite_usuarios} {plano.limite_usuarios === 1 ? 'Usuário' : 'Usuários'}</p>
@@ -288,7 +288,7 @@ export default function RegistroPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    {planos.find(p => p.id === selectedPlanId)?.slug !== 'trial' ? (
+                    {(planos.find(p => p.id === selectedPlanId)?.preco_mensal || 0) > 0 ? (
                       <div className="p-6 rounded-[2rem] bg-slate-900 text-white relative overflow-hidden group border border-white/10">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150" />
                         <div className="relative z-10 space-y-4">
