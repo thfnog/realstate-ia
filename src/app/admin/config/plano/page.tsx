@@ -17,11 +17,11 @@ interface Plano {
 }
 
 interface BillingInfo {
-  imobiliaria: {
+  imobiliaria?: {
     cartao_final: string;
     cartao_bandeira: string;
     nome: string;
-  };
+  } | null;
   assinatura: {
     id: string;
     plano_id: string;
@@ -231,11 +231,11 @@ export default function AgencyPlansPage() {
                   onClick={() => setShowCardModal(true)}
                   className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
                 >
-                  {billing?.imobiliaria.cartao_final ? 'Trocar Cartão' : 'Adicionar Cartão'}
+                  {billing?.imobiliaria?.cartao_final ? 'Trocar Cartão' : 'Adicionar Cartão'}
                 </button>
               </div>
 
-              {billing?.imobiliaria.cartao_final ? (
+              {billing?.imobiliaria?.cartao_final ? (
                 <div className="bg-slate-900 p-8 rounded-[2rem] text-white flex items-center justify-between relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150" />
                   <div className="relative z-10">
