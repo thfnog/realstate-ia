@@ -181,6 +181,10 @@ export default function AgencyPlansPage() {
 
                   <div className="flex-1 space-y-4 mb-10">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">O que está incluído:</p>
+                    <div className="flex items-center gap-3">
+                      <IoCheckmarkCircle className="text-emerald-500 shrink-0" size={18} />
+                      <span className="text-sm font-bold text-slate-700">Bot de Atendimento IA</span>
+                    </div>
                     {plano.modulos.map((m) => (
                       <div key={m} className="flex items-center gap-3">
                         <IoCheckmarkCircle className="text-emerald-500 shrink-0" size={18} />
