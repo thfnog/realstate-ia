@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const end_date = searchParams.get('end_date') || undefined;
 
     // Fetch data for stats
-    const [leadsData, imoveisData, corretores, vendas] = await Promise.all([
+    const [leadsData, imoveisData, corretores, vendas, botMessagesCount] = await Promise.all([
       leadRepo.findAll({ imobiliaria_id: session.imobiliaria_id, limit: 2000 }),
       imovelRepo.findAll({ imobiliaria_id: session.imobiliaria_id, limit: 2000 }),
       corretorRepo.findAll(session.imobiliaria_id),
@@ -32,7 +32,13 @@ export async function GET(request: Request) {
         corretor_id: session.app_role === 'corretor' ? session.corretor_id! : undefined,
         start_date,
         end_date
-      })
+      }),
+      client
+        .from('mensagens_historico')
+        .select('*', { count: 'exact', head: true })
+        .eq('imobiliaria_id', session.imobiliaria_id)
+        .eq('is_bot', true)
+        .then(res => res.count || 0)
     ]);
 
     let leads = leadsData.data;
@@ -59,7 +65,8 @@ export async function GET(request: Request) {
       taxaConversao: leads.length > 0 ? (leads.filter(l => l.status === 'fechado').length / leads.length) * 100 : 0,
       totalComissao: vendas.reduce((acc, v) => acc + (v.valor_comissao || 0), 0),
       totalVendasValor: vendas.reduce((acc, v) => acc + (v.valor_venda || 0), 0),
-      vendasCount: vendas.length
+      vendasCount: vendas.length,
+      botMessagesCount
     };
 
     // Temporal Data (Last 7 days)

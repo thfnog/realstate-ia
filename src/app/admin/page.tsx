@@ -161,6 +161,13 @@ export default function AdminDashboard() {
       color: 'text-slate-600',
       bg: 'bg-slate-50/50',
     },
+    ...(activeModules.includes('bot') ? [{
+      label: 'Conversas por Bot',
+      value: (stats as any).botMessagesCount?.toString() || '0',
+      icon: '🤖',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50/50',
+    }] : []),
   ];
 
   return (

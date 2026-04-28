@@ -64,7 +64,8 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
       direction: 'outbound',
       message_text: message,
       status: 'sent',
-      provider_id: result
+      provider_id: result,
+      is_bot: true
     });
 
     return result;

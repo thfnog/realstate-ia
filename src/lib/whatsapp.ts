@@ -210,7 +210,8 @@ export async function saveMessageToHistory({
   direction,
   message_text,
   status = 'sent',
-  provider_id
+  provider_id,
+  is_bot = false
 }: {
   imobiliaria_id: string;
   lead_id: string;
@@ -219,6 +220,7 @@ export async function saveMessageToHistory({
   message_text: string;
   status?: 'sent' | 'delivered' | 'read' | 'error';
   provider_id?: string | null;
+  is_bot?: boolean;
 }) {
   if (mock.isMockMode()) return;
 
@@ -230,7 +232,8 @@ export async function saveMessageToHistory({
       direction,
       message_text,
       status,
-      provider_id: provider_id || null
+      provider_id: provider_id || null,
+      is_bot
     }]);
 
     if (error) {
