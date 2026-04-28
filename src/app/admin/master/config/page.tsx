@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { IoSettingsOutline, IoMailOutline, IoLogoSlack, IoSaveOutline, IoShieldCheckmarkOutline, IoArrowBackOutline } from 'react-icons/io5';
+import { IoSettingsOutline, IoMailOutline, IoLogoSlack, IoSaveOutline, IoShieldCheckmarkOutline, IoArrowBackOutline, IoFlaskOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
@@ -16,6 +16,7 @@ export default function MasterConfigPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchConfig() {
@@ -33,6 +34,27 @@ export default function MasterConfigPage() {
     }
     fetchConfig();
   }, []);
+
+  const handleTest = async (type: 'resend' | 'slack') => {
+    setTesting(type);
+    try {
+      const res = await fetch('/api/master/config/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Teste de ${type === 'resend' ? 'E-mail' : 'Slack'} enviado com sucesso!`);
+      } else {
+        toast.error(`Falha no teste: ${data.error}`);
+      }
+    } catch (err) {
+      toast.error('Erro ao processar teste');
+    } finally {
+      setTesting(null);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,18 +115,28 @@ export default function MasterConfigPage() {
       <form onSubmit={handleSave} className="space-y-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* RESEND CONFIG */}
-          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-lg shadow-rose-100">
-                <IoMailOutline size={24} />
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8 flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-lg shadow-rose-100">
+                  <IoMailOutline size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">E-mail (Resend)</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Fallback para Auth & Notificações</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">E-mail (Resend)</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Fallback para Auth & Notificações</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleTest('resend')}
+                disabled={testing === 'resend'}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-100 transition-all disabled:opacity-50"
+              >
+                {testing === 'resend' ? 'Enviando...' : <><IoFlaskOutline size={14} /> Testar</>}
+              </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 flex-1">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">API Key</label>
                 <input 
@@ -129,18 +161,28 @@ export default function MasterConfigPage() {
           </div>
 
           {/* SLACK CONFIG */}
-          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-100">
-                <IoLogoSlack size={24} />
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8 flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-100">
+                  <IoLogoSlack size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Notificações Slack</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Webhooks para Monitoramento</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">Notificações Slack</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Webhooks para Monitoramento</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleTest('slack')}
+                disabled={testing === 'slack'}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-100 transition-all disabled:opacity-50"
+              >
+                {testing === 'slack' ? 'Testando...' : <><IoFlaskOutline size={14} /> Testar</>}
+              </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 flex-1">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Webhook URL</label>
                 <input 
