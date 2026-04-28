@@ -45,7 +45,10 @@ export default function MasterConfigPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success(`Teste de ${type === 'resend' ? 'E-mail' : 'Slack'} enviado com sucesso!`);
+        const msg = type === 'resend' 
+          ? `Teste de E-mail enviado p/ seu e-mail!` 
+          : `Teste de Slack enviado p/ canal de sistema!`;
+        toast.success(msg);
       } else {
         toast.error(`Falha no teste: ${data.error}`);
       }
@@ -126,14 +129,17 @@ export default function MasterConfigPage() {
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Fallback para Auth & Notificações</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => handleTest('resend')}
-                disabled={testing === 'resend'}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-100 transition-all disabled:opacity-50"
-              >
-                {testing === 'resend' ? 'Enviando...' : <><IoFlaskOutline size={14} /> Testar</>}
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleTest('resend')}
+                  disabled={testing === 'resend'}
+                  className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-100 transition-all disabled:opacity-50"
+                >
+                  {testing === 'resend' ? 'Enviando...' : <><IoFlaskOutline size={14} /> Testar</>}
+                </button>
+                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tighter italic">Envia p/ seu e-mail</p>
+              </div>
             </div>
 
             <div className="space-y-6 flex-1">

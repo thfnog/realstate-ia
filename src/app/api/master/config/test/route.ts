@@ -9,7 +9,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    const { type } = await request.json();
+    const { type, to: customTo } = await request.json();
     
     // Get current config
     const { data: config } = await supabaseAdmin
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       const resend = new Resend(config.resend_api_key);
       
       const from = config.resend_from_email || 'ImobIA <convite@imobia.com.br>';
-      const to = session.email;
+      const to = customTo || session.email;
 
       const { data, error } = await resend.emails.send({
         from,
