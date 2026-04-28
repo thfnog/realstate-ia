@@ -5,6 +5,7 @@ import { IoCashOutline, IoCalendarOutline, IoRocketOutline, IoCheckmarkCircleOut
 import { toast } from 'sonner';
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
 import { formatCurrency, getConfig } from '@/lib/countryConfig';
+import { PlanGuard } from '@/components/PlanGuard';
 
 export default function MonthlyFinancialPage() {
   const [cobrancas, setCobrancas] = useState<any[]>([]);
@@ -62,7 +63,8 @@ export default function MonthlyFinancialPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in pb-20">
+    <PlanGuard requiredModule="locacao">
+      <div className="space-y-8 animate-fade-in pb-20">
       
       {/* Header & Filtros */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
@@ -181,7 +183,8 @@ export default function MonthlyFinancialPage() {
         </div>
       </div>
     </div>
-  );
+  </PlanGuard>
+);
 }
 
 function SummaryCard({ title, value, icon, color, config, loading }: any) {

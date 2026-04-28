@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { LeadComCorretor } from '@/lib/database.types';
+import { PlanGuard } from '@/components/PlanGuard';
 
 export default function CarteiraPage() {
   const [leads, setLeads] = useState<LeadComCorretor[]>([]);
@@ -45,7 +46,8 @@ export default function CarteiraPage() {
   }
 
   return (
-    <div className="animate-fade-in">
+    <PlanGuard requiredModule="operacao">
+      <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Carteira de Clientes</h1>
@@ -131,6 +133,7 @@ export default function CarteiraPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PlanGuard>
   );
 }

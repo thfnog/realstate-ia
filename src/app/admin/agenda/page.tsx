@@ -14,6 +14,8 @@ const eventConfig: Record<string, { label: string, color: string, bg: string, ic
   outro: { label: 'Outro', color: 'text-slate-600', bg: 'bg-slate-50 border-slate-100', icon: '📅' },
 };
 
+import { PlanGuard } from '@/components/PlanGuard';
+
 export default function AgendaPage() {
   const config = getConfig();
   const [eventos, setEventos] = useState<any[]>([]);
@@ -190,13 +192,14 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="animate-fade-in flex flex-col h-[calc(100vh-2rem)] space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Agenda Operacional</h1>
-          <p className="text-slate-500 font-medium mt-1">Acompanhamento centralizado de visitas, vistorias e contratos.</p>
-        </div>
-        <div className="flex items-center gap-3">
+    <PlanGuard requiredModule="operacao">
+      <div className="animate-fade-in flex flex-col h-[calc(100vh-2rem)] space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Agenda Operacional</h1>
+            <p className="text-slate-500 font-medium mt-1">Acompanhamento centralizado de visitas, vistorias e contratos.</p>
+          </div>
+          <div className="flex items-center gap-3">
           <button 
             onClick={fetchData}
             className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-primary hover:shadow-lg transition-all"
@@ -550,6 +553,7 @@ export default function AgendaPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PlanGuard>
   );
 }

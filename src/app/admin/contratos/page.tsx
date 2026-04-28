@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { IoAddOutline, IoDocumentTextOutline, IoDownloadOutline, IoPersonOutline, IoKeyOutline, IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
 import { getConfig, formatCurrency } from '@/lib/countryConfig';
+import { PlanGuard } from '@/components/PlanGuard';
 
 export default function ContratosPage() {
   const [contratos, setContratos] = useState<any[]>([]);
@@ -42,25 +43,26 @@ export default function ContratosPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-10 opacity-[0.03] rotate-12">
-          <IoDocumentTextOutline size={200} />
-        </div>
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full mb-4">
-            <IoDocumentTextOutline /> Jurídico & Locação
+    <PlanGuard requiredModule="locacao">
+      <div className="space-y-8 animate-fade-in pb-20">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-10 opacity-[0.03] rotate-12">
+            <IoDocumentTextOutline size={200} />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">Contratos Ativos</h1>
-          <p className="text-slate-500 font-medium max-w-md">Gestão de minutas, assinaturas digitais e acompanhamento de vigência.</p>
-        </div>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full mb-4">
+              <IoDocumentTextOutline /> Jurídico & Locação
+            </div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">Contratos Ativos</h1>
+            <p className="text-slate-500 font-medium max-w-md">Gestão de minutas, assinaturas digitais e acompanhamento de vigência.</p>
+          </div>
 
-        <div className="flex items-center gap-4 relative z-10">
-           <button className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95">
+          <div className="flex items-center gap-4 relative z-10">
+            <button className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95">
               <IoAddOutline size={18} /> Novo Contrato
-           </button>
+            </button>
+          </div>
         </div>
-      </div>
 
       <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
@@ -136,5 +138,6 @@ export default function ContratosPage() {
         </div>
       </div>
     </div>
-  );
+  </PlanGuard>
+);
 }

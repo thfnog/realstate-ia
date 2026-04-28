@@ -17,6 +17,7 @@ interface Plano {
 
 const AVAILABLE_MODULES = [
   { id: 'crm', label: 'CRM & Leads' },
+  { id: 'bot', label: 'Bot IA & WhatsApp' },
   { id: 'dashboard', label: 'Dashboard Analítico' },
   { id: 'inventario', label: 'Gestão de Imóveis' },
   { id: 'operacao', label: 'Agenda & Escala' },

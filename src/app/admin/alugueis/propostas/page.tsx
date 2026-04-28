@@ -6,6 +6,7 @@ import { formatCurrency, getConfig } from '@/lib/countryConfig';
 import { toast } from 'sonner';
 import { IoCheckmarkCircleOutline, IoCloseCircleOutline, IoDocumentTextOutline, IoTimeOutline, IoCheckmarkDoneOutline, IoEyeOutline } from 'react-icons/io5';
 import PropostaDetalhesModal from '@/components/admin/alugueis/PropostaDetalhesModal';
+import { PlanGuard } from '@/components/PlanGuard';
 
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
 
@@ -59,7 +60,8 @@ export default function AdminPropostasPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in pb-20">
+    <PlanGuard requiredModule="locacao">
+      <div className="space-y-8 animate-fade-in pb-20">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Propostas de Aluguel</h1>
@@ -194,7 +196,8 @@ export default function AdminPropostasPage() {
           }}
         />
       )}
-    </div>
+      </div>
+    </PlanGuard>
   );
 }
 

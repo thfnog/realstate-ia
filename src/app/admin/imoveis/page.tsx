@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { IoAddOutline, IoSearchOutline, IoTrashOutline, IoExpandOutline, IoBedOutline, IoFilterOutline, IoChevronBackOutline, IoChevronForwardOutline, IoPricetagOutline } from 'react-icons/io5';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { PlanGuard } from '@/components/PlanGuard';
 import { getConfigByCode, formatCurrency, CountryConfig } from '@/lib/countryConfig';
 
 interface Imovel {
@@ -126,7 +127,8 @@ export default function ImoveisPage() {
   };
 
   return (
-    <div className="space-y-10 animate-fade-in pb-20">
+    <PlanGuard requiredModule="inventario">
+      <div className="space-y-10 animate-fade-in pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Gestão de Imóveis</h1>
@@ -391,7 +393,8 @@ export default function ImoveisPage() {
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </PlanGuard>
   );
 }
 
