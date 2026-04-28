@@ -1,114 +1,118 @@
 import { NextResponse } from 'next/server';
-import { createImobiliaria, createUsuario, createLead, createImovel, createEvento, isMockMode } from '@/lib/mockDb';
+import { supabaseAdmin } from '@/lib/supabase';
 import type { Moeda } from '@/lib/database.types';
 
 export async function POST(request: Request) {
   try {
-    const { nomeFantasia, identificadorFiscal, numeroRegistro, email, pswd, configPais } = await request.json();
+    const { 
+      nomeFantasia, 
+      identificadorFiscal, 
+      numeroRegistro, 
+      email, 
+      pswd, 
+      configPais,
+      planoId,
+      cartao_final,
+      cartao_bandeira
+    } = await request.json();
 
-    if (!nomeFantasia || !identificadorFiscal || !numeroRegistro || !email || !pswd) {
+    if (!nomeFantasia || !identificadorFiscal || !numeroRegistro || !email || !pswd || !planoId) {
       return NextResponse.json({ error: 'Preencha todos os campos obrigatórios' }, { status: 400 });
     }
 
-    // In a real generic app, we check if email is unique globally.
-    // For MVP using mock, we will proceed.
-    if (isMockMode()) {
-      try {
-        // 1. Create Imobiliaria
-        const novaImob = createImobiliaria({
-          nome_fantasia: nomeFantasia,
-          identificador_fiscal: identificadorFiscal,
-          numero_registro: numeroRegistro,
-          plano: 'free',
-          config_pais: configPais === 'PT' ? 'PT' : 'BR',
-          delay_auto_reply_sec: 20,
-          config_lembrete_1_horas: 24,
-          config_lembrete_2_horas: 48,
-        });
+    // 1. Create Imobiliaria
+    const { data: imob, error: imobError } = await supabaseAdmin
+      .from('imobiliarias')
+      .insert({
+        nome_fantasia: nomeFantasia,
+        identificador_fiscal: identificadorFiscal,
+        numero_registro: numeroRegistro,
+        config_pais: configPais === 'PT' ? 'PT' : 'BR',
+        cartao_final,
+        cartao_bandeira,
+        delay_auto_reply_sec: 20,
+        config_lembrete_1_horas: 24,
+        config_lembrete_2_horas: 48,
+      })
+      .select()
+      .single();
 
-        // 2. Create Usuario
-        const user = createUsuario({
-          imobiliaria_id: novaImob.id,
-          email: email,
-          hash_senha: pswd, // Note: Always hash in production
-          role: 'admin',
-          corretor_id: null,
-          auth_id: null,
-        });
-
-        // ... (demo data injection follows)
-        const moeda: Moeda = configPais === 'PT' ? 'EUR' : 'BRL';
-        const demoNames = ['João Silva (Demo)', 'Maria Fernandes (Demo)', 'Ricardo Costa (Demo)'];
-        const demoLeads = demoNames.map((n) => {
-          return createLead({
-            imobiliaria_id: novaImob.id,
-            nome: n,
-            telefone: configPais === 'PT' ? '+351910000000' : '+5511990000000',
-            origem: 'manual',
-            portal_origem: 'Demonstração',
-            moeda,
-            finalidade: 'comprar',
-            prazo: 'Imediato',
-            pagamento: null,
-            descricao_interesse: 'Lead injetado de forma automática para efeitos de demonstração.',
-            tipo_interesse: 'apartamento',
-            orcamento: configPais === 'PT' ? 250000 : 500000,
-            area_interesse: null,
-            quartos_interesse: 2,
-            vagas_interesse: null,
-            bairros_interesse: [],
-            corretor_id: null,
-            status: 'novo',
-          });
-        });
-
-        const imovel = createImovel({
-          imobiliaria_id: novaImob.id,
-          tipo: 'apartamento',
-          freguesia: configPais === 'PT' ? 'Chiado (Demonstração)' : 'Pinheiros (Demonstração)',
-          valor: configPais === 'PT' ? 450000 : 850000,
-          area_util: 85,
-          quartos: 2,
-          vagas_garagem: 1,
-          status: 'disponivel',
-          moeda,
-        } as any);
-
-        const dt = new Date();
-        dt.setDate(dt.getDate() + 2);
-        dt.setHours(14, 30, 0, 0);
-        const leadDemoId = demoLeads[0]?.id || novaImob.id.slice(0, 8);
-        createEvento({
-          imobiliaria_id: novaImob.id,
-          lead_id: leadDemoId,
-          corretor_id: null,
-          tipo: 'reuniao',
-          titulo: 'Reunião de Alinhamento (Demo)',
-          descricao: 'Evento inserido automaticamente para demonstração da agenda.',
-          data_hora: dt.toISOString(),
-          local: 'Escritório',
-          status: 'agendado',
-        });
-
-        return NextResponse.json({
-          success: true,
-          message: 'Conta criada com sucesso',
-          user_id: user.id,
-          imobiliaria_id: novaImob.id
-        });
-      } catch (err: any) {
-        if (err.message === 'DUPLICATE_IDENTIFIER') {
-          return NextResponse.json({ error: 'Esta imobiliária (CNPJ/NIF) já está cadastrada no ImobIA.' }, { status: 409 });
-        }
-        if (err.message === 'DUPLICATE_REGISTRATION') {
-          return NextResponse.json({ error: 'Este número de registro (CRECI/AMI) já está cadastrado.' }, { status: 409 });
-        }
-        throw err;
+    if (imobError) {
+      if (imobError.code === '23505') {
+        return NextResponse.json({ error: 'Esta imobiliária ou número de registro já está cadastrado.' }, { status: 409 });
       }
-    } else {
-      // Future Supabase logic
-      return NextResponse.json({ error: 'Registro Cloud não configurado na V1.' }, { status: 501 });
+      return NextResponse.json({ error: imobError.message }, { status: 500 });
     }
+
+    // 2. Create Subscription
+    const { error: subError } = await supabaseAdmin
+      .from('assinaturas')
+      .insert({
+        imobiliaria_id: imob.id,
+        plano_id: planoId,
+        status: 'ativo',
+        periodo_inicio: new Date().toISOString(),
+      });
+
+    if (subError) return NextResponse.json({ error: 'Erro ao vincular plano.' }, { status: 500 });
+
+    // 3. Create Auth User
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: pswd,
+      email_confirm: true,
+      user_metadata: { imobiliaria_id: imob.id, role: 'admin' }
+    });
+
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 });
+
+    // 4. Create Public User Record
+    const { error: userError } = await supabaseAdmin
+      .from('usuarios')
+      .insert({
+        id: authData.user.id,
+        imobiliaria_id: imob.id,
+        email: email,
+        app_role: 'admin',
+        status: 'ativo'
+      });
+
+    if (userError) return NextResponse.json({ error: userError.message }, { status: 500 });
+
+    // 5. Inject Demo Data (Optional but recommended for onboarding)
+    const moeda: Moeda = configPais === 'PT' ? 'EUR' : 'BRL';
+    
+    // Create a demo Lead
+    await supabaseAdmin.from('leads').insert({
+      imobiliaria_id: imob.id,
+      nome: 'João Silva (Demo)',
+      telefone: configPais === 'PT' ? '+351910000000' : '+5511990000000',
+      origem: 'manual',
+      portal_origem: 'Demonstração',
+      moeda,
+      finalidade: 'comprar',
+      descricao_interesse: 'Lead injetado automaticamente para efeitos de demonstração.',
+      status: 'novo'
+    });
+
+    // Create a demo Property
+    await supabaseAdmin.from('imoveis').insert({
+      imobiliaria_id: imob.id,
+      tipo: 'apartamento',
+      freguesia: configPais === 'PT' ? 'Chiado (Demo)' : 'Pinheiros (Demo)',
+      valor: configPais === 'PT' ? 450000 : 850000,
+      quartos: 2,
+      status: 'disponivel',
+      moeda
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Conta criada com sucesso',
+      user_id: authData.user.id,
+      imobiliaria_id: imob.id
+    });
+
   } catch (err) {
     console.error('Erro ao registrar:', err);
     return NextResponse.json({ error: 'Erro interno ao criar conta' }, { status: 500 });
