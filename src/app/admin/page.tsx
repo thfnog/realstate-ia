@@ -52,6 +52,8 @@ export default function AdminDashboard() {
   const [config, setConfig] = useState<any>(getConfig());
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activePlan, setActivePlan] = useState<string>('Essencial');
+  const [activeModules, setActiveModules] = useState<string[]>([]);
   const [user, setUser] = useState<{ app_role: string; email: string; corretor_id: string | null } | null>(null);
 
   useEffect(() => {
@@ -70,9 +72,13 @@ export default function AdminDashboard() {
         setStats(statsData);
 
         const imobData = await imobRes.json();
-        if (imobData && imobData.config_pais) {
-          const { getConfigByCode } = require('@/lib/countryConfig');
-          setConfig(getConfigByCode(imobData.config_pais));
+        if (imobData) {
+          if (imobData.config_pais) {
+            const { getConfigByCode } = require('@/lib/countryConfig');
+            setConfig(getConfigByCode(imobData.config_pais));
+          }
+          setActivePlan(imobData.active_plan || 'Essencial');
+          setActiveModules(imobData.active_modules || []);
         }
       } catch (err) {
         console.error('Erro ao carregar dados do dashboard:', err);
@@ -320,11 +326,13 @@ export default function AdminDashboard() {
             <h2 className="text-3xl font-black mb-4 tracking-tighter">Escalabilidade & Performance 🚀</h2>
             <p className="text-slate-400 mb-10 max-w-md font-medium">Acelere sua imobiliária com inteligência artificial, automação de leads e gestão financeira integrada.</p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/admin/imoveis" className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-xl shadow-white/5 active:scale-95">
-                Novo Imóvel
-              </Link>
-              {user?.app_role === 'admin' && (
-                <Link href="/admin/corretores" className="px-8 py-3 bg-slate-800 text-white border border-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all active:scale-95">
+              {activeModules.includes('inventario') && (
+                <Link href="/admin/imoveis/novo" className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-xl shadow-white/5 active:scale-95">
+                  Novo Imóvel
+                </Link>
+              )}
+              {user?.app_role === 'admin' && activePlan.toLowerCase() !== 'essencial' && (
+                <Link href="/admin/equipe" className="px-8 py-3 bg-slate-800 text-white border border-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all active:scale-95">
                   Gerir Equipe
                 </Link>
               )}
@@ -334,29 +342,31 @@ export default function AdminDashboard() {
           <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px]" />
         </div>
 
-        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col justify-between">
-           <div>
-             <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">Saúde do Inventário</h3>
-             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carteira Ativa</span>
-                   <span className="font-black text-slate-900 text-lg">{stats.totalImoveis}</span>
-                </div>
-                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                   <div className="bg-emerald-500 h-full transition-all duration-1000" style={{width: `${(stats.imoveisDisponiveis / (stats.totalImoveis || 1)) * 100}%`}} />
-                </div>
-                <div className="flex items-center justify-between">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponibilidade</span>
-                   <span className="font-black text-emerald-600 text-lg">
-                    {((stats.imoveisDisponiveis / (stats.totalImoveis || 1)) * 100).toFixed(0)}%
-                   </span>
-                </div>
+        {activeModules.includes('inventario') && (
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col justify-between">
+             <div>
+               <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">Saúde do Inventário</h3>
+               <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carteira Ativa</span>
+                     <span className="font-black text-slate-900 text-lg">{stats.totalImoveis}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                     <div className="bg-emerald-500 h-full transition-all duration-1000" style={{width: `${(stats.imoveisDisponiveis / (stats.totalImoveis || 1)) * 100}%`}} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponibilidade</span>
+                     <span className="font-black text-emerald-600 text-lg">
+                      {((stats.imoveisDisponiveis / (stats.totalImoveis || 1)) * 100).toFixed(0)}%
+                     </span>
+                  </div>
+               </div>
              </div>
-           </div>
-           <Link href="/admin/agenda" className="mt-8 block text-center py-4 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 rounded-2xl hover:bg-primary hover:text-white transition-all">
-             Ver Escala de Plantão →
-           </Link>
-        </div>
+             <Link href="/admin/agenda" className="mt-8 block text-center py-4 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 rounded-2xl hover:bg-primary hover:text-white transition-all">
+               Ver Escala de Plantão →
+             </Link>
+          </div>
+        )}
       </div>
     </div>
   );
