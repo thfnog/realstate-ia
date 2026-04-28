@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       let text = payload.text;
       let name = payload.name;
       let instanceName = payload.instance;
+      let isGroup = false;
 
       const event = payload.event?.toLowerCase() || '';
       let remoteJid = payload.data?.key?.remoteJid || '';
@@ -102,12 +103,19 @@ export async function POST(request: Request) {
           return;
         }
 
-        if (remoteJid.includes('@g.us')) {
-          console.log(`🚫 Mensagem de grupo ignorada: ${remoteJid}`);
-          return;
+        isGroup = remoteJid.includes('@g.us');
+        const participantJid = key?.participant || '';
+        
+        if (isGroup) {
+          if (!participantJid) {
+            console.log(`🚫 Mensagem de grupo ignorada (sem participante identificado): ${remoteJid}`);
+            return;
+          }
+          sender = participantJid.split('@')[0] || '';
+          console.log(`👥 Mensagem de grupo detectada. Remetente: ${sender} (Grupo: ${remoteJid})`);
+        } else {
+          sender = remoteJid.split('@')[0] || '';
         }
-
-        sender = remoteJid.split('@')[0] || '';
         text = messageObj?.conversation || 
                messageObj?.extendedTextMessage?.text || 
                messageObj?.text ||
@@ -208,13 +216,17 @@ export async function POST(request: Request) {
            lead_id: lead.id,
            corretor_id: lead.corretor_id,
            direction: 'inbound',
-           message_text: text,
+           message_text: isGroup ? `[Grupo: ${remoteJid.split('@')[0]}] ${text}` : text,
            provider_id: payload.data?.key?.id
          });
 
          const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
          if (aiResponse) {
-            await processLead(lead, { forceAutoReply: true, customReply: aiResponse });
+             await processLead(lead, { 
+               forceAutoReply: !isGroup, 
+               customReply: isGroup ? undefined : aiResponse,
+               skipAutoReply: isGroup
+             });
          }
          return;
       }
@@ -248,7 +260,7 @@ export async function POST(request: Request) {
         corretor_id: fallback_corretor_id,
         status: 'novo' as const,
         origem: 'whatsapp' as const,
-        portal_origem: instanceName || 'WhatsApp Bot'
+        portal_origem: isGroup ? `Grupo WhatsApp (${remoteJid.split('@')[0]})` : (instanceName || 'WhatsApp Bot')
       };
 
       let newLead;
@@ -309,11 +321,11 @@ export async function POST(request: Request) {
         lead_id: newLead.id,
         corretor_id: newLead.corretor_id,
         direction: 'inbound',
-        message_text: text,
+        message_text: isGroup ? `[Grupo: ${remoteJid.split('@')[0]}] ${text}` : text,
         provider_id: payload.data?.key?.id
       });
 
-      await processLead(newLead, { skipAutoReply: extracted.is_lead !== true });
+      await processLead(newLead, { skipAutoReply: extracted.is_lead !== true || isGroup });
     })();
 
     // Non-blocking background task
