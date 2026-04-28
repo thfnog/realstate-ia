@@ -48,13 +48,16 @@ export async function POST(request: Request) {
     const { error: subError } = await supabaseAdmin
       .from('assinaturas')
       .insert({
-        imobiliaria_id: imob.id,
+        tenant_id: imob.id,
         plano_id: planoId,
         status: 'ativo',
         periodo_inicio: new Date().toISOString(),
       });
 
-    if (subError) return NextResponse.json({ error: 'Erro ao vincular plano.' }, { status: 500 });
+    if (subError) {
+      await supabaseAdmin.from('imobiliarias').delete().eq('id', imob.id);
+      return NextResponse.json({ error: 'Erro ao vincular plano.' }, { status: 500 });
+    }
 
     // 3. Create Auth User
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -64,7 +67,10 @@ export async function POST(request: Request) {
       user_metadata: { imobiliaria_id: imob.id, role: 'admin' }
     });
 
-    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 });
+    if (authError) {
+      await supabaseAdmin.from('imobiliarias').delete().eq('id', imob.id);
+      return NextResponse.json({ error: authError.message }, { status: 500 });
+    }
 
     // 4. Create Public User Record
     const { error: userError } = await supabaseAdmin
@@ -77,7 +83,11 @@ export async function POST(request: Request) {
         status: 'ativo'
       });
 
-    if (userError) return NextResponse.json({ error: userError.message }, { status: 500 });
+    if (userError) {
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      await supabaseAdmin.from('imobiliarias').delete().eq('id', imob.id);
+      return NextResponse.json({ error: userError.message }, { status: 500 });
+    }
 
     // 5. Inject Demo Data (Optional but recommended for onboarding)
     const moeda: Moeda = configPais === 'PT' ? 'EUR' : 'BRL';
