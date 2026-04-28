@@ -167,7 +167,7 @@ export default function AgencyPlansPage() {
                   </div>
 
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{plano.nome}</h3>
-                  <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed h-12 overflow-hidden">{plano.descricao}</p>
+                  <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed h-20 overflow-hidden">{plano.descricao}</p>
 
                   <div className="mb-10">
                     <div className="flex items-baseline gap-1">

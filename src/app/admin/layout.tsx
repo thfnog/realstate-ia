@@ -20,6 +20,7 @@ const navGroups = [
     module: 'crm',
     items: [
       { href: '/admin/leads', label: 'Leads', icon: '👤' },
+      { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
       { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
     ]
   },
@@ -43,7 +44,6 @@ const navGroups = [
     label: 'Operação',
     module: 'operacao',
     items: [
-      { href: '/admin/corretores', label: 'Corretores', icon: '🤝' },
       { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
       { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
     ]
@@ -93,6 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ email: string; app_role: string } | null>(null);
   const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'sistema']);
+  const [imobiliariaName, setImobiliariaName] = useState<string>('ImobIA');
 
   const isMasterPath = pathname.startsWith('/admin/master');
 
@@ -102,6 +103,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then(data => {
         if (data && data.config_pais) setCountryMode(data.config_pais);
         if (data.active_modules) setActivePlanModules(data.active_modules);
+        if (data.nome_fantasia) setImobiliariaName(data.nome_fantasia);
       })
       .catch(() => {});
 
@@ -197,25 +199,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         ))}
       </nav>
 
-      {/* User Info & Logout */}
-      <div className="px-3 py-6 border-t border-white/5 space-y-4 bg-sidebar-bg/50 backdrop-blur-md">
-        {user && (
-          <div className="px-4 py-2.5 bg-white/5 rounded-xl border border-white/5">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Usuário</p>
-            <p className="text-sm text-slate-300 truncate font-medium">{user.email}</p>
-          </div>
-        )}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-all duration-300 border border-transparent hover:border-rose-500/20"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">🚪</span>
-            Sair da Conta
-          </div>
-          <span className="text-[10px] opacity-40 italic">v2.0</span>
-        </button>
-      </div>
+      {/* User Info Removed from Sidebar - Moved to Header */}
     </>
   );
 
@@ -264,8 +248,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </svg>
             </button>
             <div className="hidden sm:block">
-               <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">ImobIA</h2>
-               <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] mt-1">Real Estate Management</p>
+               <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest leading-none">{imobiliariaName}</h2>
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Painel Administrativo</p>
             </div>
           </div>
 
@@ -274,14 +258,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             
             <div className="w-px h-6 bg-slate-100 mx-1 hidden sm:block" />
             
-            <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-2xl border border-slate-100 bg-slate-50/50">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary">
-                {user?.email?.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-900 leading-none truncate max-w-[100px]">{user?.email?.split('@')[0]}</span>
+            <div className="flex items-center gap-4 px-3 py-1.5 rounded-2xl border border-slate-100 bg-white shadow-sm">
+              <div className="hidden md:flex flex-col text-right">
+                <span className="text-[10px] font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.email}</span>
                 <span className="text-[8px] font-black text-primary uppercase tracking-widest mt-0.5">{user?.app_role}</span>
               </div>
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary">
+                {user?.email?.charAt(0).toUpperCase()}
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="ml-2 p-2 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all"
+                title="Sair da Conta"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
           </div>
         </header>
