@@ -24,6 +24,7 @@ export default function ConfigPage() {
   const [horarioInicio, setHorarioInicio] = useState('09:00');
   const [horarioFim, setHorarioFim] = useState('18:00');
   const [saving, setSaving] = useState(false);
+  const [activeModules, setActiveModules] = useState<string[]>([]);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -37,6 +38,7 @@ export default function ConfigPage() {
           setCountryMode(data.config_pais);
           setImobId(data.id);
           setNome(data.nome_fantasia);
+          setActiveModules(data.active_modules || []);
           // NEW READ ONLY FIELDS
           setFiscalId(data.identificador_fiscal || '-');
           setRegId(data.numero_registro || '-');
@@ -150,63 +152,65 @@ export default function ConfigPage() {
       </div>
 
       {/* 🤖 AI & SERVICE HOURS CONFIG */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <div className="flex items-center justify-between mb-6">
-           <div>
-              <h2 className="text-lg font-semibold text-text-primary">🤖 Inteligência de Agendamento</h2>
-              <p className="text-sm text-text-secondary mt-0.5">Defina os horários que o bot pode sugerir aos clientes</p>
-           </div>
-           <button 
-             onClick={async () => {
-               setSaving(true);
-               try {
-                 const res = await fetch('/api/imobiliaria', {
-                   method: 'PATCH',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ horario_inicio: horarioInicio, horario_fim: horarioFim })
-                 });
-                 if (res.ok) alert('✅ Horários salvos com sucesso!');
-                 else alert('❌ Falha ao salvar horários');
-               } catch {
-                 alert('❌ Erro de conexão');
-               } finally {
-                 setSaving(false);
-               }
-             }}
-             disabled={saving}
-             className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50"
-           >
-             {saving ? 'Salvando...' : 'Salvar Preferências'}
-           </button>
+      {activeModules.includes('bot') && (
+        <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+             <div>
+                <h2 className="text-lg font-semibold text-text-primary">🤖 Inteligência de Agendamento</h2>
+                <p className="text-sm text-text-secondary mt-0.5">Defina os horários que o bot pode sugerir aos clientes</p>
+             </div>
+             <button 
+               onClick={async () => {
+                 setSaving(true);
+                 try {
+                   const res = await fetch('/api/imobiliaria', {
+                     method: 'PATCH',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ horario_inicio: horarioInicio, horario_fim: horarioFim })
+                   });
+                   if (res.ok) alert('✅ Horários salvos com sucesso!');
+                   else alert('❌ Falha ao salvar horários');
+                 } catch {
+                   alert('❌ Erro de conexão');
+                 } finally {
+                   setSaving(false);
+                 }
+               }}
+               disabled={saving}
+               className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50"
+             >
+               {saving ? 'Salvando...' : 'Salvar Preferências'}
+             </button>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+             <div className="space-y-2">
+                <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Início do Expediente</label>
+                <input 
+                  type="time" 
+                  value={horarioInicio}
+                  onChange={(e) => setHorarioInicio(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
+                />
+             </div>
+             <div className="space-y-2">
+                <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Fim do Expediente</label>
+                <input 
+                  type="time" 
+                  value={horarioFim}
+                  onChange={(e) => setHorarioFim(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
+                />
+             </div>
+          </div>
+          
+          <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100">
+             <p className="text-xs text-amber-800 leading-relaxed">
+                <strong>Nota:</strong> O bot usará estas janelas para procurar espaços vazios na agenda dos corretores e sugerir opções aos leads. Fora deste horário, o bot informará que o atendimento humano retornará no próximo período.
+             </p>
+          </div>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-           <div className="space-y-2">
-              <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Início do Expediente</label>
-              <input 
-                type="time" 
-                value={horarioInicio}
-                onChange={(e) => setHorarioInicio(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
-              />
-           </div>
-           <div className="space-y-2">
-              <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Fim do Expediente</label>
-              <input 
-                type="time" 
-                value={horarioFim}
-                onChange={(e) => setHorarioFim(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
-              />
-           </div>
-        </div>
-        
-        <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100">
-           <p className="text-xs text-amber-800 leading-relaxed">
-             <strong>Nota:</strong> O bot usará estas janelas para procurar espaços vazios na agenda dos corretores e sugerir opções aos leads. Fora deste horário, o bot informará que o atendimento humano retornará no próximo período.
-           </p>
-        </div>
-      </div>
+      )}
 
       {/* Channels */}
       <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
@@ -259,7 +263,7 @@ export default function ConfigPage() {
           )}
 
           {/* WhatsApp - BR Only (Currently) */}
-          {!isPT && (
+          {!isPT && activeModules.includes('bot') && (
             <div className={`rounded-xl border-2 p-4 ${channels.whatsapp ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -323,7 +327,7 @@ export default function ConfigPage() {
       )}
 
       {/* WhatsApp Diagnostic (Pragmatic Fix) */}
-      {!isPT && (
+      {!isPT && activeModules.includes('bot') && (
          <div className="bg-indigo-50/50 rounded-xl border border-indigo-200 p-6 mb-6">
            <div className="flex items-center gap-3 mb-4">
              <span className="text-2xl text-indigo-600">🛠️</span>

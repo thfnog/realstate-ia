@@ -123,7 +123,7 @@ export default function PerfilPage() {
         </form>
       </div>
 
-      {user?.corretores?.id ? (
+      {user?.active_modules?.includes('bot') && user?.corretores?.id && (
         <div className="mt-8 bg-white rounded-3xl border border-border-light shadow-sm p-8 space-y-8 animate-fade-in">
           <div className="flex items-center gap-3">
             <IoLogoWhatsapp className="text-emerald-500 text-3xl" />
@@ -147,7 +147,9 @@ export default function PerfilPage() {
             </p>
           </div>
         </div>
-      ) : (
+      )}
+
+      {user?.active_modules?.includes('bot') && !user?.corretores?.id && (
         <div className="mt-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-12 text-center space-y-6 animate-fade-in">
            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mx-auto">
              <IoLogoWhatsapp className="text-slate-300 text-3xl" />

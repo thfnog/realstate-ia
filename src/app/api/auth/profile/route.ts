@@ -19,12 +19,23 @@ export async function GET() {
 
     const { data: user, error } = await supabaseAdmin
       .from('usuarios')
-      .select('*, corretores(*)')
+      .select('*, corretores(*), imobiliarias(*)')
       .eq('id', session.usuario_id)
       .single();
 
     if (error) throw error;
-    return NextResponse.json(user);
+
+    // Get active modules
+    const { data: imobData } = await supabaseAdmin
+      .from('imobiliarias')
+      .select('*, assinaturas(*, planos(*))')
+      .eq('id', user.imobiliaria_id)
+      .single();
+    
+    const sub = Array.isArray(imobData?.assinaturas) ? imobData?.assinaturas[0] : imobData?.assinaturas;
+    const activeModules = sub?.planos?.modulos || [];
+
+    return NextResponse.json({ ...user, active_modules: activeModules });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

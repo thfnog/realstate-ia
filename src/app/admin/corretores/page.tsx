@@ -24,6 +24,7 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
   const [editingId, setEditingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [form, setForm] = useState({ nome: '', telefone: '', email: '', ativo: true, liberarAcesso: false, comissao_padrao: 5 });
+  const [activeModules, setActiveModules] = useState<string[]>([]);
 
   async function fetchCorretores() {
     try {
@@ -31,6 +32,10 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
       const res = await fetch('/api/corretores');
       const data = await res.json();
       if (Array.isArray(data)) setCorretores(data);
+      
+      const imobRes = await fetch('/api/imobiliaria');
+      const imobData = await imobRes.json();
+      setActiveModules(imobData.active_modules || []);
     } catch (err) {
       console.error('Erro:', err);
     } finally {
@@ -230,20 +235,22 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
 
                 <div className="flex flex-wrap items-center gap-4">
                   {/* WhatsApp Bot Status */}
-                  <div className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                    c.whatsapp_status === 'open'
-                      ? 'bg-primary/5 text-primary border-primary/20'
-                      : c.whatsapp_status === 'connecting'
-                      ? 'bg-amber-50 text-amber-600 border-amber-100'
-                      : 'bg-slate-50 text-slate-400 border-slate-100 opacity-60'
-                  }`}>
-                    <IoLogoWhatsapp size={14} className={c.whatsapp_status === 'open' ? 'animate-pulse' : ''} />
-                    {c.whatsapp_status === 'open' 
-                      ? 'Bot Integrado' 
-                      : c.whatsapp_status === 'connecting' 
-                      ? 'Conectando...' 
-                      : 'Sem Integração'}
-                  </div>
+                  {activeModules.includes('bot') && (
+                    <div className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      c.whatsapp_status === 'open'
+                        ? 'bg-primary/5 text-primary border-primary/20'
+                        : c.whatsapp_status === 'connecting'
+                        ? 'bg-amber-50 text-amber-600 border-amber-100'
+                        : 'bg-slate-50 text-slate-400 border-slate-100 opacity-60'
+                    }`}>
+                      <IoLogoWhatsapp size={14} className={c.whatsapp_status === 'open' ? 'animate-pulse' : ''} />
+                      {c.whatsapp_status === 'open' 
+                        ? 'Bot Integrado' 
+                        : c.whatsapp_status === 'connecting' 
+                        ? 'Conectando...' 
+                        : 'Sem Integração'}
+                    </div>
+                  )}
 
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleAtivo(c); }}

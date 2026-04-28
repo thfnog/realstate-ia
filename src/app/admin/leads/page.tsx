@@ -29,9 +29,11 @@ export default function LeadsPage() {
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [finalidadeFilter, setFinalidadeFilter] = useState<string>('');
   const [origemFilter, setOrigemFilter] = useState<string>('');
   const [corretorFilter, setCorretorFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'novo' | 'antigo' | 'interesse'>('novo');
   const [resending, setResending] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -250,15 +252,27 @@ export default function LeadsPage() {
     }
   }
 
-  const filteredLeads = leads.filter(l => {
-    if (origemFilter && l.origem !== origemFilter) return false;
-    if (corretorFilter && l.corretor_id !== corretorFilter) return false;
-    if (searchQuery) {
-      const s = searchQuery.toLowerCase();
-      return l.nome.toLowerCase().includes(s) || l.telefone.includes(s);
-    }
-    return true;
-  });
+  const filteredLeads = leads
+    .filter(l => {
+      if (origemFilter && l.origem !== origemFilter) return false;
+      if (corretorFilter && l.corretor_id !== corretorFilter) return false;
+      if (finalidadeFilter && l.finalidade !== finalidadeFilter) return false;
+      if (searchQuery) {
+        const s = searchQuery.toLowerCase();
+        return l.nome.toLowerCase().includes(s) || l.telefone.includes(s);
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'interesse') {
+        const valA = a.finalidade || '';
+        const valB = b.finalidade || '';
+        return valA.localeCompare(valB);
+      }
+      const dateA = new Date(a.criado_em).getTime();
+      const dateB = new Date(b.criado_em).getTime();
+      return sortOrder === 'novo' ? dateB - dateA : dateA - dateB;
+    });
 
   return (
     <div className="animate-fade-in pb-20 space-y-8">
@@ -274,6 +288,10 @@ export default function LeadsPage() {
         setOrigemFilter={setOrigemFilter}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        finalidadeFilter={finalidadeFilter}
+        setFinalidadeFilter={setFinalidadeFilter}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
         corretores={corretores}
         onAddLead={() => setShowManualModal(true)}
       />

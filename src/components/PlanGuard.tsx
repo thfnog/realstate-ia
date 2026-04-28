@@ -11,6 +11,7 @@ interface PlanGuardProps {
 }
 
 const PLAN_LEVELS = {
+  'free': 0,
   'essencial': 1,
   'profissional': 2,
   'enterprise': 3

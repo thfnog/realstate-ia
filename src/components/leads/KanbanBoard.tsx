@@ -148,7 +148,19 @@ function SortableLeadCard({
        <div className="flex justify-between items-start mb-3">
            <div>
               <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">{lead.nome}</h4>
-              <p className="text-[10px] text-text-muted mt-0.5">{lead.telefone}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[10px] text-text-muted">{lead.telefone}</p>
+                {lead.finalidade && (
+                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter ${
+                    lead.finalidade === 'alugar' ? 'bg-blue-100 text-blue-700' : 
+                    lead.finalidade === 'comprar' ? 'bg-emerald-100 text-emerald-700' : 
+                    'bg-amber-100 text-amber-700'
+                  }`}>
+                    {lead.finalidade === 'alugar' ? 'Aluguel' : 
+                     lead.finalidade === 'comprar' ? 'Compra' : 'Venda/Invest'}
+                  </span>
+                )}
+              </div>
               {lead.portal_origem && (
                 <p className="text-[9px] text-text-tertiary font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
