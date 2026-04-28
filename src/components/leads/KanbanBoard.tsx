@@ -129,10 +129,16 @@ function SortableLeadCard({
        <div className={`absolute top-0 left-0 right-0 h-1 ${config.bg.split(' ')[0]}`} />
 
        <div className="flex justify-between items-start mb-3">
-          <div>
-             <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">{lead.nome}</h4>
-             <p className="text-[10px] text-text-muted mt-0.5">{lead.telefone}</p>
-          </div>
+           <div>
+              <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">{lead.nome}</h4>
+              <p className="text-[10px] text-text-muted mt-0.5">{lead.telefone}</p>
+              {lead.portal_origem && (
+                <p className="text-[9px] text-text-tertiary font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
+                   <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                   {lead.portal_origem}
+                </p>
+              )}
+           </div>
           <div className="flex gap-1.5">
              {lead.origem === 'whatsapp' && (
                 <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-xs animate-pulse" title="Vindo do WhatsApp Bot">
