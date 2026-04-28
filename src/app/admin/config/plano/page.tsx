@@ -179,19 +179,28 @@ export default function AgencyPlansPage() {
                     </p>
                   </div>
 
-                  <div className="flex-1 space-y-4 mb-10">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">O que está incluído:</p>
-                    <div className="flex items-center gap-3">
-                      <IoCheckmarkCircle className="text-emerald-500 shrink-0" size={18} />
-                      <span className="text-sm font-bold text-slate-700">Bot de Atendimento IA</span>
+                    <div className="flex-1 space-y-4 mb-10">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">O que está incluído:</p>
+                      
+                      {plano.modulos.map((m) => {
+                        const labels: Record<string, string> = {
+                          'crm': 'CRM & Leads Especialista',
+                          'bot': 'Bot IA & WhatsApp 24h',
+                          'dashboard': 'Dashboard de Performance',
+                          'inventario': 'Gestão de Imóveis & Portais',
+                          'operacao': 'Escala & Agenda Inteligente',
+                          'locacao': 'Locação & Contratos Digitais',
+                          'sistema': 'Configurações Avançadas'
+                        };
+                        
+                        return (
+                          <div key={m} className="flex items-center gap-3">
+                            <IoCheckmarkCircle className="text-emerald-500 shrink-0" size={18} />
+                            <span className="text-sm font-bold text-slate-700">{labels[m] || m}</span>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {plano.modulos.map((m) => (
-                      <div key={m} className="flex items-center gap-3">
-                        <IoCheckmarkCircle className="text-emerald-500 shrink-0" size={18} />
-                        <span className="text-sm font-bold text-slate-700 capitalize">Módulo {m}</span>
-                      </div>
-                    ))}
-                  </div>
 
                   <button 
                     disabled={isCurrent}
