@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     if (type === 'slack') {
       if (!config.slack_webhook_url) return NextResponse.json({ error: 'Webhook URL do Slack não configurada' }, { status: 400 });
       
-      const channel = config.slack_channel_system || '#sistema';
+      const channel = config.slack_channel || '#alertas';
       
       const response = await fetch(config.slack_webhook_url, {
         method: 'POST',

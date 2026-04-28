@@ -11,8 +11,7 @@ export default function MasterConfigPage() {
     resend_api_key: '',
     resend_from_email: '',
     slack_webhook_url: '',
-    slack_channel_leads: '',
-    slack_channel_system: ''
+    slack_channel: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -199,27 +198,15 @@ export default function MasterConfigPage() {
                   placeholder="https://hooks.slack.com/services/..."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Canal de Leads</label>
-                  <input 
-                    type="text"
-                    value={config.slack_channel_leads || ''}
-                    onChange={e => setConfig({...config, slack_channel_leads: e.target.value})}
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-                    placeholder="#leads"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Canal do Sistema</label>
-                  <input 
-                    type="text"
-                    value={config.slack_channel_system || ''}
-                    onChange={e => setConfig({...config, slack_channel_system: e.target.value})}
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-                    placeholder="#sistema"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Canal de Alertas</label>
+                <input 
+                  type="text" 
+                  value={config.slack_channel || ''}
+                  onChange={e => setConfig({ ...config, slack_channel: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                  placeholder="#alertas"
+                />
               </div>
             </div>
           </div>
