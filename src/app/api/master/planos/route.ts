@@ -3,12 +3,6 @@ import { getAuthFromCookies } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
-  const session = await getAuthFromCookies();
-  // Allow master OR any authenticated admin/broker to see plans (public catalog)
-  if (!session) {
-    return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
-  }
-
   const { data, error } = await supabaseAdmin
     .from('planos')
     .select('*')

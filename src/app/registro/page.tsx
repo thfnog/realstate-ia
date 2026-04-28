@@ -152,18 +152,9 @@ export default function RegistroPage() {
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                   <span className="text-sm font-bold text-slate-700">Região de Operação</span>
                   <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
-                    <button 
-                      onClick={() => setConfigPais('BR')}
-                      className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${configPais === 'BR' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                      🇧🇷 Brasil
-                    </button>
-                    <button 
-                      onClick={() => setConfigPais('PT')}
-                      className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${configPais === 'PT' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                      🇵🇹 Portugal
-                    </button>
+                    <div className="px-6 py-2 rounded-lg text-xs font-black bg-primary text-white shadow-md flex items-center gap-2">
+                      🇧🇷 Brasil (Piloto)
+                    </div>
                   </div>
                 </div>
 
@@ -297,34 +288,42 @@ export default function RegistroPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <div className="p-6 rounded-[2rem] bg-slate-900 text-white relative overflow-hidden group border border-white/10">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150" />
-                      <div className="relative z-10 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Dados de Cobrança (Opcional)</h4>
-                          <span className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full font-black uppercase tracking-widest">PCI Secure</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 bg-white/5 p-4 rounded-xl border border-white/10">
-                             <input 
-                               value={cartaoFinal}
-                               onChange={e => setCartaoFinal(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                               className="bg-transparent border-none outline-none w-full font-mono text-lg placeholder:text-white/20" 
-                               placeholder="•••• •••• •••• 4482" 
-                             />
+                    {planos.find(p => p.id === selectedPlanId)?.slug !== 'trial' ? (
+                      <div className="p-6 rounded-[2rem] bg-slate-900 text-white relative overflow-hidden group border border-white/10">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150" />
+                        <div className="relative z-10 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Dados de Cobrança (Opcional)</h4>
+                            <span className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full font-black uppercase tracking-widest">PCI Secure</span>
                           </div>
-                          <div className="w-24 bg-white/5 p-4 rounded-xl border border-white/10">
-                             <input 
-                               value={cartaoBandeira}
-                               onChange={e => setCartaoBandeira(e.target.value)}
-                               className="bg-transparent border-none outline-none w-full text-xs font-black uppercase placeholder:text-white/20" 
-                               placeholder="VISA" 
-                             />
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1 bg-white/5 p-4 rounded-xl border border-white/10">
+                               <input 
+                                 value={cartaoFinal}
+                                 onChange={e => setCartaoFinal(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                 className="bg-transparent border-none outline-none w-full font-mono text-lg placeholder:text-white/20" 
+                                 placeholder="•••• •••• •••• 4482" 
+                               />
+                            </div>
+                            <div className="w-24 bg-white/5 p-4 rounded-xl border border-white/10">
+                               <input 
+                                 value={cartaoBandeira}
+                                 onChange={e => setCartaoBandeira(e.target.value)}
+                                 className="bg-transparent border-none outline-none w-full text-xs font-black uppercase placeholder:text-white/20" 
+                                 placeholder="VISA" 
+                               />
+                            </div>
                           </div>
+                          <p className="text-[8px] text-white/40 font-medium uppercase tracking-widest">Você só será cobrado após o período de testes se optar por manter o plano.</p>
                         </div>
-                        <p className="text-[8px] text-white/40 font-medium uppercase tracking-widest">Você só será cobrado após o período de testes se optar por manter o plano.</p>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="p-8 rounded-[2rem] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-center space-y-2">
+                        <span className="text-2xl">🎁</span>
+                        <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Plano Gratuito Selecionado</p>
+                        <p className="text-xs text-slate-400 font-medium max-w-[280px]">Nenhuma informação de pagamento é necessária para começar agora.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
