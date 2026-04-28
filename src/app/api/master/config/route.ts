@@ -13,10 +13,10 @@ export async function GET() {
       .from('configuracoes_sistema')
       .select('*')
       .eq('id', 1)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return NextResponse.json(data);
+    return NextResponse.json(data || {});
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -36,19 +36,17 @@ export async function POST(request: Request) {
       'resend_api_key', 
       'resend_from_email', 
       'slack_webhook_url', 
-      'slack_channel_leads', 
-      'slack_channel_system'
+      'slack_channel'
     ];
     
-    const updateData: any = {};
+    const updateData: any = { id: 1 };
     allowedFields.forEach(field => {
       if (body[field] !== undefined) updateData[field] = body[field];
     });
 
     const { data, error } = await supabaseAdmin
       .from('configuracoes_sistema')
-      .update(updateData)
-      .eq('id', 1)
+      .upsert(updateData)
       .select()
       .single();
 

@@ -16,10 +16,10 @@ export async function POST(request: Request) {
       .from('configuracoes_sistema')
       .select('*')
       .eq('id', 1)
-      .single();
+      .maybeSingle();
 
-    if (!config) {
-      return NextResponse.json({ error: 'Configuração não encontrada' }, { status: 404 });
+    if (!config || !config.slack_webhook_url) {
+      return NextResponse.json({ error: 'Configuração não encontrada no banco. Salve no painel primeiro.' }, { status: 404 });
     }
 
     if (type === 'resend') {
