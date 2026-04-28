@@ -69,7 +69,16 @@ export async function POST(request: Request) {
 
     if (authError) {
       await supabaseAdmin.from('imobiliarias').delete().eq('id', imob.id);
-      return NextResponse.json({ error: authError.message }, { status: 500 });
+      
+      // Translate common error messages
+      let msg = authError.message;
+      if (msg.includes('email address has already been registered')) {
+        msg = 'Este e-mail já está cadastrado no sistema.';
+      } else if (msg.includes('Password should be at least')) {
+        msg = 'A senha deve ter pelo menos 6 caracteres.';
+      }
+      
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
     // 4. Create Public User Record
