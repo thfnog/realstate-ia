@@ -87,7 +87,7 @@ const configs: Record<CountryCode, CountryConfig> = {
  * Defaults to PT (Portugal) if not set.
  */
 export function getConfig(): CountryConfig {
-  const mode = (process.env.NEXT_PUBLIC_COUNTRY_MODE || 'PT').toUpperCase() as CountryCode;
+  const mode = (process.env.NEXT_PUBLIC_COUNTRY_MODE || 'BR').toUpperCase() as CountryCode;
   return getConfigByCode(mode);
 }
 
@@ -95,7 +95,7 @@ export function getConfig(): CountryConfig {
  * Returns configuration for a specific country code.
  */
 export function getConfigByCode(code: CountryCode): CountryConfig {
-  return configs[code] || configs.PT;
+  return configs[code] || configs.BR;
 }
 
 /**

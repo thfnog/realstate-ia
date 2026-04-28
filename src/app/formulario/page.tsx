@@ -69,36 +69,16 @@ function FormularioContent() {
 
   // ---- Phone mask ----
   function formatPhone(value: string): string {
-    if (!config) return value;
-    const digits = value.replace(/\D/g, '');
-    
-    if (config.code === 'PT') {
-      // PT format: +351 9XX XXX XXX
-      const ptDigits = digits.startsWith('351') ? digits.slice(3) : digits;
-      if (ptDigits.length === 0) return '';
-      if (ptDigits.length <= 3) return `+351 ${ptDigits}`;
-      if (ptDigits.length <= 6) return `+351 ${ptDigits.slice(0, 3)} ${ptDigits.slice(3)}`;
-      return `+351 ${ptDigits.slice(0, 3)} ${ptDigits.slice(3, 6)} ${ptDigits.slice(6, 9)}`;
-    } else {
-      // BR format: (00) 00000-0000
-      const brDigits = digits.slice(0, 11);
-      if (brDigits.length <= 2) return brDigits;
-      if (brDigits.length <= 7) return `(${brDigits.slice(0, 2)}) ${brDigits.slice(2)}`;
-      return `(${brDigits.slice(0, 2)}) ${brDigits.slice(2, 7)}-${brDigits.slice(7, 11)}`;
-    }
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   }
 
   // ---- Inline validation helpers ----
   function isPhoneValid(v: string): boolean {
-    if (!config) return false;
-    if (config.code === 'PT') {
-      const d = v.replace(/\D/g, '');
-      // Expect 351 + 9 digits = 12, or just 9 digits if user typed without +351
-      return d.length === 12 || d.length === 9;
-    } else {
-      const d = v.replace(/\D/g, '');
-      return d.length >= 10 && d.length <= 11;
-    }
+    const d = v.replace(/\D/g, '');
+    return d.length >= 10 && d.length <= 11;
   }
 
   function isNomeValid(v: string): boolean {
@@ -106,7 +86,7 @@ function FormularioContent() {
   }
 
   const nomeError = touched.nome && !isNomeValid(nome) ? 'Nome deve ter pelo menos 3 caracteres' : '';
-  const phoneError = touched.telefone && !isPhoneValid(telefone) ? (config?.code === 'PT' ? 'Informe um número de telefone válido (9 dígitos)' : 'Informe um número com DDD (10 ou 11 dígitos)') : '';
+  const phoneError = touched.telefone && !isPhoneValid(telefone) ? 'Informe um número com DDD (10 ou 11 dígitos)' : '';
 
   function handleBlur(field: string) {
     setTouched((prev) => ({ ...prev, [field]: true }));

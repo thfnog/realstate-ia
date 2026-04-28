@@ -103,7 +103,7 @@ export default function PerfilPage() {
                 required
                 value={form.telefone}
                 onChange={e => setForm({ ...form, telefone: e.target.value })}
-                placeholder="+351 9xx xxx xxx ou +55 11 9xxxx-xxxx"
+                placeholder="Ex: +55 11 99999-9999"
                 className="w-full px-4 py-3.5 rounded-xl border-2 border-border-light text-sm focus:outline-none focus:border-primary transition-all bg-surface-alt/30 font-medium"
               />
             </div>
@@ -117,7 +117,7 @@ export default function PerfilPage() {
               disabled={saving}
               className="px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-black transition-all hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Guardar Alterações'}
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
             </button>
           </div>
         </form>
@@ -155,7 +155,7 @@ export default function PerfilPage() {
            <div className="max-w-sm mx-auto">
              <h3 className="text-lg font-black text-slate-900 tracking-tight">Ativar Ferramentas de IA</h3>
              <p className="text-slate-500 text-xs font-medium mt-2">
-               Para habilitar a integração com o WhatsApp e o Motor de IA, primeiro preencha seu Nome e Telefone acima e clique em <strong>"Guardar Alterações"</strong>.
+               Para habilitar a integração com o WhatsApp e o Motor de IA, primeiro preencha seu Nome e Telefone acima e clique em <strong>"Salvar Alterações"</strong>.
              </p>
            </div>
         </div>
@@ -168,7 +168,7 @@ export default function PerfilPage() {
             <h4 className="text-sm font-bold text-amber-900">Dica de Atendimento</h4>
             <p className="text-xs text-amber-800 mt-1 leading-relaxed">
               O seu nome e telefone são usados pelo Motor de IA para se apresentar aos leads e agendar visitas. 
-              Mantenha-os atualizados para garantir que os clientes consigam entrar em contato consigo sem problemas.
+              Mantenha-os atualizados para garantir que os clientes consigam entrar em contato com você sem problemas.
             </p>
           </div>
         </div>
