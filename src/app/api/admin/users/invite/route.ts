@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
     let authUserId = inviteData?.user?.id;
 
-    // FALLBACK: If invite fails due to Rate Limit, generate a manual link
+    // FALLBACK: If invite fails due to Rate Limit, generate a manual link and send via Resend if possible
     if (inviteError && (inviteError.status === 429 || inviteError.message.toLowerCase().includes('rate limit'))) {
       console.warn('[INVITE] Email rate limit hit. Generating manual link...');
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
@@ -113,6 +113,46 @@ export async function POST(request: Request) {
         manualLink = linkData.properties.action_link;
         authUserId = linkData.user.id;
         inviteError = null; // Clear error as we have a fallback
+
+        // --- RESEND FALLBACK ---
+        try {
+          const { data: sysConfig } = await supabaseAdmin
+            .from('configuracoes_sistema')
+            .select('resend_api_key, resend_from_email')
+            .eq('id', 1)
+            .single();
+
+          if (sysConfig?.resend_api_key) {
+            const { Resend } = await import('resend');
+            const resend = new Resend(sysConfig.resend_api_key);
+            
+            const from = sysConfig.resend_from_email || 'ImobIA <convite@imobia.com.br>';
+            const userName = nome || email.split('@')[0];
+
+            await resend.emails.send({
+              from,
+              to: email,
+              subject: `Convite para participar da plataforma ImobIA`,
+              html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; border: 1px solid #eee; border-radius: 20px;">
+                  <h2 style="color: #0f172a; margin-bottom: 20px;">Olá, ${userName}!</h2>
+                  <p style="color: #475569; line-height: 1.6;">Você foi convidado para participar da plataforma <strong>ImobIA</strong>.</p>
+                  <p style="color: #475569; line-height: 1.6;">Clique no botão abaixo para ativar sua conta e definir sua senha:</p>
+                  <div style="margin: 40px 0;">
+                    <a href="${manualLink}" style="background-color: #4f46e5; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; display: inline-block;">Ativar Minha Conta</a>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; pt: 20px;">
+                    Este convite expira em 24 horas. Se o botão acima não funcionar, copie e cole este link no seu navegador: <br/>
+                    <span style="color: #4f46e5;">${manualLink}</span>
+                  </p>
+                </div>
+              `
+            });
+            console.log(`[INVITE] Link de convite enviado via Resend para ${email}`);
+          }
+        } catch (resendErr) {
+          console.error('[INVITE] Erro ao enviar via Resend fallback:', resendErr);
+        }
       }
     }
 

@@ -59,6 +59,14 @@ export default function MasterDashboardPage() {
       href: '/admin/master/status',
       color: 'bg-rose-500',
       stats: '99.9% Uptime'
+    },
+    {
+      title: 'Infraestrutura Global',
+      description: 'Configuração de chaves de API Resend, Slack e serviços externos.',
+      icon: <IoSettingsOutline size={32} />,
+      href: '/admin/master/config',
+      color: 'bg-slate-700',
+      stats: 'Seguro'
     }
   ];
 
