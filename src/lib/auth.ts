@@ -77,6 +77,15 @@ export async function signIn(email: string, password: string): Promise<string | 
       
       if (!fallbackProfile) return null;
       user = fallbackProfile;
+
+      // SYNC: Se logou por email mas não tinha auth_id vinculado, vincula agora
+      if (!user.auth_id) {
+        await supabaseAdmin
+          .from('usuarios')
+          .update({ auth_id: authData.user.id })
+          .eq('id', user.id);
+        user.auth_id = authData.user.id;
+      }
     } else {
       user = profile;
     }

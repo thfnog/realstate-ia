@@ -134,19 +134,36 @@ export async function PATCH(request: Request) {
       console.log(`[PROFILE] Tentando atualizar senha para usuario_id: ${session.usuario_id}`);
       
       // Get auth_id from the user record we already have or fetch it
-      const { data: userWithAuth, error: authIdError } = await supabaseAdmin
+      let { data: userWithAuth, error: authIdError } = await supabaseAdmin
         .from('usuarios')
-        .select('auth_id')
+        .select('auth_id, email')
         .eq('id', session.usuario_id)
         .single();
       
-      if (authIdError || !userWithAuth?.auth_id) {
-        console.error('[PROFILE] Erro ao buscar auth_id:', authIdError);
-        throw new Error('Seu usuário não possui um ID de autenticação vinculado. Entre em contato com o suporte.');
+      let targetAuthId = userWithAuth?.auth_id;
+
+      if (authIdError || !targetAuthId) {
+        console.log(`[PROFILE] auth_id não encontrado para ${session.usuario_id}. Tentando recuperar por email: ${session.email}`);
+        
+        // Fallback: Buscar no Supabase Auth pelo email do usuário
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        const authUser = users.find(u => u.email === (userWithAuth?.email || session.email));
+
+        if (authUser) {
+          console.log(`[PROFILE] Usuário de autenticação encontrado: ${authUser.id}. Vinculando...`);
+          await supabaseAdmin
+            .from('usuarios')
+            .update({ auth_id: authUser.id })
+            .eq('id', session.usuario_id);
+          targetAuthId = authUser.id;
+        } else {
+          console.error('[PROFILE] Erro ao buscar auth_id:', authIdError || 'Usuário não encontrado no Supabase Auth');
+          throw new Error('Seu usuário não possui um ID de autenticação vinculado. Entre em contato com o suporte.');
+        }
       }
 
       const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
-        userWithAuth.auth_id,
+        targetAuthId,
         { password: senha }
       );
 
