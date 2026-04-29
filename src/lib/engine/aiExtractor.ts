@@ -59,8 +59,9 @@ MENSAGEM DO CLIENTE:
 
 REGRAS DE CLASSIFICAÇÃO (is_lead):
 - Marque "is_lead": true apenas se houver intenção EXPLÍCITA de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, agendamento de visitas, interesse em vender/alugar, pedido de catálogo).
-- Marque "is_lead": false para RELATOS DE STATUS, conversas sociais, ou saudações genéricas isoladas (ex: "Oi", "Bom dia", "Tudo bem?", "Tô no trânsito", "Já te ligo", "Beleza", "Valeu", "Estou ocupado", "Semana corrida").
-- IMPORTANTE: Mensagens que são APENAS saudações sem acompanhamento de uma dúvida ou pedido NÃO são leads. Se o usuário só disse "Oi", marque como false.
+- Marque "is_lead": false para RELATOS DE STATUS, conversas sociais, saudações genéricas isoladas ou SERVIÇOS TERCEIRIZADOS (ex: "frete", "mudança", "pintura", "limpeza", "reforma", "ofereço meus serviços", "parceria de marketing").
+- IMPORTANTE: Se o usuário estiver buscando ou oferecendo serviços que não sejam a COMPRA, VENDA ou ALUGUEL de IMÓVEIS (ex: perguntando preço de frete de mudança), marque como false.
+- Mensagens que são APENAS saudações sem acompanhamento de uma dúvida ou pedido NÃO são leads. Se o usuário só disse "Oi", marque como false.
 - Se a mensagem for muito curta (menos de 10 caracteres) e for apenas social, SEMPRE marque false.
 
 ${feedbackExamples ? `EXEMPLOS DE APRENDIZADO (FEEDBACK DO USUÁRIO):\n${feedbackExamples}\n` : ''}

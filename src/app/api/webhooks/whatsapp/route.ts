@@ -109,8 +109,12 @@ export async function POST(request: Request) {
         const participantJid = key?.participant || '';
         
         if (isGroup) {
-          console.log(`👥 Mensagem de grupo ignorada (Lead Generation bloqueada para grupos): ${remoteJid}`);
-          return;
+          if (!participantJid) {
+            console.log(`🚫 Mensagem de grupo ignorada (sem participante identificado): ${remoteJid}`);
+            return;
+          }
+          sender = participantJid.split('@')[0] || '';
+          console.log(`👥 Mensagem de grupo detectada. Remetente: ${sender} (Grupo: ${remoteJid})`);
         } else {
           sender = remoteJid.split('@')[0] || '';
         }
