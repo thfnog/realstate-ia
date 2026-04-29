@@ -1,19 +1,31 @@
-import { shouldIgnoreMessage } from '../src/lib/messageFilter';
 
-const testCases = [
-  { text: 'https://meet.google.com/kji-bpoq-dyw', expected: true, reason: 'Meeting link' },
-  { text: 'Goodie! https://meet.google.com/kji-bpoq-dyw', expected: true, reason: 'Short greeting + Meeting link' },
-  { text: 'Oi, tudo bem? Gostaria de saber mais sobre o imóvel.', expected: false, reason: 'Legit lead' },
-  { text: 'https://www.zapimoveis.com.br/imovel/123', expected: true, reason: 'Just a URL' },
-  { text: 'Goodie!', expected: true, reason: 'Random word' },
-  { text: 'Oi', expected: false, reason: 'Common greeting' },
-  { text: 'Teste', expected: true, reason: 'Test message' },
-  { text: 'Tenho interesse no apartamento de 3 quartos no Morumbi.', expected: false, reason: 'Specific interest' },
-];
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
 
-console.log('--- Testando Filtro de Mensagens ---');
-testCases.forEach(({ text, expected, reason }) => {
-  const result = shouldIgnoreMessage(text);
-  const passed = result === expected;
-  console.log(`${passed ? '✅' : '❌'} [${reason}] "${text}" -> ${result ? 'IGNORAR' : 'PROCESSAR'} (Esperado: ${expected ? 'IGNORAR' : 'PROCESSAR'})`);
-});
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+async function testFilter() {
+  console.log('Testing filter finalidade=comprar...');
+  
+  let query = supabaseAdmin
+    .from('leads')
+    .select('id, nome, finalidade', { count: 'exact' })
+    .eq('finalidade', 'comprar');
+
+  const { data, count, error } = await query;
+  
+  if (error) {
+    console.error('Error:', error);
+    return;
+  }
+
+  console.log('Count:', count);
+  console.log('Data:', data);
+}
+
+testFilter();

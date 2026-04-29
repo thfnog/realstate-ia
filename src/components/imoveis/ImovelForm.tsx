@@ -20,7 +20,7 @@ const STEPS = [
   { id: 2, label: 'Localização', icon: '📍' },
   { id: 3, label: 'Características', icon: '🏠' },
   { id: 4, label: 'Financeiro', icon: '💰' },
-  { id: 5, label: 'Fotos & Finalizar', icon: '📸' }
+  { id: 5, label: 'Fotos & Mídia', icon: '📸' }
 ];
 
 export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) {
@@ -30,16 +30,34 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
   const [corretores, setCorretores] = useState<Corretor[]>([]);
 
   // Form State
+  const [showProprietario, setShowProprietario] = useState(false);
+
   const [formData, setFormData] = useState<Partial<Imovel>>({
     titulo: '',
     tipo: 'apartamento',
     status: 'disponivel',
-    pais: 'BR', // Default to BR as user is in BR now
+    pais: 'BR',
     finalidade: 'venda',
     negocio: 'residencial',
+    empreendimento: null,
+    proprietario_nome: null,
+    proprietario_telefone: null,
+    proprietario_email: null,
+    complemento: null,
     data_captacao: new Date().toISOString().split('T')[0],
     origem_captacao: 'angariação própria',
     vagas_garagem: 0,
+    salas: null,
+    num_andares: null,
+    num_torres: null,
+    area_construida: null,
+    area_privativa: null,
+    comodidades_condominio: [],
+    valor_locacao: null,
+    seguro_incendio_mensal: null,
+    taxa_administracao_pct: null,
+    video_url: null,
+    tour_360_url: null,
     aceita_permuta: false,
     aceita_financiamento: true,
     fotos: [],
@@ -148,9 +166,20 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                       <label className="block text-sm font-semibold text-text-primary mb-2">Título do Imóvel</label>
                       <input 
                         type="text" 
-                        placeholder="Ex: Apartamento T3 com Vista Mar — Ref: 2025"
+                        placeholder="Ex: Casa em Condomínio 4 quartos — Helvetia Park"
                         value={formData.titulo}
                         onChange={e => setFormData({...formData, titulo: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border border-border focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all bg-surface-alt/30"
+                      />
+                   </div>
+
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Empreendimento / Condomínio</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Helvetia Park, Mantova..."
+                        value={formData.empreendimento || ''}
+                        onChange={e => setFormData({...formData, empreendimento: e.target.value || null})}
                         className="w-full px-4 py-3 rounded-xl border border-border focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all bg-surface-alt/30"
                       />
                    </div>
@@ -177,10 +206,47 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                          <option value="disponivel">Disponível</option>
                          <option value="reservado">Reservado</option>
                          <option value="vendido">Vendido</option>
+                         <option value="alugado">Alugado</option>
                          <option value="arrendado">Arrendado</option>
+                         <option value="indisponivel">Indisponível</option>
+                         <option value="em_reforma">Em Reforma</option>
                          <option value="retirado">Retirado</option>
                       </select>
                    </div>
+                </div>
+
+                {/* Proprietário (colapsável) */}
+                <div className="mt-6 border border-border-light rounded-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowProprietario(!showProprietario)}
+                    className="w-full flex items-center justify-between px-5 py-4 bg-surface-alt/30 hover:bg-surface-alt/60 transition-all text-sm font-bold text-text-primary"
+                  >
+                    <span>👤 Dados do Proprietário</span>
+                    <span className="text-text-secondary text-xs">{showProprietario ? '▲ Fechar' : '▼ Expandir'}</span>
+                  </button>
+                  {showProprietario && (
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border-light">
+                      <div>
+                        <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Nome</label>
+                        <input type="text" placeholder="Nome do proprietário" value={formData.proprietario_nome || ''}
+                          onChange={e => setFormData({...formData, proprietario_nome: e.target.value || null})}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-surface-alt/30" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Telefone</label>
+                        <input type="tel" placeholder="(00) 00000-0000" value={formData.proprietario_telefone || ''}
+                          onChange={e => setFormData({...formData, proprietario_telefone: e.target.value || null})}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-surface-alt/30" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-text-secondary uppercase mb-1">E-mail</label>
+                        <input type="email" placeholder="email@exemplo.com" value={formData.proprietario_email || ''}
+                          onChange={e => setFormData({...formData, proprietario_email: e.target.value || null})}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-surface-alt/30" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -268,58 +334,142 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                         onChange={e => setFormData({...formData, tipo: e.target.value as TipoImovel})}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30"
                       >
-                         <option value="apartamento">Apartamento</option>
-                         <option value="casa">Casa</option>
-                         <option value="terreno">Terreno</option>
-                         <option value="loja">Comercial</option>
+                         <optgroup label="Residencial">
+                           <option value="apartamento">Apartamento</option>
+                           <option value="apartamento_duplex">Apartamento Duplex</option>
+                           <option value="cobertura">Cobertura</option>
+                           <option value="kitnet">Kitnet / Studio</option>
+                           <option value="flat">Flat</option>
+                           <option value="casa">Casa</option>
+                           <option value="casa_condominio">Casa em Condomínio</option>
+                           <option value="sobrado">Sobrado</option>
+                         </optgroup>
+                         <optgroup label="Rural">
+                           <option value="chacara">Chácara</option>
+                           <option value="sitio">Sítio</option>
+                           <option value="fazenda">Fazenda</option>
+                         </optgroup>
+                         <optgroup label="Terrenos">
+                           <option value="terreno">Terreno</option>
+                           <option value="lote">Lote</option>
+                         </optgroup>
+                         <optgroup label="Comercial">
+                           <option value="sala_comercial">Sala Comercial</option>
+                           <option value="loja">Loja</option>
+                           <option value="escritorio">Escritório</option>
+                           <option value="galpao">Galpão</option>
+                           <option value="barracao">Barracão</option>
+                         </optgroup>
+                         <optgroup label="Outros">
+                           <option value="garagem">Garagem</option>
+                           <option value="armazem">Armazém</option>
+                         </optgroup>
                       </select>
                    </div>
                    <div>
                       <label className="block text-sm font-semibold text-text-primary mb-2">{config.terminology.quartosLabel}</label>
-                      <input 
-                        type="number" 
-                        value={formData.quartos ?? ''}
+                      <input type="number" value={formData.quartos ?? ''}
                         onChange={e => setFormData({...formData, quartos: e.target.value === '' ? null : parseInt(e.target.value)})}
-                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30"
-                      />
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Útil (m²)</label>
-                      <input 
-                        type="number" 
-                        value={formData.area_util ?? ''}
-                        onChange={e => setFormData({...formData, area_util: e.target.value === '' ? null : parseFloat(e.target.value)})}
-                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30"
-                      />
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Suítes</label>
+                      <input type="number" value={formData.suites ?? ''}
+                        onChange={e => setFormData({...formData, suites: e.target.value === '' ? null : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-2">Vagas</label>
-                      <input 
-                        type="number" 
-                        value={formData.vagas_garagem ?? 0}
-                        onChange={e => setFormData({...formData, vagas_garagem: e.target.value === '' ? 0 : parseInt(e.target.value)})}
-                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30"
-                      />
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Banheiros</label>
+                      <input type="number" value={formData.casas_banho ?? ''}
+                        onChange={e => setFormData({...formData, casas_banho: e.target.value === '' ? null : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                 </div>
 
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Salas</label>
+                      <input type="number" value={formData.salas ?? ''}
+                        onChange={e => setFormData({...formData, salas: e.target.value === '' ? null : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Vagas</label>
+                      <input type="number" value={formData.vagas_garagem ?? 0}
+                        onChange={e => setFormData({...formData, vagas_garagem: e.target.value === '' ? 0 : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Útil (m²)</label>
+                      <input type="number" value={formData.area_util ?? ''}
+                        onChange={e => setFormData({...formData, area_util: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Construída (m²)</label>
+                      <input type="number" value={formData.area_construida ?? ''}
+                        onChange={e => setFormData({...formData, area_construida: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Terreno (m²)</label>
+                      <input type="number" value={formData.area_terreno ?? ''}
+                        onChange={e => setFormData({...formData, area_terreno: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Andar</label>
+                      <input type="number" value={formData.andar ?? ''}
+                        onChange={e => setFormData({...formData, andar: e.target.value === '' ? null : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Nº Andares</label>
+                      <input type="number" value={formData.num_andares ?? ''}
+                        onChange={e => setFormData({...formData, num_andares: e.target.value === '' ? null : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Complemento</label>
+                      <input type="text" placeholder="Bloco, Torre, Apto" value={formData.complemento || ''}
+                        onChange={e => setFormData({...formData, complemento: e.target.value || null})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                </div>
+
+                {/* Comodidades do Imóvel */}
                 <div>
-                   <label className="block text-sm font-semibold text-text-primary mb-2">Comodidades</label>
+                   <label className="block text-sm font-semibold text-text-primary mb-2">🏠 Características do Imóvel</label>
                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {['Piscina', 'Ginásio', 'Elevador', 'Varanda', 'Jardim', 'Ar Condicionado'].map(item => (
+                      {['Piscina','Churrasqueira','Ar Condicionado','Cozinha Planejada','Closet','Varanda/Sacada','Home Office','Escritório','Lavabo','Espaço Gourmet','Lareira','Móveis Planejados','Aquecimento Solar','Energia Fotovoltaica','Banheira','Adega','Despensa','Lavanderia','Elevador','Jardim'].map(item => (
                          <label key={item} className="flex items-center gap-3 p-3 rounded-xl border border-border-light hover:bg-surface-hover cursor-pointer transition-all">
-                            <input 
-                               type="checkbox" 
-                               checked={formData.comodidades?.includes(item)}
+                            <input type="checkbox" checked={formData.comodidades?.includes(item)}
                                onChange={(e) => {
                                   const current = formData.comodidades || [];
-                                  setFormData({
-                                     ...formData, 
-                                     comodidades: e.target.checked ? [...current, item] : current.filter(i => i !== item)
-                                  })
+                                  setFormData({...formData, comodidades: e.target.checked ? [...current, item] : current.filter(i => i !== item)})
                                }}
-                               className="w-4 h-4 text-primary rounded"
-                            />
+                               className="w-4 h-4 text-primary rounded" />
+                            <span className="text-sm text-text-primary">{item}</span>
+                         </label>
+                      ))}
+                   </div>
+                </div>
+
+                {/* Comodidades do Condomínio */}
+                <div>
+                   <label className="block text-sm font-semibold text-text-primary mb-2">🏢 Características do Condomínio / Empreendimento</label>
+                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {['Academia','Salão de Festas','Playground','Quadra Poliesportiva','Piscina Coletiva','Portaria 24h','Segurança','Pet Place','Brinquedoteca','Espaço Coworking','Sauna','SPA','Quadra de Tênis','Jardim Coletivo','Churrasqueira Coletiva','Lago','Trilha Ecológica'].map(item => (
+                         <label key={item} className="flex items-center gap-3 p-3 rounded-xl border border-border-light hover:bg-surface-hover cursor-pointer transition-all">
+                            <input type="checkbox" checked={formData.comodidades_condominio?.includes(item)}
+                               onChange={(e) => {
+                                  const current = formData.comodidades_condominio || [];
+                                  setFormData({...formData, comodidades_condominio: e.target.checked ? [...current, item] : current.filter(i => i !== item)})
+                               }}
+                               className="w-4 h-4 text-emerald-600 rounded" />
                             <span className="text-sm text-text-primary">{item}</span>
                          </label>
                       ))}
@@ -350,6 +500,16 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
 
                       <div className="grid grid-cols-2 gap-4">
                          <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Valor Locação /mês</label>
+                            <input 
+                               type="text" 
+                               placeholder="0,00"
+                               value={formatCurrency(formData.valor_locacao)}
+                               onChange={e => setFormData({...formData, valor_locacao: parseCurrency(e.target.value)})}
+                               className="w-full px-4 py-3 rounded-xl border border-border"
+                            />
+                         </div>
+                         <div>
                             <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Condomínio /mês</label>
                             <input 
                                type="text" 
@@ -369,7 +529,17 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                                className="w-full px-4 py-3 rounded-xl border border-border"
                             />
                          </div>
-                         <div className="col-span-2 md:col-span-1">
+                         <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Seguro Incêndio /mês</label>
+                            <input 
+                               type="text" 
+                               placeholder="0,00"
+                               value={formatCurrency(formData.seguro_incendio_mensal)}
+                               onChange={e => setFormData({...formData, seguro_incendio_mensal: parseCurrency(e.target.value)})}
+                               className="w-full px-4 py-3 rounded-xl border border-border"
+                            />
+                         </div>
+                         <div>
                             <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Comissão de Venda (%)</label>
                             <input 
                                type="number" 
@@ -379,6 +549,18 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                                value={formData.comissao_venda || ''}
                                onChange={e => setFormData({...formData, comissao_venda: parseFloat(e.target.value)})}
                                className="w-full px-4 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 font-bold"
+                            />
+                         </div>
+                         <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-2">Taxa Adm. Locação (%)</label>
+                            <input 
+                               type="number" 
+                               step="0.1"
+                               min="0"
+                               max="100"
+                               value={formData.taxa_administracao_pct || ''}
+                               onChange={e => setFormData({...formData, taxa_administracao_pct: parseFloat(e.target.value)})}
+                               className="w-full px-4 py-3 rounded-xl border border-border"
                             />
                          </div>
                       </div>
@@ -402,8 +584,26 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
             {step === 5 && (
                <div className="space-y-6 animate-fade-in">
                   <div className="border-b border-border-light pb-4 mb-6">
-                    <h2 className="text-xl font-bold text-text-primary">Gestão de Fotos</h2>
-                    <p className="text-text-secondary text-sm">A primeira foto será a capa do imóvel.</p>
+                    <h2 className="text-xl font-bold text-text-primary">Fotos & Mídia</h2>
+                    <p className="text-text-secondary text-sm">Fotos, vídeo e tour virtual do imóvel.</p>
+                 </div>
+
+                 {/* Video & Tour */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                     <label className="block text-xs font-bold text-text-secondary uppercase mb-2">🎥 URL do Vídeo (YouTube/Vimeo)</label>
+                     <input type="url" placeholder="https://youtube.com/watch?v=..."
+                       value={formData.video_url || ''}
+                       onChange={e => setFormData({...formData, video_url: e.target.value || null})}
+                       className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-text-secondary uppercase mb-2">🔄 Tour Virtual 360° (Matterport)</label>
+                     <input type="url" placeholder="https://my.matterport.com/show/?m=..."
+                       value={formData.tour_360_url || ''}
+                       onChange={e => setFormData({...formData, tour_360_url: e.target.value || null})}
+                       className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
                  </div>
 
                  <PhotoUploadZone 

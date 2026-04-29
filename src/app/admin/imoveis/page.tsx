@@ -197,9 +197,29 @@ export default function ImoveisPage() {
                   className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer"
               >
                   <option value="">Todos</option>
-                  <option value="apartamento">Apartamento</option>
-                  <option value="casa">Casa</option>
-                  <option value="terreno">Terreno</option>
+                  <optgroup label="Residencial">
+                    <option value="apartamento">Apartamento</option>
+                    <option value="apartamento_duplex">Apto Duplex</option>
+                    <option value="cobertura">Cobertura</option>
+                    <option value="kitnet">Kitnet</option>
+                    <option value="casa">Casa</option>
+                    <option value="casa_condominio">Casa Condomínio</option>
+                    <option value="sobrado">Sobrado</option>
+                  </optgroup>
+                  <optgroup label="Rural">
+                    <option value="chacara">Chácara</option>
+                    <option value="sitio">Sítio</option>
+                    <option value="fazenda">Fazenda</option>
+                  </optgroup>
+                  <optgroup label="Terrenos">
+                    <option value="terreno">Terreno</option>
+                    <option value="lote">Lote</option>
+                  </optgroup>
+                  <optgroup label="Comercial">
+                    <option value="sala_comercial">Sala Comercial</option>
+                    <option value="loja">Loja</option>
+                    <option value="galpao">Galpão</option>
+                  </optgroup>
               </select>
             </div>
           </div>

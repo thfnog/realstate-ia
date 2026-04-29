@@ -46,9 +46,16 @@ export type Corretor = {
   criado_em: string;
 };
 
-export type TipoImovel = 'apartamento' | 'casa' | 'terreno' | 'loja' | 'escritorio' | 'garagem' | 'armazem' | 'quintal';
-export type StatusImovel = 'disponivel' | 'reservado' | 'vendido' | 'arrendado' | 'retirado';
-export type NegocioImovel = 'residencial' | 'comercial' | 'investimento';
+export type TipoImovel =
+  | 'apartamento' | 'apartamento_duplex' | 'cobertura' | 'kitnet' | 'flat'
+  | 'casa' | 'casa_condominio' | 'sobrado'
+  | 'chacara' | 'sitio' | 'fazenda'
+  | 'terreno' | 'lote'
+  | 'sala_comercial' | 'loja' | 'escritorio' | 'galpao' | 'barracao'
+  | 'garagem' | 'armazem' | 'quintal';
+
+export type StatusImovel = 'disponivel' | 'reservado' | 'vendido' | 'arrendado' | 'alugado' | 'indisponivel' | 'em_reforma' | 'retirado';
+export type NegocioImovel = 'residencial' | 'comercial' | 'misto' | 'rural' | 'industrial' | 'investimento';
 export type Moeda = 'EUR' | 'BRL';
 
 export type ImovelFoto = {
@@ -72,38 +79,54 @@ export type Imovel = {
   freguesia: string; // Bairro no BR
   rua: string | null;
   numero: string | null;
+  complemento: string | null; // Apto, bloco, torre
   codigo_postal: string | null;
   latitude: number | null;
   longitude: number | null;
 
   tipo: TipoImovel;
-  finalidade: 'venda' | 'arrendamento' | 'ambos';
+  finalidade: 'venda' | 'aluguel' | 'arrendamento' | 'venda_e_aluguel' | 'temporada' | 'ambos';
   negocio: NegocioImovel;
+  empreendimento: string | null; // Nome do condomínio/edifício/empreendimento
   corretor_id: string | null;
   data_captacao: string;
   origem_captacao: string;
 
+  // Proprietário (dados simplificados)
+  proprietario_nome: string | null;
+  proprietario_telefone: string | null;
+  proprietario_email: string | null;
+
   // Características (Terminologia flexível via config)
   area_bruta: number | null;
   area_util: number | null;
+  area_construida: number | null;
+  area_privativa: number | null;
   area_terreno: number | null;
   quartos: number | null; // Tipologia T em PT
   suites: number | null;
   casas_banho: number | null;
+  salas: number | null;
   vagas_garagem: number;
   andar: number | null;
+  num_andares: number | null;
+  num_torres: number | null;
   ano_construcao: number | null;
   estado_conservacao: string | null;
   certificado_energetico: string | null;
   orientacao_solar: string[] | null;
-  comodidades: string[] | null;
+  comodidades: string[] | null; // Características do imóvel
+  comodidades_condominio: string[] | null; // Características do condomínio/empreendimento
 
   // Financeiro
   valor: number;
+  valor_locacao: number | null; // Valor mensal de aluguel
   moeda: Moeda;
   valor_avaliacao: number | null;
   imi_iptu_anual: number | null;
   condominio_mensal: number | null;
+  seguro_incendio_mensal: number | null;
+  taxa_administracao_pct: number | null; // % sobre aluguel
   aceita_permuta: boolean;
   aceita_financiamento: boolean;
 
@@ -111,6 +134,10 @@ export type Imovel = {
   descricao: string | null;
   pontos_venda: string[] | null;
   observacoes_internas: string | null;
+
+  // Mídia
+  video_url: string | null;
+  tour_360_url: string | null;
 
   status: StatusImovel;
   fotos: ImovelFoto[];
