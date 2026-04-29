@@ -354,15 +354,17 @@ export default function AgencyPlansPage() {
         </div>
       </div>
 
-      <div className="bg-amber-50 p-8 rounded-[2rem] border border-amber-100 flex items-start gap-6">
-        <IoWarningOutline className="text-amber-600 shrink-0" size={28} />
-        <div>
-          <p className="text-amber-900 font-black text-sm uppercase tracking-widest mb-2">Regras de Downgrade</p>
-          <p className="text-amber-700/70 text-sm font-medium leading-relaxed">
-            Para mudar para um plano inferior, certifique-se de que a sua imobiliária possui um número de usuários ativos igual ou menor ao limite permitido pelo novo plano. Se necessário, inative usuários na tela de <Link href="/admin/usuarios" className="underline font-bold hover:text-amber-900">Gestão de Usuários</Link> antes de solicitar a troca.
-          </p>
+      {!['essencial', 'gratuito', 'free'].includes(planos.find(p => p.id === billing?.assinatura?.plano_id)?.slug.toLowerCase() || 'essencial') && (
+        <div className="bg-amber-50 p-8 rounded-[2rem] border border-amber-100 flex items-start gap-6">
+          <IoWarningOutline className="text-amber-600 shrink-0" size={28} />
+          <div>
+            <p className="text-amber-900 font-black text-sm uppercase tracking-widest mb-2">Regras de Downgrade</p>
+            <p className="text-amber-700/70 text-sm font-medium leading-relaxed">
+              Para mudar para um plano inferior, certifique-se de que a sua imobiliária possui um número de usuários ativos igual ou menor ao limite permitido pelo novo plano. Se necessário, inative usuários na tela de <Link href="/admin/usuarios" className="underline font-bold hover:text-amber-900">Gestão de Usuários</Link> antes de solicitar a troca.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

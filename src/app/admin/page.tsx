@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                   Novo Imóvel
                 </Link>
               )}
-              {user?.app_role === 'admin' && activePlan.toLowerCase() !== 'essencial' && (
+              {user?.app_role === 'admin' && !['essencial', 'gratuito', 'free'].includes(activePlan.toLowerCase()) && (
                 <Link href="/admin/equipe" className="px-8 py-3 bg-slate-800 text-white border border-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all active:scale-95">
                   Gerir Equipe
                 </Link>

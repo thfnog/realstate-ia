@@ -129,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return {
       ...group,
       items: group.items.filter(item => {
-        if (item.href === '/admin/equipe' && activePlan.toLowerCase() === 'essencial') return false;
+        if (item.href === '/admin/equipe' && ['essencial', 'gratuito', 'free'].includes(activePlan.toLowerCase())) return false;
         
         if (user?.app_role === 'admin' || user?.app_role === 'master') return true;
         const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
