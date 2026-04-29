@@ -76,7 +76,11 @@ export function TableView({
               const status = statusConfig[lead.status] || statusConfig.novo;
               const recent = isRecent(lead.criado_em);
               return (
-                <tr key={lead.id} className="border-b border-border-light last:border-0 hover:bg-surface-hover transition-colors">
+                <tr 
+                  key={lead.id} 
+                  onClick={() => openAgendaModal(lead)}
+                  className="border-b border-border-light last:border-0 hover:bg-surface-hover transition-colors cursor-pointer"
+                >
                   {/* Nome + recent indicator */}
                   <td className="px-4 py-3 font-medium text-text-primary">
                     <div className="flex items-center gap-2">
@@ -110,7 +114,7 @@ export function TableView({
                   </td>
 
                   {/* WhatsApp (clickable) */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <a
                       href={getWhatsAppLink(lead.telefone)}
                       target="_blank"
@@ -141,7 +145,7 @@ export function TableView({
                   </td>
 
                   {/* Corretor */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <select
                       value={lead.corretor_id || ''}
                       onChange={(e) => updateCorretor(lead.id, e.target.value)}
@@ -168,7 +172,7 @@ export function TableView({
                   </td>
 
                   {/* Status dropdown (inline save) */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <select
                       value={lead.status}
                       onChange={(e) => updateStatus(lead.id, e.target.value as StatusLead)}
@@ -186,7 +190,7 @@ export function TableView({
                   </td>
 
                   {/* Actions */}
-                  <td className="px-2 py-3 text-right">
+                  <td className="px-2 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => openAgendaModal(lead)}
