@@ -293,7 +293,7 @@ export function AgendaModal({
                           ? 'bg-emerald-100 text-emerald-950 rounded-tr-none' 
                           : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
                       }`}>
-                        <p className="whitespace-pre-wrap">{msg.message_text}</p>
+                        <p className="whitespace-pre-wrap break-words">{msg.message_text}</p>
                         <p className="text-[9px] mt-1 opacity-50 text-right">
                           {new Date(msg.criado_em).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           {msg.direction === 'outbound' && ' ✓'}
