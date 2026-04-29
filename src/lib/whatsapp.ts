@@ -243,4 +243,37 @@ export async function saveMessageToHistory({
     console.error('❌ Falha catastrófica ao salvar histórico:', err);
   }
 }
+/**
+ * Verifica se já existe uma interação prévia (mensagens enviadas pelo corretor)
+ * no histórico do WhatsApp, para evitar que o bot responda chats antigos.
+ */
+export async function hasPriorInteraction(instanceName: string, remoteJid: string): Promise<boolean> {
+  if (PROVIDER !== 'evolution' || !EVOLUTION_API_KEY || !EVOLUTION_URL) return false;
 
+  try {
+    // Tenta buscar as últimas mensagens desse chat
+    const res = await fetch(getUrl(`/chat/findMessages/${instanceName}`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({
+        number: remoteJid.split('@')[0], // Evolution espera apenas o número ou JID dependendo da versão
+        count: 10
+      })
+    });
+
+    if (!res.ok) return false;
+    const data = await res.json();
+    const messages = Array.isArray(data) ? data : (data.messages || []);
+
+    if (!Array.isArray(messages)) return false;
+
+    // Se houver qualquer mensagem onde key.fromMe === true, houve interação humana/manual prévia
+    return messages.some((m: any) => m.key?.fromMe === true);
+  } catch (err) {
+    console.error('❌ Erro ao consultar histórico Evolution:', err);
+    return false;
+  }
+}

@@ -227,15 +227,25 @@ export async function POST(request: Request) {
            provider_id: payload.data?.key?.id
          });
 
-         const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
-         if (aiResponse) {
-             await processLead(lead, { 
-               forceAutoReply: !isGroup, 
-               customReply: isGroup ? undefined : aiResponse,
-               skipAutoReply: isGroup
-             });
-         }
-         return;
+          let skipAutoReply = isGroup;
+          if (!skipAutoReply && instanceName && remoteJid) {
+            const { hasPriorInteraction } = await import('@/lib/whatsapp');
+            const hasHistory = await hasPriorInteraction(instanceName, remoteJid);
+            if (hasHistory) {
+              console.log(`🕵️ Chat antigo detectado (Lead Existente) para ${sender}. Pulando saudação automática.`);
+              skipAutoReply = true;
+            }
+          }
+
+          const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
+          if (aiResponse) {
+              await processLead(lead, { 
+                forceAutoReply: !skipAutoReply && !isGroup, 
+                customReply: isGroup ? undefined : aiResponse,
+                skipAutoReply: skipAutoReply || isGroup
+              });
+          }
+          return;
       }
 
       let imovel_id: string | null = null;
@@ -332,7 +342,19 @@ export async function POST(request: Request) {
         provider_id: payload.data?.key?.id
       });
 
-      await processLead(newLead, { skipAutoReply: extracted.is_lead !== true || isGroup });
+      // Se for um lead NOVO, verificar se já existe histórico real no WhatsApp (interação humana prévia)
+      let skipAutoReply = extracted.is_lead !== true || isGroup;
+      
+      if (!skipAutoReply && instanceName && remoteJid) {
+        const { hasPriorInteraction } = await import('@/lib/whatsapp');
+        const hasHistory = await hasPriorInteraction(instanceName, remoteJid);
+        if (hasHistory) {
+          console.log(`🕵️ Chat antigo detectado (Lead Novo) para ${sender}. Pulando saudação automática.`);
+          skipAutoReply = true;
+        }
+      }
+
+      await processLead(newLead, { skipAutoReply });
     })();
 
     // Non-blocking background task
