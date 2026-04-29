@@ -59,11 +59,13 @@ export async function POST(request: Request) {
         const msgData = payload.data;
         const messageObj = msgData.message || (msgData.messages && msgData.messages[0]?.message);
         const key = msgData.key || (msgData.messages && msgData.messages[0]?.key);
+        const fromMe = key?.fromMe === true || key?.fromMe === 'true';
         
         remoteJid = key?.remoteJid || '';
         
-        // Outbound Message Detection
-        if (key?.fromMe) {
+        // Outbound Message Detection: Ignore messages sent from our own instance
+        if (fromMe) {
+          console.log(`📤 Mensagem de saída detectada (fromMe: true) para JID: ${remoteJid}. Ignorando processamento de lead.`);
           const phone = remoteJid.split('@')[0] || '';
           if (!phone) return;
 
