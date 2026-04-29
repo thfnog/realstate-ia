@@ -104,12 +104,22 @@ export async function POST(request: Request) {
           const leadName = (!lead.nome || lead.nome.startsWith('Lead #')) ? '' : lead.nome.split(' ')[0];
           const countryCode = imob?.config_pais || 'BR';
 
+          const iconMap: Record<string, string> = {
+            visita: '🏠 Visita',
+            reuniao: '🤝 Reunião',
+            assinatura: '✍️ Assinatura',
+            cartorio: '🏛️ Cartório',
+            vistoria: '🔍 Vistoria',
+            outro: '📌 Compromisso'
+          };
+          const tipoLabel = iconMap[data.tipo] || '📅 Compromisso';
+
           const msgBody = 
 `*Novo Agendamento Confirmado!* 📅
 
 Olá${leadName ? ` ${leadName}` : ''}, ${corretor ? `o ${corretor.nome}` : 'agendamos'} um encontro com você:
 
-📍 *Tipo:* ${data.tipo === 'visita' ? '🏠 Visita' : '🤝 Reunião'}
+📍 *Tipo:* ${tipoLabel}
 ⏰ *Hora:* ${dateStr}
 🏢 *Local:* ${data.local || 'A combinar'}
 📝 *Assunto:* ${data.titulo}

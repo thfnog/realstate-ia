@@ -364,6 +364,8 @@ export function AgendaModal({
                       <option value="visita">🏠 Visita</option>
                       <option value="reuniao">🤝 Reunião</option>
                       <option value="assinatura">✍️ Assinatura</option>
+                      <option value="cartorio">🏛️ Cartório</option>
+                      <option value="vistoria">🔍 Vistoria</option>
                     </select>
                   </div>
                   <div className="space-y-1">
@@ -385,6 +387,22 @@ export function AgendaModal({
                   value={newEvent.titulo}
                   onChange={e => setNewEvent({...newEvent, titulo: e.target.value})}
                   className="w-full text-xs p-2 rounded-lg border border-border bg-white focus:ring-2 focus:ring-primary/20 outline-none"
+                />
+
+                <input 
+                  type="text" 
+                  placeholder="Local (ex: Rua Augusta, 100)"
+                  value={newEvent.local}
+                  onChange={e => setNewEvent({...newEvent, local: e.target.value})}
+                  className="w-full text-xs p-2 rounded-lg border border-border bg-white focus:ring-2 focus:ring-primary/20 outline-none"
+                />
+
+                <textarea 
+                  placeholder="Observações / Notas internas"
+                  value={newEvent.descricao}
+                  onChange={e => setNewEvent({...newEvent, descricao: e.target.value})}
+                  className="w-full text-xs p-2 rounded-lg border border-border bg-white focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                  rows={2}
                 />
 
                 <button 
