@@ -170,8 +170,13 @@ export async function POST(request: Request) {
 
       const extracted = await extractLeadWithAI(text, imobiliaria_id);
 
-      if (extracted.is_lead === false) {
-        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia})`);
+      // Salvaguarda: Se for apenas saudação e a IA não identificou interesse, descartamos como ruído
+      const simpleGreetings = ['oi', 'olá', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'td bem', 'opa', 'blz', 'beleza'];
+      const textClean = text.toLowerCase().trim().replace(/[?!.]/g, '');
+      const isSimpleGreeting = textClean.length < 15 && simpleGreetings.includes(textClean);
+
+      if (extracted.is_lead === false || (isSimpleGreeting && !extracted.tipo_interesse && !extracted.freguesia)) {
+        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia || 'Saudação genérica'})`);
         return;
       }
 
