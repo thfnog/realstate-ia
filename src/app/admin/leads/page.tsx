@@ -294,6 +294,7 @@ export default function LeadsPage() {
         setSortOrder={setSortOrder}
         corretores={corretores}
         onAddLead={() => setShowManualModal(true)}
+        onRefresh={fetchLeads}
       />
 
       {loading ? (

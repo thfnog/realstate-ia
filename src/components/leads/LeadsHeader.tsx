@@ -19,6 +19,7 @@ interface LeadsHeaderProps {
   setSortOrder: (s: 'novo' | 'antigo' | 'interesse') => void;
   corretores: Corretor[];
   onAddLead: () => void;
+  onRefresh: () => void;
 }
 
 export function LeadsHeader({
@@ -38,7 +39,8 @@ export function LeadsHeader({
   sortOrder,
   setSortOrder,
   corretores,
-  onAddLead
+  onAddLead,
+  onRefresh
 }: LeadsHeaderProps) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
@@ -106,6 +108,14 @@ export function LeadsHeader({
             📊 Funil
           </button>
         </div>
+
+        <button 
+          onClick={onRefresh}
+          className="flex items-center justify-center p-2 rounded-xl bg-white border border-border text-text-muted hover:text-primary hover:border-primary transition-all shadow-sm"
+          title="Atualizar lista"
+        >
+          <span className="text-sm">🔄</span>
+        </button>
 
         <button 
           onClick={onAddLead}
