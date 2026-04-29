@@ -225,7 +225,7 @@ export async function POST(request: Request) {
            lead_id: lead.id,
            corretor_id: lead.corretor_id,
            direction: 'inbound',
-           message_text: isGroup ? `[Grupo: ${remoteJid.split('@')[0]}] ${text}` : text,
+           message_text: isGroup ? `[Grupo] ${name || sender}: ${text}` : text,
            provider_id: payload.data?.key?.id
          });
 
@@ -343,7 +343,7 @@ export async function POST(request: Request) {
         lead_id: newLead.id,
         corretor_id: newLead.corretor_id,
         direction: 'inbound',
-        message_text: isGroup ? `[Grupo: ${remoteJid.split('@')[0]}] ${text}` : text,
+        message_text: isGroup ? `[Grupo] ${name || sender}: ${text}` : text,
         provider_id: payload.data?.key?.id
       });
 
