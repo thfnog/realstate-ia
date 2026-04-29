@@ -12,6 +12,16 @@ export class MockLeadRepository implements ILeadRepository {
     
     // Filter by imobiliaria_id (simulating what RLS or manual filters do)
     leads = leads.filter(l => l.imobiliaria_id === filters.imobiliaria_id);
+    
+    if (filters.origem) leads = leads.filter(l => l.origem === filters.origem);
+    if (filters.finalidade) leads = leads.filter(l => l.finalidade === filters.finalidade);
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      leads = leads.filter(l => 
+        l.nome.toLowerCase().includes(s) || 
+        l.telefone.includes(s)
+      );
+    }
 
     const count = leads.length;
     

@@ -16,6 +16,13 @@ export class SupabaseLeadRepository implements ILeadRepository {
       query = query.neq('status', 'descartado');
     }
     if (filters.corretor_id) query = query.eq('corretor_id', filters.corretor_id);
+    if (filters.origem) query = query.eq('origem', filters.origem);
+    if (filters.finalidade) query = query.eq('finalidade', filters.finalidade);
+    
+    if (filters.search) {
+      const s = filters.search.trim();
+      query = query.or(`nome.ilike.%${s}%,telefone.ilike.%${s}%`);
+    }
     
     query = query.eq('imobiliaria_id', filters.imobiliaria_id);
 

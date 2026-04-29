@@ -59,6 +59,11 @@ export default function LeadsPage() {
       setLoading(true);
       const url = new URL('/api/leads', window.location.origin);
       if (statusFilter) url.searchParams.set('status', statusFilter);
+      if (origemFilter) url.searchParams.set('origem', origemFilter);
+      if (finalidadeFilter) url.searchParams.set('finalidade', finalidadeFilter);
+      if (corretorFilter) url.searchParams.set('corretor_id', corretorFilter);
+      if (searchQuery) url.searchParams.set('search', searchQuery);
+      
       url.searchParams.set('page', page.toString());
       url.searchParams.set('limit', limit.toString());
       
@@ -86,7 +91,11 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, page]);
+  }, [statusFilter, origemFilter, finalidadeFilter, corretorFilter, searchQuery, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, origemFilter, finalidadeFilter, corretorFilter, searchQuery]);
 
   useEffect(() => {
     fetchLeads();
@@ -253,16 +262,6 @@ export default function LeadsPage() {
   }
 
   const filteredLeads = leads
-    .filter(l => {
-      if (origemFilter && l.origem !== origemFilter) return false;
-      if (corretorFilter && l.corretor_id !== corretorFilter) return false;
-      if (finalidadeFilter && l.finalidade !== finalidadeFilter) return false;
-      if (searchQuery) {
-        const s = searchQuery.toLowerCase();
-        return l.nome.toLowerCase().includes(s) || l.telefone.includes(s);
-      }
-      return true;
-    })
     .sort((a, b) => {
       if (sortOrder === 'interesse') {
         const valA = a.finalidade || '';

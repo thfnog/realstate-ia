@@ -9,6 +9,9 @@ export interface LeadFilters extends PaginationParams {
   imobiliaria_id: string;
   status?: string;
   corretor_id?: string;
+  search?: string;
+  origem?: string;
+  finalidade?: string;
 }
 
 export interface ILeadRepository {
