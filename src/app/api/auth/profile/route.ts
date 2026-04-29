@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthFromCookies } from '@/lib/auth';
 import * as mock from '@/lib/mockDb';
+import bcrypt from 'bcryptjs';
 
 export async function GET() {
   try {
@@ -47,7 +48,7 @@ export async function PATCH(request: Request) {
     if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
-    const { nome, telefone } = body;
+    const { nome, telefone, senha } = body;
 
     if (mock.isMockMode()) {
       mock.seedTestData();
@@ -72,6 +73,11 @@ export async function PATCH(request: Request) {
         user.corretor_id = corretorId; // In-memory update
       } else {
         mock.updateCorretor(corretorId, { nome, telefone });
+      }
+
+      if (senha) {
+        const hash = await bcrypt.hash(senha, 10);
+        user.hash_senha = hash;
       }
 
       return NextResponse.json({ success: true, corretor_id: corretorId });
@@ -122,6 +128,25 @@ export async function PATCH(request: Request) {
         .eq('id', corretorId);
 
       if (updateError) throw updateError;
+    }
+
+    if (senha) {
+      const { data: userWithAuth, error: authIdError } = await supabaseAdmin
+        .from('usuarios')
+        .select('auth_id')
+        .eq('id', session.usuario_id)
+        .single();
+      
+      if (authIdError || !userWithAuth.auth_id) {
+        throw new Error('Usuário sem ID de autenticação vinculado');
+      }
+
+      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
+        userWithAuth.auth_id,
+        { password: senha }
+      );
+
+      if (passwordError) throw passwordError;
     }
 
     return NextResponse.json({ success: true, corretor_id: corretorId });

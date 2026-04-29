@@ -9,7 +9,8 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [form, setForm] = useState({ nome: '', telefone: '' });
+  const [form, setForm] = useState({ nome: '', telefone: '', senha: '' });
+  const [confirmarSenha, setConfirmarSenha] = useState('');
 
   async function fetchProfile() {
     try {
@@ -36,6 +37,19 @@ export default function PerfilPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    
+    if (form.senha && form.senha !== confirmarSenha) {
+      toast.error('As senhas não coincidem');
+      setSaving(false);
+      return;
+    }
+
+    if (form.senha && form.senha.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      setSaving(false);
+      return;
+    }
+
     const { nome, telefone } = form;
     try {
       const res = await fetch('/api/auth/profile', {
@@ -45,6 +59,8 @@ export default function PerfilPage() {
       });
       if (res.ok) {
         toast.success('Perfil atualizado com sucesso!');
+        setForm({ ...form, senha: '' });
+        setConfirmarSenha('');
         fetchProfile();
       } else {
         toast.error('Erro ao atualizar perfil');
@@ -109,6 +125,36 @@ export default function PerfilPage() {
             </div>
 
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border-light">
+            <div className="md:col-span-2">
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                <span className="p-1.5 bg-amber-50 text-amber-600 rounded-lg">🔒</span>
+                Alterar Senha
+              </h3>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">Deixe em branco para manter a senha atual</p>
+            </div>
+            
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nova Senha</label>
+              <input
+                type="password"
+                value={form.senha || ''}
+                onChange={e => setForm({ ...form, senha: e.target.value })}
+                placeholder="••••••••"
+                className="w-full px-4 py-3.5 rounded-xl border-2 border-border-light text-sm focus:outline-none focus:border-primary transition-all bg-surface-alt/30 font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Confirmar Nova Senha</label>
+              <input
+                type="password"
+                value={confirmarSenha}
+                onChange={e => setConfirmarSenha(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3.5 rounded-xl border-2 border-border-light text-sm focus:outline-none focus:border-primary transition-all bg-surface-alt/30 font-medium"
+              />
+            </div>
           </div>
 
           <div className="pt-4 border-t border-border-light flex justify-end">
