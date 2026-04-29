@@ -244,64 +244,79 @@ export async function saveMessageToHistory({
   }
 }
 /**
- * Verifica se já existe uma interação prévia (mensagens enviadas pelo corretor)
- * no histórico do WhatsApp, para evitar que o bot responda chats antigos.
+ * Verifica se já existe uma interação prévia no histórico do WhatsApp.
+ * Critérios:
+ * 1. Existe alguma mensagem enviada pelo corretor (fromMe: true)?
+ * 2. Existe alguma mensagem (de qualquer lado) com mais de 10 minutos de idade?
  */
 export async function hasPriorInteraction(instanceName: string, remoteJid: string): Promise<boolean> {
   if (PROVIDER !== 'evolution' || !EVOLUTION_API_KEY || !EVOLUTION_URL) return false;
 
   const jid = remoteJid.includes('@') ? remoteJid : `${remoteJid}@s.whatsapp.net`;
-  console.log(`🕵️ Verificando histórico Evolution para JID: ${jid} (Instância: ${instanceName})`);
+  const phone = jid.split('@')[0];
+  console.log(`🕵️ Analisando histórico profundo para JID: ${jid}`);
 
   try {
-    // 1. Tentar via findMessages (mais eficiente)
+    // Tentamos buscar as mensagens. Se findMessages falhar, tentamos fetchMessages.
+    let messages: any[] = [];
+    
     const res = await fetch(getUrl(`/chat/findMessages/${instanceName}`), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': EVOLUTION_API_KEY
-      },
-      body: JSON.stringify({
-        where: { key: { remoteJid: jid } },
-        limit: 50
-      })
+      headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+      body: JSON.stringify({ where: { key: { remoteJid: jid } }, limit: 50 })
     });
 
-    let messages = [];
     if (res.ok) {
       const data = await res.json();
       messages = Array.isArray(data) ? data : (data.messages || []);
     } else {
-      console.warn(`⚠️ findMessages falhou (${res.status}). Tentando fetchMessages...`);
-      // 2. Fallback para fetchMessages (mais lento mas às vezes mais confiável)
-      const resFetch = await fetch(getUrl(`/chat/fetchMessages/${instanceName}`), {
+      // Fallback para fetchMessages
+      const resFallback = await fetch(getUrl(`/chat/fetchMessages/${instanceName}`), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY
-        },
-        body: JSON.stringify({
-          number: jid.split('@')[0],
-          count: 50
-        })
+        headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+        body: JSON.stringify({ number: phone, count: 50 })
       });
-      if (resFetch.ok) {
-        const dataFetch = await resFetch.json();
-        messages = Array.isArray(dataFetch) ? dataFetch : (dataFetch.messages || []);
+      if (resFallback.ok) {
+        const dataFallback = await resFallback.json();
+        messages = Array.isArray(dataFallback) ? dataFallback : (dataFallback.messages || []);
       }
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      console.log(`🕵️ Histórico vazio ou inacessível para ${jid}.`);
+      console.log(`🕵️ [${phone}] Nenhum histórico encontrado na Evolution.`);
       return false;
     }
 
-    // Se houver qualquer mensagem onde key.fromMe === true, houve interação humana/manual prévia
-    const hasMe = messages.some((m: any) => m.key?.fromMe === true);
-    console.log(`🕵️ Resultado para ${jid}: ${hasMe ? 'INTERAÇÃO PRÉVIA DETECTADA' : 'CHAT LIMPO'}`);
-    return hasMe;
+    const now = Date.now();
+    const tenMinutesAgo = now - (10 * 60 * 1000);
+
+    let hasHumanMe = false;
+    let hasOldMessages = false;
+
+    for (const m of messages) {
+      // 1. Verificação fromMe (Corretor respondeu?)
+      if (m.key?.fromMe === true) {
+        // Verificar se não é o próprio bot (opcional, mas seguro)
+        const text = m.message?.conversation || m.message?.extendedTextMessage?.text || '';
+        const isBot = text.toLowerCase().includes('recebi seu interesse') || text.toLowerCase().includes('recebi o seu contacto');
+        if (!isBot) hasHumanMe = true;
+      }
+
+      // 2. Verificação de Idade (Mensagens antigas no chat?)
+      const msgTimestamp = (m.messageTimestamp || m.timestamp || 0) * 1000;
+      if (msgTimestamp > 0 && msgTimestamp < tenMinutesAgo) {
+        hasOldMessages = true;
+      }
+      
+      if (hasHumanMe || hasOldMessages) break;
+    }
+
+    const verdict = hasHumanMe || hasOldMessages;
+    console.log(`🕵️ [${phone}] Veredito: ${verdict ? 'CONVERSA ANTIGA' : 'CONVERSA NOVA'} (Broker: ${hasHumanMe}, Antiga: ${hasOldMessages})`);
+    return verdict;
+
   } catch (err) {
-    console.error('❌ Erro crítico ao consultar histórico Evolution:', err);
+    console.error(`❌ Falha na análise de histórico para ${phone}:`, err);
     return false;
   }
 }
