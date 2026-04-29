@@ -36,6 +36,27 @@ ALTER TABLE imoveis ADD COLUMN IF NOT EXISTS taxa_administracao_pct NUMERIC;
 ALTER TABLE imoveis ADD COLUMN IF NOT EXISTS video_url TEXT;
 ALTER TABLE imoveis ADD COLUMN IF NOT EXISTS tour_360_url TEXT;
 
--- 2. No constraint changes needed — the 'tipo', 'status', 'finalidade', 'negocio'
---    columns are TEXT type in Supabase so they accept any string value.
---    TypeScript types enforce the valid values at the application layer.
+-- 2. Update Enums (Run these individually if the migration fails due to transaction restrictions)
+-- NOTE: PostgreSQL ADD VALUE cannot be executed inside a transaction block in some versions.
+ALTER TYPE tipo_imovel ADD VALUE 'apartamento_duplex';
+ALTER TYPE tipo_imovel ADD VALUE 'cobertura';
+ALTER TYPE tipo_imovel ADD VALUE 'kitnet';
+ALTER TYPE tipo_imovel ADD VALUE 'flat';
+ALTER TYPE tipo_imovel ADD VALUE 'casa_condominio';
+ALTER TYPE tipo_imovel ADD VALUE 'sobrado';
+ALTER TYPE tipo_imovel ADD VALUE 'chacara';
+ALTER TYPE tipo_imovel ADD VALUE 'sitio';
+ALTER TYPE tipo_imovel ADD VALUE 'fazenda';
+ALTER TYPE tipo_imovel ADD VALUE 'lote';
+ALTER TYPE tipo_imovel ADD VALUE 'sala_comercial';
+ALTER TYPE tipo_imovel ADD VALUE 'galpao';
+ALTER TYPE tipo_imovel ADD VALUE 'barracao';
+
+ALTER TYPE status_imovel ADD VALUE 'alugado';
+ALTER TYPE status_imovel ADD VALUE 'indisponivel';
+ALTER TYPE status_imovel ADD VALUE 'em_reforma';
+
+ALTER TYPE negocio_imovel ADD VALUE 'misto';
+ALTER TYPE negocio_imovel ADD VALUE 'rural';
+ALTER TYPE negocio_imovel ADD VALUE 'industrial';
+

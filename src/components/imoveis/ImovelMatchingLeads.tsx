@@ -15,7 +15,8 @@ export default function ImovelMatchingLeads({ imovel }: ImovelMatchingLeadsProps
     async function fetchMatches() {
       try {
         const res = await fetch('/api/leads');
-        const allLeads: Lead[] = await res.json();
+        const result = await res.json();
+        const allLeads: Lead[] = result.data || [];
         
         // Logic de Matching
         const matches = allLeads.filter(lead => {

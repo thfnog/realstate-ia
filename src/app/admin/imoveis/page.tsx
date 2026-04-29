@@ -104,8 +104,8 @@ export default function ImoveisPage() {
     fetchImoveis();
   }, [page, filter, searchTerm]);
 
-  const proxyImage = (url: string) => {
-    if (!url) return '';
+  const proxyImage = (url: any) => {
+    if (!url || typeof url !== 'string') return '';
     if (url.includes('rodrigomartinatti.com.br')) {
       return `/api/proxy/image?url=${encodeURIComponent(url)}`;
     }
