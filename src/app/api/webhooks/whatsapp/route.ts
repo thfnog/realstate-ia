@@ -232,10 +232,13 @@ export async function POST(request: Request) {
           let skipAutoReply = isGroup;
           if (!skipAutoReply && instanceName && remoteJid) {
             const { hasPriorInteraction } = await import('@/lib/whatsapp');
+            console.log(`[Webhook] Verificando interação prévia (Lead Existente) para ${remoteJid}...`);
             const hasHistory = await hasPriorInteraction(instanceName, remoteJid);
             if (hasHistory) {
-              console.log(`🕵️ Chat antigo detectado (Lead Existente) para ${sender}. Pulando saudação automática.`);
+              console.log(`🕵️ Chat antigo detectado (Lead Existente) para ${sender}. Bot permanecerá em silêncio.`);
               skipAutoReply = true;
+            } else {
+              console.log(`✅ Chat novo confirmado (Lead Existente) para ${sender}. Procedendo com resposta do bot.`);
             }
           }
 
@@ -349,10 +352,13 @@ export async function POST(request: Request) {
       
       if (!skipAutoReply && instanceName && remoteJid) {
         const { hasPriorInteraction } = await import('@/lib/whatsapp');
+        console.log(`[Webhook] Verificando interação prévia para ${remoteJid}...`);
         const hasHistory = await hasPriorInteraction(instanceName, remoteJid);
         if (hasHistory) {
-          console.log(`🕵️ Chat antigo detectado (Lead Novo) para ${sender}. Pulando saudação automática.`);
+          console.log(`🕵️ Chat antigo detectado (Lead Novo) para ${sender}. Bot permanecerá em silêncio.`);
           skipAutoReply = true;
+        } else {
+          console.log(`✅ Chat novo confirmado para ${sender}. Procedendo com resposta do bot.`);
         }
       }
 

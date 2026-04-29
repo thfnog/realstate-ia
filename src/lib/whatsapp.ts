@@ -250,8 +250,11 @@ export async function saveMessageToHistory({
 export async function hasPriorInteraction(instanceName: string, remoteJid: string): Promise<boolean> {
   if (PROVIDER !== 'evolution' || !EVOLUTION_API_KEY || !EVOLUTION_URL) return false;
 
+  const jid = remoteJid.includes('@') ? remoteJid : `${remoteJid}@s.whatsapp.net`;
+  console.log(`🕵️ Verificando histórico Evolution para JID: ${jid} (Instância: ${instanceName})`);
+
   try {
-    // Tenta buscar as últimas mensagens desse chat usando o formato 'where' mais compatível
+    // 1. Tentar via findMessages (mais eficiente)
     const res = await fetch(getUrl(`/chat/findMessages/${instanceName}`), {
       method: 'POST',
       headers: {
@@ -259,46 +262,46 @@ export async function hasPriorInteraction(instanceName: string, remoteJid: strin
         'apikey': EVOLUTION_API_KEY
       },
       body: JSON.stringify({
-        where: {
-          key: {
-            remoteJid: remoteJid.includes('@') ? remoteJid : `${remoteJid}@s.whatsapp.net`
-          }
-        },
-        limit: 10
+        where: { key: { remoteJid: jid } },
+        limit: 50
       })
     });
 
-    if (!res.ok) {
-      console.warn(`⚠️ findMessages falhou (${res.status}). Tentando fallback por número simples.`);
-      // Fallback para versões que esperam apenas o número no corpo
-      const resFallback = await fetch(getUrl(`/chat/findMessages/${instanceName}`), {
+    let messages = [];
+    if (res.ok) {
+      const data = await res.json();
+      messages = Array.isArray(data) ? data : (data.messages || []);
+    } else {
+      console.warn(`⚠️ findMessages falhou (${res.status}). Tentando fetchMessages...`);
+      // 2. Fallback para fetchMessages (mais lento mas às vezes mais confiável)
+      const resFetch = await fetch(getUrl(`/chat/fetchMessages/${instanceName}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': EVOLUTION_API_KEY
         },
         body: JSON.stringify({
-          number: remoteJid.split('@')[0],
-          count: 10
+          number: jid.split('@')[0],
+          count: 50
         })
       });
-      if (!resFallback.ok) return false;
-      const fallbackData = await resFallback.json();
-      const messages = Array.isArray(fallbackData) ? fallbackData : (fallbackData.messages || []);
-      return messages.some((m: any) => m.key?.fromMe === true);
+      if (resFetch.ok) {
+        const dataFetch = await resFetch.json();
+        messages = Array.isArray(dataFetch) ? dataFetch : (dataFetch.messages || []);
+      }
     }
 
-    const data = await res.json();
-    const messages = Array.isArray(data) ? data : (data.messages || []);
-
-    if (!Array.isArray(messages)) return false;
+    if (!Array.isArray(messages) || messages.length === 0) {
+      console.log(`🕵️ Histórico vazio ou inacessível para ${jid}.`);
+      return false;
+    }
 
     // Se houver qualquer mensagem onde key.fromMe === true, houve interação humana/manual prévia
     const hasMe = messages.some((m: any) => m.key?.fromMe === true);
-    console.log(`🕵️ Verificação de histórico para ${remoteJid}: ${hasMe ? 'ENCONTRADO' : 'LIMPO'}`);
+    console.log(`🕵️ Resultado para ${jid}: ${hasMe ? 'INTERAÇÃO PRÉVIA DETECTADA' : 'CHAT LIMPO'}`);
     return hasMe;
   } catch (err) {
-    console.error('❌ Erro ao consultar histórico Evolution:', err);
+    console.error('❌ Erro crítico ao consultar histórico Evolution:', err);
     return false;
   }
 }
