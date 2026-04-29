@@ -20,7 +20,8 @@ export default function PerfilPage() {
         setUser(data);
         setForm({
           nome: data.corretores?.nome || '',
-          telefone: data.corretores?.telefone || ''
+          telefone: data.corretores?.telefone || '',
+          senha: ''
         });
       }
     } catch (err) {
@@ -123,7 +124,7 @@ export default function PerfilPage() {
                 className="w-full px-4 py-3.5 rounded-xl border-2 border-border-light text-sm focus:outline-none focus:border-primary transition-all bg-surface-alt/30 font-medium"
               />
             </div>
-
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border-light">
             <div className="md:col-span-2">
