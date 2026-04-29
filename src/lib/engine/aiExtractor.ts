@@ -12,6 +12,7 @@ export interface AILeadProfile {
   concelho?: string;  // Cidade
   orcamento?: number;
   quartos?: number;
+  finalidade?: 'comprar' | 'alugar' | 'investir';
   is_lead: boolean; // TRUE if it is real estate related, FALSE if noise/social
   resumo_ia?: string;
 }
