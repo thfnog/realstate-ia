@@ -261,7 +261,7 @@ export default function LeadsPage() {
     }
   }
 
-  const filteredLeads = leads
+  const filteredLeads = [...leads]
     .sort((a, b) => {
       if (sortOrder === 'interesse') {
         const valA = a.finalidade || '';

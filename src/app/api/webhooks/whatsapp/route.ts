@@ -274,6 +274,7 @@ export async function POST(request: Request) {
         email: null,
         moeda,
         tipo_interesse: extracted.tipo_interesse || null,
+        finalidade: (extracted.finalidade as any) || null,
         orcamento: extracted.orcamento || null,
         quartos_interesse: extracted.quartos || null,
         bairros_interesse: extracted.freguesia ? [extracted.freguesia] : [],

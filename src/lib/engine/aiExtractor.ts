@@ -69,17 +69,19 @@ ${feedbackExamples ? `EXEMPLOS DE APRENDIZADO (FEEDBACK DO USUÁRIO):\n${feedbac
 REGRAS DE EXTRAÇÃO:
 1. Extraia o nome se mencionado de forma clara (ex: "Sou o Carlos").
 2. Identifique o tipo: 'apartamento', 'casa' ou 'terreno'.
-3. Identifique o bairro (freguesia) e cidade (concelho).
-4. Converta valores monetários para números puros.
-5. Retorne APENAS um objeto JSON puro.
+3. Identifique a finalidade: 'comprar', 'alugar' ou 'investir'.
+4. Identifique o bairro (freguesia) e cidade (concelho).
+5. Converta valores monetários para números puros.
+6. Retorne APENAS um objeto JSON puro.
 
 EXEMPLO DE SAÍDA (LEAD):
 {
   "is_lead": true,
   "nome": "Roberto",
   "tipo_interesse": "casa",
+  "finalidade": "comprar",
   "freguesia": "Swiss Park",
-  "resumo_ia": "Cliente busca casa de alto padrão."
+  "resumo_ia": "Cliente busca casa de alto padrão para compra."
 }
 
 EXEMPLO DE SAÍDA (RUÍDO/STATUS):
