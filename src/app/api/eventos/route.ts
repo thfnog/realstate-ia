@@ -16,7 +16,10 @@ export async function GET(request: Request) {
 
     const cookieStore = await cookies();
     const token = cookieStore.get('auth-token')?.value || '';
-    const client = getUserSupabaseClient(token);
+    
+    const { supabaseAdmin } = await import('@/lib/supabase');
+    const isAdmin = session.app_role === 'admin' || session.app_role === 'master';
+    const client = isAdmin ? supabaseAdmin : getUserSupabaseClient(token);
     const repository = getEventoRepository(client);
 
     const events = await repository.findAll({

@@ -32,7 +32,11 @@ export async function GET(request: Request) {
   // Initialize Repository
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value || '';
-  const client = getUserSupabaseClient(token);
+  
+  // For Admin/Master, use supabaseAdmin to bypass RLS and ensure they see everything.
+  // For Corretor, use a client bound to their token to respect RLS.
+  const isAdmin = session.app_role === 'admin' || session.app_role === 'master';
+  const client = isAdmin ? supabaseAdmin : getUserSupabaseClient(token);
   const repository = getLeadRepository(client);
 
   // Fetch leads using the repository (handles both Mock and Supabase/RLS)
