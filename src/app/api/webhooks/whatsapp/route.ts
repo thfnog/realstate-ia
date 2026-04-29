@@ -109,12 +109,8 @@ export async function POST(request: Request) {
         const participantJid = key?.participant || '';
         
         if (isGroup) {
-          if (!participantJid) {
-            console.log(`🚫 Mensagem de grupo ignorada (sem participante identificado): ${remoteJid}`);
-            return;
-          }
-          sender = participantJid.split('@')[0] || '';
-          console.log(`👥 Mensagem de grupo detectada. Remetente: ${sender} (Grupo: ${remoteJid})`);
+          console.log(`👥 Mensagem de grupo ignorada (Lead Generation bloqueada para grupos): ${remoteJid}`);
+          return;
         } else {
           sender = remoteJid.split('@')[0] || '';
         }
@@ -229,7 +225,7 @@ export async function POST(request: Request) {
            provider_id: payload.data?.key?.id
          });
 
-          let skipAutoReply = isGroup;
+          let skipAutoReply: boolean = isGroup;
           if (!skipAutoReply && instanceName && remoteJid) {
             const { hasPriorInteraction } = await import('@/lib/whatsapp');
             console.log(`[Webhook] Verificando interação prévia (Lead Existente) para ${remoteJid}...`);
@@ -348,7 +344,7 @@ export async function POST(request: Request) {
       });
 
       // Se for um lead NOVO, verificar se já existe histórico real no WhatsApp (interação humana prévia)
-      let skipAutoReply = extracted.is_lead !== true || isGroup;
+      let skipAutoReply: boolean = extracted.is_lead !== true || isGroup;
       
       if (!skipAutoReply && instanceName && remoteJid) {
         const { hasPriorInteraction } = await import('@/lib/whatsapp');
