@@ -131,14 +131,18 @@ export async function PATCH(request: Request) {
     }
 
     if (senha) {
+      console.log(`[PROFILE] Tentando atualizar senha para usuario_id: ${session.usuario_id}`);
+      
+      // Get auth_id from the user record we already have or fetch it
       const { data: userWithAuth, error: authIdError } = await supabaseAdmin
         .from('usuarios')
         .select('auth_id')
         .eq('id', session.usuario_id)
         .single();
       
-      if (authIdError || !userWithAuth.auth_id) {
-        throw new Error('Usuário sem ID de autenticação vinculado');
+      if (authIdError || !userWithAuth?.auth_id) {
+        console.error('[PROFILE] Erro ao buscar auth_id:', authIdError);
+        throw new Error('Seu usuário não possui um ID de autenticação vinculado. Entre em contato com o suporte.');
       }
 
       const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -146,7 +150,12 @@ export async function PATCH(request: Request) {
         { password: senha }
       );
 
-      if (passwordError) throw passwordError;
+      if (passwordError) {
+        console.error('[PROFILE] Erro no Supabase Auth:', passwordError);
+        throw new Error(`Erro na autenticação: ${passwordError.message}`);
+      }
+      
+      console.log('[PROFILE] Senha atualizada com sucesso no Supabase Auth');
     }
 
     return NextResponse.json({ success: true, corretor_id: corretorId });

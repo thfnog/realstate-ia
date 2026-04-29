@@ -64,7 +64,8 @@ export default function PerfilPage() {
         setConfirmarSenha('');
         fetchProfile();
       } else {
-        toast.error('Erro ao atualizar perfil');
+        const errorData = await res.json();
+        toast.error(errorData.error || 'Erro ao atualizar perfil');
       }
     } catch (err) {
       toast.error('Erro de conexão');
