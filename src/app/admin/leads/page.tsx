@@ -33,6 +33,7 @@ export default function LeadsPage() {
   const [origemFilter, setOrigemFilter] = useState<string>('');
   const [corretorFilter, setCorretorFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [whatsappType, setWhatsappType] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'novo' | 'antigo' | 'interesse'>('novo');
   const [resending, setResending] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -63,6 +64,7 @@ export default function LeadsPage() {
       if (finalidadeFilter) url.searchParams.set('finalidade', finalidadeFilter);
       if (corretorFilter) url.searchParams.set('corretor_id', corretorFilter);
       if (searchQuery) url.searchParams.set('search', searchQuery);
+      if (whatsappType) url.searchParams.set('whatsapp_type', whatsappType);
       
       url.searchParams.set('page', page.toString());
       url.searchParams.set('limit', limit.toString());
@@ -91,11 +93,11 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, origemFilter, finalidadeFilter, corretorFilter, searchQuery, page]);
+  }, [statusFilter, origemFilter, finalidadeFilter, corretorFilter, searchQuery, whatsappType, page]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, origemFilter, finalidadeFilter, corretorFilter, searchQuery]);
+  }, [statusFilter, origemFilter, finalidadeFilter, corretorFilter, searchQuery, whatsappType]);
 
   useEffect(() => {
     fetchLeads();
@@ -289,6 +291,8 @@ export default function LeadsPage() {
         setStatusFilter={setStatusFilter}
         finalidadeFilter={finalidadeFilter}
         setFinalidadeFilter={setFinalidadeFilter}
+        whatsappType={whatsappType}
+        setWhatsappType={setWhatsappType}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
         corretores={corretores}

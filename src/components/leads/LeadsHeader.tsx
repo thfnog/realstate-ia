@@ -17,6 +17,8 @@ interface LeadsHeaderProps {
   setFinalidadeFilter: (f: string) => void;
   sortOrder: 'novo' | 'antigo' | 'interesse';
   setSortOrder: (s: 'novo' | 'antigo' | 'interesse') => void;
+  whatsappType: string;
+  setWhatsappType: (t: string) => void;
   corretores: Corretor[];
   onAddLead: () => void;
   onRefresh: () => void;
@@ -38,6 +40,8 @@ export function LeadsHeader({
   setFinalidadeFilter,
   sortOrder,
   setSortOrder,
+  whatsappType,
+  setWhatsappType,
   corretores,
   onAddLead,
   onRefresh
@@ -158,6 +162,16 @@ export function LeadsHeader({
             <option value="webhook_grupozap">Grupo OLX</option>
             <option value="whatsapp">WhatsApp</option>
             <option value="manual">Manual</option>
+          </select>
+
+          <select 
+            value={whatsappType}
+            onChange={(e) => setWhatsappType(e.target.value)}
+            className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-border bg-white text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          >
+            <option value="">📱 Tipo WhatsApp</option>
+            <option value="particular">Particular (Direto)</option>
+            <option value="group">Vindo de Grupos</option>
           </select>
 
           <select

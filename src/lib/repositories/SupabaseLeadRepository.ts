@@ -19,6 +19,13 @@ export class SupabaseLeadRepository implements ILeadRepository {
     if (filters.origem) query = query.eq('origem', filters.origem);
     if (filters.finalidade) query = query.eq('finalidade', filters.finalidade);
     
+    if (filters.whatsapp_type === 'group') {
+      query = query.ilike('portal_origem', '%Grupo%');
+    } else if (filters.whatsapp_type === 'particular') {
+      query = query.not('portal_origem', 'ilike', '%Grupo%');
+      query = query.eq('origem', 'whatsapp');
+    }
+    
     if (filters.search) {
       const s = filters.search.trim();
       query = query.or(`nome.ilike.%${s}%,telefone.ilike.%${s}%`);

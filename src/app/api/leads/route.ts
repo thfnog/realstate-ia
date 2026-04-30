@@ -47,6 +47,7 @@ export async function GET(request: Request) {
     origem: searchParams.get('origem') || undefined,
     finalidade: searchParams.get('finalidade') || undefined,
     search: searchParams.get('search') || undefined,
+    whatsapp_type: searchParams.get('whatsapp_type') as any || undefined,
     page,
     limit
   });
