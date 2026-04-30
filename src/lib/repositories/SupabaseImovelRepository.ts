@@ -23,6 +23,7 @@ export class SupabaseImovelRepository implements IImovelRepository {
       query = query.or(`titulo.ilike.%${filters.search}%,referencia.ilike.%${filters.search}%,concelho.ilike.%${filters.search}%,freguesia.ilike.%${filters.search}%`);
     }
 
+    query = query.order('status', { ascending: true });
     query = query.order('criado_em', { ascending: false });
 
     if (filters.page && filters.limit) {
