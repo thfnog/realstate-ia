@@ -129,7 +129,7 @@ function transformToImovel(raw: any, imobiliaria_id: string): Partial<Imovel> {
     fotos = a.imagens
       .filter((img: any) => img.published === 1)
       .map((img: any, idx: number) => ({
-        url_media: img.url || img.nome,
+        url_media: img.imagemfull || img.imagem || img.nome,
         ordem: idx,
         is_capa: idx === 0,
         tipo_media: 'imagem'
