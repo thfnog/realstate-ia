@@ -101,7 +101,8 @@ export function getConfigByCode(code: CountryCode): CountryConfig {
 /**
  * Formats a monetary value according to the active country's config.
  */
-export function formatCurrency(value: number, config?: CountryConfig): string {
+export function formatCurrency(value: number | null | undefined, config?: CountryConfig): string {
+  if (value === null || value === undefined) return '—';
   const c = config || getConfig();
   return value.toLocaleString(c.currency.locale, {
     style: 'currency',
