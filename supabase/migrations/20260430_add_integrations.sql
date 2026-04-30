@@ -29,7 +29,7 @@ CREATE POLICY "Enable read for users of the same imobiliaria" ON imobiliaria_int
 CREATE POLICY "Enable all for admin" ON imobiliaria_integracoes
     FOR ALL USING (
         auth.uid() IN (
-            SELECT auth_user_id FROM usuarios WHERE role = 'admin'
+            SELECT auth_id FROM usuarios WHERE role = 'admin' OR role = 'master'
         )
     );
 
