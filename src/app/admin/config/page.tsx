@@ -25,6 +25,15 @@ export default function ConfigPage() {
   const [horarioFim, setHorarioFim] = useState('18:00');
   const [saving, setSaving] = useState(false);
   const [activeModules, setActiveModules] = useState<string[]>([]);
+  
+  // Integrations state
+  const [widesysUrl, setWidesysUrl] = useState('');
+  const [widesysUser, setWidesysUser] = useState('');
+  const [widesysPass, setWidesysPass] = useState('');
+  const [widesysActive, setWidesysActive] = useState(false);
+  const [widesysLastSync, setWidesysLastSync] = useState('');
+  const [savingWidesys, setSavingWidesys] = useState(false);
+  const [syncingWidesys, setSyncingWidesys] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -46,6 +55,19 @@ export default function ConfigPage() {
           // Set business hours from DB if exist
           if (data.horario_inicio) setHorarioInicio(data.horario_inicio);
           if (data.horario_fim) setHorarioFim(data.horario_fim);
+          
+          // Fetch integrations
+          fetch(`/api/admin/integrations?imobiliaria_id=${data.id}`)
+            .then(res => res.json())
+            .then(intData => {
+              if (intData && intData.config) {
+                setWidesysUrl(intData.config.url || '');
+                setWidesysUser(intData.config.username || '');
+                setWidesysPass(intData.config.password || '');
+                setWidesysActive(intData.active || false);
+                if (intData.last_sync) setWidesysLastSync(new Date(intData.last_sync).toLocaleString('pt-BR'));
+              }
+            });
         }
         setLoading(false);
       });
@@ -277,6 +299,131 @@ export default function ConfigPage() {
               <p className="text-xs text-text-muted">Recepção de leads diretos pelo WhatsApp Business</p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* INTEGRAÇÕES - WIDESYS */}
+      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">🔄 Integração de Imóveis (Widesys / Joomla)</h2>
+            <p className="text-sm text-text-secondary mt-1">
+              Configure a sincronização automática de imóveis a partir do site da imobiliária.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-text-secondary">Sincronização Ativa?</span>
+            <button 
+              onClick={() => setWidesysActive(!widesysActive)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${widesysActive ? 'bg-emerald-500' : 'bg-slate-300'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${widesysActive ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="col-span-1 sm:col-span-2">
+            <label className="block text-xs font-bold text-text-muted uppercase mb-1">URL da API (ex: https://site.com.br/api/index.php/v1)</label>
+            <input 
+              type="text" 
+              value={widesysUrl}
+              onChange={(e) => setWidesysUrl(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-text-muted uppercase mb-1">E-mail (Autenticação)</label>
+            <input 
+              type="email" 
+              value={widesysUser}
+              onChange={(e) => setWidesysUser(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-text-muted uppercase mb-1">Senha (API)</label>
+            <input 
+              type="password" 
+              value={widesysPass}
+              onChange={(e) => setWidesysPass(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-border-light pt-4">
+          <div className="text-xs text-text-muted">
+            {widesysLastSync ? (
+              <span>Última sincronização: <strong className="text-text-primary">{widesysLastSync}</strong></span>
+            ) : (
+              <span>Nenhuma sincronização realizada ainda.</span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={async () => {
+                setSavingWidesys(true);
+                try {
+                  const res = await fetch('/api/admin/integrations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      imobiliaria_id: imobId,
+                      active: widesysActive,
+                      config: { url: widesysUrl, username: widesysUser, password: widesysPass }
+                    })
+                  });
+                  if (res.ok) alert('✅ Integração salva com sucesso!');
+                  else alert('❌ Erro ao salvar integração.');
+                } catch {
+                  alert('❌ Falha na conexão.');
+                } finally {
+                  setSavingWidesys(false);
+                }
+              }}
+              disabled={savingWidesys}
+              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-all disabled:opacity-50"
+            >
+              {savingWidesys ? 'Salvando...' : 'Salvar Configuração'}
+            </button>
+
+            <button
+              onClick={async () => {
+                if (!widesysUrl) return alert('Configure e salve a URL primeiro.');
+                setSyncingWidesys(true);
+                try {
+                  const res = await fetch('/api/master/integrations/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imobiliaria_id: imobId, provider: 'widesys' })
+                  });
+                  const data = await res.json();
+                  if (res.ok && data.results) {
+                    alert(`✅ Sincronização concluída!\nInseridos: ${data.results[0]?.totalInserted}\nAtualizados: ${data.results[0]?.totalUpdated}\nDesativados: ${data.results[0]?.totalDeactivated}`);
+                    setWidesysLastSync(new Date().toLocaleString('pt-BR'));
+                  } else {
+                    alert('❌ Erro na sincronização: ' + (data.error || 'Desconhecido'));
+                  }
+                } catch (err: any) {
+                  alert('❌ Falha na comunicação: ' + err.message);
+                } finally {
+                  setSyncingWidesys(false);
+                }
+              }}
+              disabled={syncingWidesys || !widesysActive}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {syncingWidesys ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Sincronizando...
+                </>
+              ) : (
+                <>🔄 Forçar Sincronização</>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

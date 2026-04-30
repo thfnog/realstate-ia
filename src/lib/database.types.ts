@@ -15,6 +15,19 @@ export type Imobiliaria = {
   criado_em: string;
 };
 
+export type IntegracaoProvider = 'widesys' | 'xml_padrao' | 'ego';
+
+export type ImobiliariaIntegracao = {
+  id: string;
+  imobiliaria_id: string;
+  provider: IntegracaoProvider;
+  config: any; // JSONB
+  active: boolean;
+  last_sync: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Role = 'master' | 'admin' | 'corretor';
 
 export type Usuario = {
@@ -142,6 +155,8 @@ export type Imovel = {
   status: StatusImovel;
   fotos: ImovelFoto[];
   comissao_venda?: number;
+  origin_provider?: string | null;
+  origin_id?: string | null;
   criado_em: string;
 };
 
