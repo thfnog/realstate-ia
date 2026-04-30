@@ -22,7 +22,7 @@ ALTER TABLE imobiliaria_integracoes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Enable read for users of the same imobiliaria" ON imobiliaria_integracoes
     FOR SELECT USING (
         auth.uid() IN (
-            SELECT auth_user_id FROM usuarios WHERE imobiliaria_id = imobiliaria_integracoes.imobiliaria_id
+            SELECT auth_id FROM usuarios WHERE imobiliaria_id = imobiliaria_integracoes.imobiliaria_id
         )
     );
 
