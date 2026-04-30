@@ -31,6 +31,7 @@ interface AgendaModalProps {
   setSendingMsg: (val: boolean) => void;
   setMsgStatus: (val: 'idle' | 'success' | 'error') => void;
   updateStatus: (id: string, status: StatusLead) => void;
+  deleteLead: (id: string, nome: string) => void;
   corretores: Corretor[];
 }
 
@@ -51,6 +52,7 @@ export function AgendaModal({
   setSendingMsg,
   setMsgStatus,
   updateStatus,
+  deleteLead,
   corretores
 }: AgendaModalProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,38 @@ export function AgendaModal({
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (confirm('Marcar como "Não é Lead"?')) {
+                  updateStatus(selectedLead.id, 'sem_interesse');
+                }
+              }}
+              className="px-3 py-2 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-xl hover:bg-slate-200 transition-all"
+            >
+              🚫 Não é Lead
+            </button>
+
+            <button
+              onClick={() => {
+                if (confirm('Deseja DESCARTAR este lead?')) {
+                  updateStatus(selectedLead.id, 'descartado');
+                }
+              }}
+              className="px-3 py-2 bg-orange-50 text-orange-600 text-[10px] font-black uppercase rounded-xl hover:bg-orange-100 transition-all"
+            >
+              🗑️ Descartar
+            </button>
+
+            <button
+              onClick={() => {
+                deleteLead(selectedLead.id, selectedLead.nome);
+                setSelectedLead(null);
+              }}
+              className="px-3 py-2 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded-xl hover:bg-red-100 transition-all"
+            >
+              ❌ Excluir
+            </button>
+
             {(selectedLead.status === 'negociacao' || selectedLead.status === 'contrato') && (
               <Link
                 href={`/admin/contratos/novo?leadId=${selectedLead.id}&imovelId=${selectedLead.imovel_id || ''}`}
