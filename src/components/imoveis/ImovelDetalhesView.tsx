@@ -210,7 +210,7 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                     <div className="space-y-3">
                        <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Útil</span> <span className="font-bold">{imovel.area_util || '—'} m²</span></div>
                        {imovel.area_privativa && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Privativa</span> <span className="font-bold">{imovel.area_privativa} m²</span></div>}
-                       {imovel.area_comum && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Comum</span> <span className="font-bold">{imovel.area_comum} m²</span></div>}
+                       {imovel.area_bruta && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Bruta</span> <span className="font-bold">{imovel.area_bruta} m²</span></div>}
                        {imovel.area_terreno && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área do Terreno</span> <span className="font-bold">{imovel.area_terreno} m²</span></div>}
                     </div>
                  </div>

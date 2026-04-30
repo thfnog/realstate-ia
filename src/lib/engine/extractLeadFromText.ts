@@ -14,6 +14,7 @@ export interface ExtractedLeadProfile {
   concelho?: string;  // Cidade
   orcamento?: number;
   quartos?: number;
+  vagas?: number;
 }
 
 export function extractLeadFromText(text: string): ExtractedLeadProfile {
@@ -62,10 +63,17 @@ export function extractLeadFromText(text: string): ExtractedLeadProfile {
     }
   }
 
-  // 4. Extração de Quartos
-  const roomsMatch = normalized.match(/(\d)\s*(quarto|dormitorio|suíte|suite)/);
+  // 4. Extração de Quartos (Handles "3 quartos" or "3 a 4 quartos")
+  const roomsMatch = normalized.match(/(\d)\s*(a|ou|e)?\s*(\d)?\s*(quarto|dormitorio|suíte|suite)/);
   if (roomsMatch) {
-    profile.quartos = parseInt(roomsMatch[1]);
+    // If range like "3 a 4", take the highest number (4)
+    profile.quartos = roomsMatch[3] ? parseInt(roomsMatch[3]) : parseInt(roomsMatch[1]);
+  }
+
+  // 5. Extração de Vagas/Garagem (Ex: "2 vagas", "mais de 2 garagens")
+  const vagasMatch = normalized.match(/(\d)\s*(vaga|garagem|garagens|estacionamento)/);
+  if (vagasMatch) {
+    profile.vagas = parseInt(vagasMatch[1]);
   }
 
   return profile;

@@ -14,6 +14,7 @@ import type { Lead, Corretor } from '@/lib/database.types';
 import { checkCarteira } from './checkCarteira';
 import { assignCorretor } from './assignCorretor';
 import { recommendImoveis } from './recommendImoveis';
+import { extractLeadFromText } from './extractLeadFromText';
 import { sendBriefing } from './sendBriefing';
 import { sendAutoReplyToLead } from './sendAutoReply';
 import { getConfigByCode } from '@/lib/countryConfig';
@@ -143,6 +144,30 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
         .from('leads')
         .update({ corretor_id: corretor.id })
         .eq('id', lead.id);
+    }
+
+    // Step 2.5: Extract interests from text (if any) and update lead
+    if (lead.descricao_interesse && lead.origem === 'whatsapp') {
+       console.log('🤖 Step 2.5: Extraindo interesses do texto...');
+       const profile = extractLeadFromText(lead.descricao_interesse);
+       
+       const updates: any = {};
+       if (profile.tipo_interesse) updates.tipo_interesse = profile.tipo_interesse;
+       if (profile.quartos) updates.quartos_interesse = profile.quartos;
+       if (profile.orcamento) updates.orcamento = profile.orcamento;
+       if (profile.freguesia) updates.bairros_interesse = [profile.freguesia];
+       if (profile.vagas) updates.vagas_interesse = profile.vagas;
+
+       if (Object.keys(updates).length > 0) {
+          console.log(`  → Interesses extraídos: ${JSON.stringify(updates)}`);
+          if (mock.isMockMode()) {
+             mock.updateLead(lead.id, updates);
+          } else {
+             await supabaseAdmin.from('leads').update(updates).eq('id', lead.id);
+          }
+          // Update local lead object for the matching step
+          Object.assign(lead, updates);
+       }
     }
 
     // Step 3: Recommend properties

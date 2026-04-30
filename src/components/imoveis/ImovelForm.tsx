@@ -457,9 +457,9 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Comum (m²)</label>
-                      <input type="number" value={formData.area_comum ?? ''}
-                        onChange={e => setFormData({...formData, area_comum: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Bruta (m²)</label>
+                      <input type="number" value={formData.area_bruta ?? ''}
+                        onChange={e => setFormData({...formData, area_bruta: e.target.value === '' ? null : parseFloat(e.target.value)})}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>
