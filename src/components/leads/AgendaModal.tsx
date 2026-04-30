@@ -119,9 +119,21 @@ export function AgendaModal({
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                if (confirm('Marcar como "Não é Lead"?')) {
-                  updateStatus(selectedLead.id, 'sem_interesse');
+              onClick={async () => {
+                if (confirm('Marcar como "Não é Lead"? Isso ajudará a IA a aprender e o lead será removido.')) {
+                  try {
+                    const res = await fetch(`/api/leads/${selectedLead.id}/feedback`, { method: 'POST' });
+                    if (res.ok) {
+                      toast.success('Feedback enviado para a IA. O lead será removido.');
+                      setSelectedLead(null);
+                      // O ideal aqui seria dar um refresh na lista de leads. 
+                      // Como estamos no componente AgendaModal, vamos forçar um reload para garantir a consistência com o Kanban.
+                      window.location.reload();
+                    }
+                  } catch (err) {
+                    toast.error('Erro ao enviar feedback para a IA');
+                    console.error(err);
+                  }
                 }
               }}
               className="px-3 py-2 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-xl hover:bg-slate-200 transition-all"
