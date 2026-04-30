@@ -79,6 +79,7 @@ const masterNavGroups = [
     label: 'Infraestrutura',
     module: 'master',
     items: [
+      { href: '/admin/master/integrations', label: 'Integrações (APIs)', icon: '🔄' },
       { href: '/admin/master/status', label: 'Status do Sistema', icon: '⚡' },
       { href: '/admin/master/config', label: 'Configuração Global', icon: '⚙️' },
     ]
