@@ -15,8 +15,12 @@ export interface SyncResult {
 export async function runSyncForImobiliaria(imobiliariaId?: string, providerId?: IntegracaoProvider): Promise<SyncResult[]> {
   let query = supabaseAdmin
     .from('imobiliaria_integracoes')
-    .select('*')
-    .eq('active', true);
+    .select('*');
+
+  // Only filter by active for global cron (no imobiliariaId)
+  if (!imobiliariaId) {
+    query = query.eq('active', true);
+  }
 
   if (imobiliariaId) {
     query = query.eq('imobiliaria_id', imobiliariaId);
