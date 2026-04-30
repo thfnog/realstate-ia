@@ -109,7 +109,22 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
     }
   };
 
-  const progress = (Object.keys(formData).length / 30) * 100;
+  const calculateProgress = () => {
+    const fieldsToCount = [
+      'titulo', 'tipo', 'status', 'finalidade', 'concelho', 'freguesia', 
+      'quartos', 'casas_banho', 'vagas_garagem', 'area_util', 'valor', 
+      'fotos', 'descricao', 'proprietario_nome', 'latitude'
+    ];
+    const filled = fieldsToCount.filter(key => {
+      const val = (formData as any)[key];
+      if (Array.isArray(val)) return val.length > 0;
+      if (typeof val === 'number') return val !== null;
+      return val && val !== '';
+    }).length;
+    return (filled / fieldsToCount.length) * 100;
+  };
+
+  const progress = calculateProgress();
 
   return (
     <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-border-light max-w-5xl mx-auto flex flex-col h-[85vh]">
@@ -126,17 +141,19 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
         <aside className="w-56 bg-surface-alt/50 border-r border-border-light p-6 hidden md:block">
           <div className="space-y-6">
             {STEPS.map((s) => (
-              <div 
+              <button 
                 key={s.id} 
-                className={`flex items-center gap-3 transition-all duration-300 ${step >= s.id ? 'opacity-100' : 'opacity-40'}`}
+                type="button"
+                onClick={() => setStep(s.id)}
+                className={`w-full flex items-center gap-3 transition-all duration-300 group ${step >= s.id ? 'opacity-100' : 'opacity-40'}`}
               >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${step === s.id ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white border border-border-light'}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${step === s.id ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110' : 'bg-white border border-border-light group-hover:border-primary/50'}`}>
                   {step > s.id ? '✅' : s.id}
                 </div>
-                <span className={`text-xs font-bold uppercase tracking-wider ${step === s.id ? 'text-primary' : 'text-text-secondary'}`}>
+                <span className={`text-xs font-bold uppercase tracking-wider text-left transition-all ${step === s.id ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>
                   {s.label}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
           
@@ -211,6 +228,22 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                          <option value="indisponivel">Indisponível</option>
                          <option value="em_reforma">Em Reforma</option>
                          <option value="retirado">Retirado</option>
+                      </select>
+                   </div>
+
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Tipo de Negociação</label>
+                      <select 
+                        value={formData.negocio} 
+                        onChange={e => setFormData({...formData, negocio: e.target.value as NegocioImovel})}
+                        className="w-full px-4 py-3 rounded-xl border border-border focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all bg-surface-alt/30"
+                      >
+                         <option value="residencial">Residencial</option>
+                         <option value="comercial">Comercial</option>
+                         <option value="misto">Misto</option>
+                         <option value="rural">Rural</option>
+                         <option value="industrial">Industrial</option>
+                         <option value="investimento">Investimento</option>
                       </select>
                    </div>
                 </div>
@@ -411,13 +444,28 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                         onChange={e => setFormData({...formData, area_construida: e.target.value === '' ? null : parseFloat(e.target.value)})}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                    <div>
                       <label className="block text-sm font-semibold text-text-primary mb-2">Área Terreno (m²)</label>
                       <input type="number" value={formData.area_terreno ?? ''}
                         onChange={e => setFormData({...formData, area_terreno: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Privativa (m²)</label>
+                      <input type="number" value={formData.area_privativa ?? ''}
+                        onChange={e => setFormData({...formData, area_privativa: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Área Comum (m²)</label>
+                      <input type="number" value={formData.area_comum ?? ''}
+                        onChange={e => setFormData({...formData, area_comum: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Ano Construção</label>
+                      <input type="number" placeholder="Ex: 2020" value={formData.ano_construcao ?? ''}
+                        onChange={e => setFormData({...formData, ano_construcao: e.target.value === '' ? null : parseInt(e.target.value)})}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>
@@ -427,9 +475,15 @@ export default function ImovelForm({ initialData, onSuccess }: ImovelFormProps) 
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-2">Nº Andares</label>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Nº Andares Edif.</label>
                       <input type="number" value={formData.num_andares ?? ''}
                         onChange={e => setFormData({...formData, num_andares: e.target.value === '' ? null : parseInt(e.target.value)})}
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-text-primary mb-2">Nº Torres</label>
+                      <input type="number" value={formData.num_torres ?? ''}
+                        onChange={e => setFormData({...formData, num_torres: e.target.value === '' ? null : parseInt(e.target.value)})}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-surface-alt/30" />
                    </div>
                    <div>

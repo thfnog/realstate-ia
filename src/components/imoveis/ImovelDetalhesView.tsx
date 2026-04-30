@@ -60,6 +60,9 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
              }`}>
                 {imovel.status}
              </span>
+             <span className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-slate-200">
+                💼 {imovel.negocio}
+             </span>
              {imovel.empreendimento && (
                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-3 py-1 rounded-full border border-indigo-200">
                  🏢 {imovel.empreendimento}
@@ -110,6 +113,43 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
           
           <ImovelGaleria fotos={imovel.fotos || []} />
 
+          {/* Media Section: Video & Tour 360 */}
+          {(imovel.video_url || imovel.tour_360_url) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {imovel.video_url && (
+                <div className="bg-white p-4 rounded-3xl border border-border-light shadow-sm">
+                  <h3 className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-3 flex items-center gap-2">
+                    🎥 Vídeo do Imóvel
+                  </h3>
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-black">
+                    <iframe 
+                      src={imovel.video_url.replace('watch?v=', 'embed/')} 
+                      className="w-full h-full border-0"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              )}
+              {imovel.tour_360_url && (
+                <div className="bg-white p-4 rounded-3xl border border-border-light shadow-sm">
+                  <h3 className="text-[10px] font-black text-text-secondary uppercase tracking-widest mb-3 flex items-center gap-2">
+                    🔄 Tour Virtual 360°
+                  </h3>
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-surface-alt flex flex-col items-center justify-center text-center p-6">
+                    <p className="text-xs text-text-secondary mb-4">Explore cada detalhe em uma experiência imersiva.</p>
+                    <a 
+                      href={imovel.tour_360_url} 
+                      target="_blank" 
+                      className="px-6 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+                    >
+                      Abrir Tour 360°
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Quick Stats */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
              {stats.map((s, i) => (
@@ -154,16 +194,38 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                </div>
              )}
 
+              {/* Building & Detailed Areas */}
+              <div className="pt-6 border-t border-border-light grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div>
+                    <h3 className="text-[10px] font-black text-text-secondary uppercase mb-4 tracking-widest">🏢 Detalhes do Edifício</h3>
+                    <div className="space-y-3">
+                       {imovel.ano_construcao && <div className="flex justify-between text-xs"><span className="text-text-secondary">Ano de Construção</span> <span className="font-bold">{imovel.ano_construcao}</span></div>}
+                       {imovel.andar && <div className="flex justify-between text-xs"><span className="text-text-secondary">Andar</span> <span className="font-bold">{imovel.andar}º</span></div>}
+                       {imovel.num_andares && <div className="flex justify-between text-xs"><span className="text-text-secondary">Total de Andares</span> <span className="font-bold">{imovel.num_andares}</span></div>}
+                       {imovel.num_torres && <div className="flex justify-between text-xs"><span className="text-text-secondary">Número de Torres</span> <span className="font-bold">{imovel.num_torres}</span></div>}
+                    </div>
+                 </div>
+                 <div>
+                    <h3 className="text-[10px] font-black text-text-secondary uppercase mb-4 tracking-widest">📐 Detalhamento de Áreas</h3>
+                    <div className="space-y-3">
+                       <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Útil</span> <span className="font-bold">{imovel.area_util || '—'} m²</span></div>
+                       {imovel.area_privativa && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Privativa</span> <span className="font-bold">{imovel.area_privativa} m²</span></div>}
+                       {imovel.area_comum && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área Comum</span> <span className="font-bold">{imovel.area_comum} m²</span></div>}
+                       {imovel.area_terreno && <div className="flex justify-between text-xs"><span className="text-text-secondary">Área do Terreno</span> <span className="font-bold">{imovel.area_terreno} m²</span></div>}
+                    </div>
+                 </div>
+              </div>
+
              {/* Proprietário (admin only) */}
              {isAdmin && imovel.proprietario_nome && (
-               <div className="pt-6 border-t border-border-light">
-                  <h3 className="text-sm font-bold text-text-primary uppercase mb-4 tracking-widest">👤 Proprietário</h3>
-                  <div className="flex flex-wrap gap-6 text-sm">
-                    <div><span className="text-text-secondary">Nome:</span> <span className="font-bold">{imovel.proprietario_nome}</span></div>
-                    {imovel.proprietario_telefone && <div><span className="text-text-secondary">Tel:</span> <span className="font-bold">{imovel.proprietario_telefone}</span></div>}
-                    {imovel.proprietario_email && <div><span className="text-text-secondary">Email:</span> <span className="font-bold">{imovel.proprietario_email}</span></div>}
-                  </div>
-               </div>
+                <div className="pt-6 border-t border-border-light">
+                   <h3 className="text-[10px] font-black text-text-secondary uppercase mb-4 tracking-widest">👤 Proprietário</h3>
+                   <div className="flex flex-wrap gap-6 text-sm">
+                     <div><span className="text-text-secondary text-xs uppercase font-bold">Nome:</span> <span className="font-bold text-primary">{imovel.proprietario_nome}</span></div>
+                     {imovel.proprietario_telefone && <div><span className="text-text-secondary text-xs uppercase font-bold">Tel:</span> <span className="font-bold">{imovel.proprietario_telefone}</span></div>}
+                     {imovel.proprietario_email && <div><span className="text-text-secondary text-xs uppercase font-bold">Email:</span> <span className="font-bold">{imovel.proprietario_email}</span></div>}
+                   </div>
+                </div>
              )}
           </div>
         </div>
