@@ -32,6 +32,7 @@ interface AgendaModalProps {
   setMsgStatus: (val: 'idle' | 'success' | 'error') => void;
   updateStatus: (id: string, status: StatusLead) => void;
   deleteLead: (id: string, nome: string) => void;
+  onRefresh?: () => void;
   corretores: Corretor[];
 }
 
@@ -53,6 +54,7 @@ export function AgendaModal({
   setMsgStatus,
   updateStatus,
   deleteLead,
+  onRefresh,
   corretores
 }: AgendaModalProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -126,9 +128,7 @@ export function AgendaModal({
                     if (res.ok) {
                       toast.success('Feedback enviado para a IA. O lead será removido.');
                       setSelectedLead(null);
-                      // O ideal aqui seria dar um refresh na lista de leads. 
-                      // Como estamos no componente AgendaModal, vamos forçar um reload para garantir a consistência com o Kanban.
-                      window.location.reload();
+                      if (onRefresh) onRefresh();
                     }
                   } catch (err) {
                     toast.error('Erro ao enviar feedback para a IA');

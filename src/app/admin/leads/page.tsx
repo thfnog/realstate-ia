@@ -379,6 +379,7 @@ export default function LeadsPage() {
           setMsgStatus={setMsgStatus}
           updateStatus={updateStatus}
           deleteLead={deleteLead}
+          onRefresh={fetchLeads}
           corretores={corretores}
         />
       )}
