@@ -400,8 +400,13 @@ export default function ConfigPage() {
                   });
                   const data = await res.json();
                   if (res.ok && data.results) {
-                    alert(`✅ Sincronização concluída!\nInseridos: ${data.results[0]?.totalInserted}\nAtualizados: ${data.results[0]?.totalUpdated}\nDesativados: ${data.results[0]?.totalDeactivated}`);
-                    setWidesysLastSync(new Date().toLocaleString('pt-BR'));
+                    if (data.results.length === 0) {
+                      alert('Aviso: Nenhuma integração ativa encontrada para sincronizar. Verifique se a integração está marcada como "Ativa".');
+                    } else {
+                      const r = data.results[0];
+                      alert(`✅ Sincronização concluída!\nInseridos: ${r.totalInserted || 0}\nAtualizados: ${r.totalUpdated || 0}\nDesativados: ${r.totalDeactivated || 0}`);
+                      setWidesysLastSync(new Date().toLocaleString('pt-BR'));
+                    }
                   } else {
                     alert('❌ Erro na sincronização: ' + (data.error || 'Desconhecido'));
                   }
