@@ -6,7 +6,15 @@ import { getConfigByCode } from '@/lib/countryConfig';
 export async function runDailyBriefing() {
   console.log('📅 Iniciando processamento de Briefing Diário...');
 
-  // 1. Buscar todas as imobiliárias com briefing ativo
+  // Pegar a hora atual (format HH:00 ou similar) para filtrar
+  const now = new Date();
+  const currentHour = now.getHours().toString().padStart(2, '0') + ':00';
+  
+  // No banco o formato é HH:MM:SS ou HH:MM. Vamos buscar imobiliárias 
+  // que batem com a hora cheia atual (ou que o briefing está programado para agora)
+  // Nota: Em produção o cron geralmente roda de hora em hora.
+  
+  // Buscar todas as imobiliárias com briefing ativo
   const { data: imobiliarias, error: imobError } = await supabaseAdmin
     .from('imobiliarias')
     .select('*')
@@ -17,9 +25,25 @@ export async function runDailyBriefing() {
     return;
   }
 
-  console.log(`📋 Encontradas ${imobiliarias?.length || 0} imobiliárias com briefing ativo.`);
+  // Filtrar manualmente por hora respeitando o fuso horário da agência
+  const filterImobs = (imobiliarias || []).filter(imob => {
+    if (!imob.briefing_diario_hora) return false;
+    
+    // Pegar a hora atual no fuso da imobiliária
+    const tz = imob.config_pais === 'PT' ? 'Europe/Lisbon' : 'America/Sao_Paulo';
+    const localTime = new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      hour12: false,
+      timeZone: tz
+    }).format(new Date());
 
-  for (const imob of (imobiliarias || [])) {
+    const imobHour = imob.briefing_diario_hora.split(':')[0]; // Pega apenas a hora (HH)
+    return imobHour === localTime;
+  });
+
+  console.log(`📋 Encontradas ${filterImobs.length} imobiliárias programadas para esta hora.`);
+
+  for (const imob of filterImobs) {
     await processImobiliariaBriefing(imob);
   }
 }
