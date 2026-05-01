@@ -16,7 +16,13 @@ export async function GET() {
       .maybeSingle();
 
     if (error) throw error;
-    return NextResponse.json(data || {});
+    
+    // Mask sensitive fields for security
+    const maskedData = { ...data };
+    if (maskedData.resend_api_key) maskedData.resend_api_key = '********************************';
+    if (maskedData.slack_webhook_url) maskedData.slack_webhook_url = '********************************';
+
+    return NextResponse.json(maskedData || {});
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -41,7 +47,10 @@ export async function POST(request: Request) {
     
     const updateData: any = { id: 1 };
     allowedFields.forEach(field => {
-      if (body[field] !== undefined) updateData[field] = body[field];
+      // If the field is present and NOT the masked placeholder, update it
+      if (body[field] !== undefined && body[field] !== '********************************') {
+        updateData[field] = body[field];
+      }
     });
 
     const { data, error } = await supabaseAdmin

@@ -143,13 +143,15 @@ export default function MasterConfigPage() {
 
             <div className="space-y-6 flex-1">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">API Key</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                  API Key {config.resend_api_key === '********************************' && <span className="text-emerald-500 ml-2">(Configurada)</span>}
+                </label>
                 <input 
                   type="password"
                   value={config.resend_api_key || ''}
                   onChange={e => setConfig({...config, resend_api_key: e.target.value})}
                   className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-                  placeholder="re_..."
+                  placeholder={config.resend_api_key === '********************************' ? '••••••••••••••••' : 're_...'}
                 />
               </div>
               <div className="space-y-2">
@@ -189,13 +191,15 @@ export default function MasterConfigPage() {
 
             <div className="space-y-6 flex-1">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Webhook URL</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                  Webhook URL {config.slack_webhook_url === '********************************' && <span className="text-emerald-500 ml-2">(Configurada)</span>}
+                </label>
                 <input 
                   type="password"
                   value={config.slack_webhook_url || ''}
                   onChange={e => setConfig({...config, slack_webhook_url: e.target.value})}
                   className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-                  placeholder="https://hooks.slack.com/services/..."
+                  placeholder={config.slack_webhook_url === '********************************' ? '••••••••••••••••' : 'https://hooks.slack.com/services/...'}
                 />
               </div>
               <div className="space-y-2">
