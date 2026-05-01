@@ -14,7 +14,7 @@ import type { Lead, Corretor } from '@/lib/database.types';
 import { checkCarteira } from './checkCarteira';
 import { assignCorretor } from './assignCorretor';
 import { recommendImoveis } from './recommendImoveis';
-import { extractLeadFromText } from './extractLeadFromText';
+import { extractLeadWithAI } from './aiExtractor';
 import { sendBriefing } from './sendBriefing';
 import { sendAutoReplyToLead } from './sendAutoReply';
 import { getConfigByCode } from '@/lib/countryConfig';
@@ -148,8 +148,8 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
 
     // Step 2.5: Extract interests from text (if any) and update lead
     if (lead.descricao_interesse && lead.origem === 'whatsapp') {
-       console.log('🤖 Step 2.5: Extraindo interesses do texto...');
-       const profile = extractLeadFromText(lead.descricao_interesse);
+        console.log('🤖 Step 2.5: Extraindo interesses via Groq (IA)...');
+        const profile = await extractLeadWithAI(lead.descricao_interesse, lead.imobiliaria_id);
        
        const updates: any = {};
        if (profile.tipo_interesse) updates.tipo_interesse = profile.tipo_interesse;

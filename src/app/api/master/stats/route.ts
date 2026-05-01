@@ -136,8 +136,9 @@ export async function GET() {
       technicalStats: {
         totalMessages: (await supabaseAdmin.from('mensagens_historico').select('*', { count: 'exact', head: true })).count || 0,
         botMessages: (await supabaseAdmin.from('mensagens_historico').select('*', { count: 'exact', head: true }).eq('is_bot', true)).count || 0,
+        aiExtractions: (await supabaseAdmin.from('ai_usage_logs').select('*', { count: 'exact', head: true }).eq('feature', 'extraction')).count || 0,
         totalUsers: (await supabaseAdmin.from('usuarios').select('*', { count: 'exact', head: true })).count || 0,
-        databaseSize: 'N/A', // PG specific query needed for real size
+        databaseSize: 'N/A', 
       }
     });
   } catch (error: any) {

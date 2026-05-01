@@ -139,8 +139,8 @@ export default function MasterStatusPage() {
                <p className="text-[10px] font-black uppercase tracking-widest">Groq / OpenAI</p>
             </div>
             <div>
-               <p className="text-3xl font-black text-slate-900 tracking-tighter">{(stats?.technicalStats?.botMessages || 0).toLocaleString()}</p>
-               <p className="text-xs text-slate-400 font-medium">Respostas por IA</p>
+               <p className="text-3xl font-black text-slate-900 tracking-tighter">{(stats?.technicalStats?.aiExtractions || 0).toLocaleString()}</p>
+               <p className="text-xs text-slate-400 font-medium">Análises por IA (Extração)</p>
             </div>
           </div>
 
