@@ -127,15 +127,19 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
     
     // Log success
     if (imobiliaria_id) {
-      await supabaseAdmin.from('ai_usage_logs').insert([{
-        imobiliaria_id,
-        provider: 'groq',
-        model: 'llama-3.1-8b-instant',
-        feature: 'extraction',
-        input_tokens: usage.prompt_tokens || 0,
-        output_tokens: usage.completion_tokens || 0,
-        status: 'success'
-      }]).catch(e => console.error('Error logging AI usage:', e));
+      try {
+        await supabaseAdmin.from('ai_usage_logs').insert([{
+          imobiliaria_id,
+          provider: 'groq',
+          model: 'llama-3.1-8b-instant',
+          feature: 'extraction',
+          input_tokens: usage.prompt_tokens || 0,
+          output_tokens: usage.completion_tokens || 0,
+          status: 'success'
+        }]);
+      } catch (e) {
+        console.error('Error logging AI usage:', e);
+      }
     }
 
     console.log('✅ Dados extraídos via IA:', result);
@@ -144,13 +148,17 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
   } catch (error: any) {
     console.error('❌ Erro na extração via Groq:', error);
     if (imobiliaria_id) {
-      await supabaseAdmin.from('ai_usage_logs').insert([{
-        imobiliaria_id,
-        provider: 'groq',
-        feature: 'extraction',
-        status: 'error',
-        error_log: error.message
-      }]).catch(e => console.error('Error logging AI error:', e));
+      try {
+        await supabaseAdmin.from('ai_usage_logs').insert([{
+          imobiliaria_id,
+          provider: 'groq',
+          feature: 'extraction',
+          status: 'error',
+          error_log: error.message
+        }]);
+      } catch (e) {
+        console.error('Error logging AI error:', e);
+      }
     }
     return { is_lead: false };
   }
