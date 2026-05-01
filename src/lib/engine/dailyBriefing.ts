@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { Corretor, Lead, Evento, Imobiliaria } from '@/lib/database.types';
-import { sendMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { getConfigByCode } from '@/lib/countryConfig';
 
 export async function runDailyBriefing() {
@@ -50,11 +50,12 @@ async function processImobiliariaBriefing(imob: Imobiliaria) {
     if (corretor.pref_notif_whatsapp && corretor.telefone) {
       try {
         console.log(`📱 Enviando briefing para ${corretor.nome}...`);
-        await sendMessage({
-          instanceName: corretor.whatsapp_instance || process.env.WHATSAPP_DEFAULT_INSTANCE || '',
-          number: corretor.telefone,
-          text: message
-        });
+        await sendWhatsAppMessage(
+          corretor.telefone,
+          message,
+          corretor.whatsapp_instance || process.env.WHATSAPP_DEFAULT_INSTANCE || '',
+          imob.config_pais
+        );
       } catch (err) {
         console.error(`❌ Falha ao enviar briefing para ${corretor.nome}:`, err);
       }
