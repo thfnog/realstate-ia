@@ -2,6 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { PreferencesCard } from '@/components/config/PreferencesCard';
+import { 
+  IoBusinessOutline, 
+  IoChatbubbleEllipsesOutline, 
+  IoLayersOutline, 
+  IoLinkOutline, 
+  IoShieldOutline, 
+  IoChevronForwardOutline,
+  IoMailOutline,
+  IoGlobeOutline,
+  IoTimeOutline,
+  IoCalendarOutline,
+  IoFlaskOutline
+} from 'react-icons/io5';
 
 interface ChannelConfig {
   form: boolean;
@@ -10,28 +23,28 @@ interface ChannelConfig {
   whatsapp: boolean;
 }
 
+type TabType = 'agencia' | 'atendimento' | 'canais' | 'integracoes' | 'avancado';
+
 export default function ConfigPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('agencia');
   const [user, setUser] = useState<{ app_role: string; corretor_id: string | null } | null>(null);
   const [countryMode, setCountryMode] = useState<'PT' | 'BR'>('PT');
   const [imobId, setImobId] = useState<string>('');
   const [nome, setNome] = useState<string>('');
   const [loading, setLoading] = useState(true);
   
-  // Restoring email variables that I accidentally removed
   const [emailTestResult, setEmailTestResult] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   
   const [horarioInicio, setHorarioInicio] = useState('09:00');
   const [horarioFim, setHorarioFim] = useState('18:00');
   
-  // Briefing state
   const [briefingAtivo, setBriefingAtivo] = useState(false);
   const [briefingHora, setBriefingHora] = useState('08:00');
 
   const [saving, setSaving] = useState(false);
   const [activeModules, setActiveModules] = useState<string[]>([]);
   
-  // Integrations state
   const [widesysUrl, setWidesysUrl] = useState('');
   const [widesysUser, setWidesysUser] = useState('');
   const [widesysPass, setWidesysPass] = useState('');
@@ -53,19 +66,15 @@ export default function ConfigPage() {
           setImobId(data.id);
           setNome(data.nome_fantasia);
           setActiveModules(data.active_modules || []);
-          // NEW READ ONLY FIELDS
           setFiscalId(data.identificador_fiscal || '-');
           setRegId(data.numero_registro || '-');
           
-          // Set business hours from DB if exist
           if (data.horario_inicio) setHorarioInicio(data.horario_inicio);
           if (data.horario_fim) setHorarioFim(data.horario_fim);
           
-          // Set briefing from DB
           setBriefingAtivo(data.briefing_diario_ativo || false);
           if (data.briefing_diario_hora) setBriefingHora(data.briefing_diario_hora.slice(0, 5));
           
-          // Fetch integrations
           fetch(`/api/admin/integrations?imobiliaria_id=${data.id}`)
             .then(res => res.json())
             .then(intData => {
@@ -113,666 +122,511 @@ export default function ConfigPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-slate-500">A carregar configurações...</div>;
+  const menuItems = [
+    { id: 'agencia', label: 'Agência', icon: IoBusinessOutline, desc: 'Identidade e perfil' },
+    { id: 'atendimento', label: 'Atendimento', icon: IoTimeOutline, desc: 'Horários e Automação' },
+    { id: 'canais', label: 'Canais', icon: IoLayersOutline, desc: 'Entrada de leads' },
+    { id: 'integracoes', label: 'Integrações', icon: IoLinkOutline, desc: 'Widesys e Diagnóstico' },
+    { id: 'avancado', label: 'Avançado', icon: IoShieldOutline, desc: 'Sistema e Segurança' },
+  ];
+
+  if (loading) return <div className="p-12 text-center text-slate-500 font-bold animate-pulse">A carregar configurações...</div>;
 
   return (
-    <div className="animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Configurações</h1>
-        <p className="text-text-secondary text-sm mt-1">Configuração do sistema e canais de entrada</p>
+    <div className="animate-fade-in max-w-7xl mx-auto pb-20">
+      <div className="mb-10">
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Configurações</h1>
+        <p className="text-slate-500 font-medium mt-1">Gerencie o comportamento global da sua imobiliária</p>
       </div>
 
-      {user?.corretor_id && (
-        <div className="mb-8">
-           <PreferencesCard />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* SIDEBAR NAVIGATION */}
+        <div className="lg:col-span-3 space-y-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as TabType)}
+              className={`w-full flex items-center gap-4 p-5 rounded-[2rem] transition-all text-left group ${
+                activeTab === item.id 
+                  ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
+                  : 'bg-white hover:bg-slate-50 text-slate-600 border border-transparent hover:border-slate-100'
+              }`}
+            >
+              <div className={`p-3 rounded-2xl transition-all ${
+                activeTab === item.id ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400 group-hover:text-slate-900'
+              }`}>
+                <item.icon size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase tracking-widest">{item.label}</p>
+                <p className={`text-[10px] font-medium transition-all ${
+                  activeTab === item.id ? 'text-white/60' : 'text-slate-400'
+                }`}>{item.desc}</p>
+              </div>
+              <IoChevronForwardOutline size={14} className={`transition-all ${
+                activeTab === item.id ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
+              }`} />
+            </button>
+          ))}
         </div>
-      )}
 
-      {/* Tenant Identity Panel */}
-      <div className="bg-white rounded-xl border border-border-light overflow-hidden mb-6">
-        <div className="bg-slate-50 border-b border-border-light px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">🏢</span>
-            <div>
-              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Perfil da Agência</h2>
-              <p className="text-xs text-text-secondary">{nome} • ID: {imobId}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200">
-             <span className="text-lg">{isPT ? '🇵🇹' : '🇧🇷'}</span>
-             <span className="text-xs font-bold text-slate-700">{isPT ? 'PORTUGAL' : 'BRASIL'}</span>
-          </div>
-        </div>
-        
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isPT ? 'NIF / NIPC' : 'CNPJ'}</span>
-            <span className="text-sm font-mono font-semibold text-text-primary bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">{fiscalId}</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isPT ? 'Licença AMI' : 'CRECI PJ'}</span>
-            <span className="text-sm font-semibold text-text-primary bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">{regId}</span>
-          </div>
-          <div className="md:col-span-2 p-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
-             <p className="text-[11px] text-indigo-700 font-medium">
-               ℹ️ As configurações regionais (Moeda e Terminologia) são fixadas no registro da agência e não podem ser alteradas para garantir a integridade dos históricos de leads e vendas.
-             </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Country Info View */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Dicionário Ativo Global</h2>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-3xl">
-            {isPT ? '🇵🇹' : '🇧🇷'}
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-text-primary">{isPT ? 'Portugal' : 'Brasil'}</h3>
-            <div className="flex items-center gap-3 mt-1 text-sm text-text-secondary">
-              <span>Moeda: <strong>{isPT ? 'EUR (€)' : 'BRL (R$)'}</strong></span>
-              <span>•</span>
-              <span>{isPT ? 'Tipologia: T0–T5+' : 'Quartos: 1–4+'}</span>
-            </div>
-            <p className="text-xs text-text-muted mt-1.5">
-              Reflete de forma dinâmica no Motor em todo o Hub.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 🤖 AI & SERVICE HOURS CONFIG */}
-      {activeModules.includes('bot') && (
-        <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-             <div>
-                <h2 className="text-lg font-semibold text-text-primary">🤖 Inteligência de Agendamento</h2>
-                <p className="text-sm text-text-secondary mt-0.5">Defina os horários que o bot pode sugerir aos clientes</p>
-             </div>
-             <button 
-               onClick={async () => {
-                 setSaving(true);
-                 try {
-                   const res = await fetch('/api/imobiliaria', {
-                     method: 'PATCH',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({ horario_inicio: horarioInicio, horario_fim: horarioFim })
-                   });
-                   if (res.ok) alert('✅ Horários salvos com sucesso!');
-                   else alert('❌ Falha ao salvar horários');
-                 } catch {
-                   alert('❌ Erro de conexão');
-                 } finally {
-                   setSaving(false);
-                 }
-               }}
-               disabled={saving}
-               className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50"
-             >
-               {saving ? 'Salvando...' : 'Salvar Preferências'}
-             </button>
-          </div>
+        {/* CONTENT AREA */}
+        <div className="lg:col-span-9 space-y-8 animate-fade-in-up">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-             <div className="space-y-2">
-                <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Início do Expediente</label>
-                <input 
-                  type="time" 
-                  value={horarioInicio}
-                  onChange={(e) => setHorarioInicio(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
-                />
-             </div>
-             <div className="space-y-2">
-                <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Fim do Expediente</label>
-                <input 
-                  type="time" 
-                  value={horarioFim}
-                  onChange={(e) => setHorarioFim(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
-                />
-             </div>
-          </div>
-          
-          <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100">
-             <p className="text-xs text-amber-800 leading-relaxed">
-                <strong>Nota:</strong> O bot usará estas janelas para procurar espaços vazios na agenda dos corretores e sugerir opções aos leads. Fora deste horário, o bot informará que o atendimento humano retornará no próximo período.
-             </p>
-          </div>
-        </div>
-      )}
+          {/* 🏢 AGENCIA TAB */}
+          {activeTab === 'agencia' && (
+            <div className="space-y-8">
+               {user?.corretor_id && <PreferencesCard />}
 
-      {/* 📅 DAILY BRIEFING CONFIG */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <div className="flex items-center justify-between mb-6">
-           <div>
-              <h2 className="text-lg font-semibold text-text-primary">📅 Briefing Diário (WhatsApp)</h2>
-              <p className="text-sm text-text-secondary mt-0.5">Envio automático de resumo e agenda para cada corretor</p>
-           </div>
-           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500 uppercase">Ativar?</span>
-                <button 
-                  onClick={() => setBriefingAtivo(!briefingAtivo)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${briefingAtivo ? 'bg-indigo-600' : 'bg-slate-300'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${briefingAtivo ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-             </div>
-             <button 
-               onClick={async () => {
-                 setSaving(true);
-                 try {
-                   const res = await fetch('/api/imobiliaria', {
-                     method: 'PATCH',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({ 
-                       briefing_diario_ativo: briefingAtivo, 
-                       briefing_diario_hora: briefingHora 
-                     })
-                   });
-                   if (res.ok) alert('✅ Configurações de briefing salvas!');
-                   else alert('❌ Falha ao salvar configurações');
-                 } catch {
-                   alert('❌ Erro de conexão');
-                 } finally {
-                   setSaving(false);
-                 }
-               }}
-               disabled={saving}
-               className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50"
-             >
-               {saving ? 'Salvando...' : 'Salvar Briefing'}
-             </button>
-           </div>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-           <div className="space-y-2">
-              <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Horário de Envio</label>
-              <input 
-                type="time" 
-                value={briefingHora}
-                onChange={(e) => setBriefingHora(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
-              />
-           </div>
-           <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
-              <ul className="text-[11px] text-indigo-800 space-y-1.5 list-disc ml-4">
-                <li>Leads novos pendentes de atendimento</li>
-                <li>Visitas e Reuniões agendadas para o dia</li>
-                <li>Resumo de progresso da carteira ativa</li>
-              </ul>
-           </div>
-        </div>
-      </div>
+               <div className="bg-white rounded-[3rem] border border-slate-100 overflow-hidden shadow-xl shadow-slate-200/40">
+                  <div className="bg-slate-50 border-b border-slate-100 px-10 py-8 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-3xl shadow-sm">🏢</div>
+                      <div>
+                        <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Perfil da Agência</h2>
+                        <p className="text-xs text-slate-400 font-bold">{nome} • ID: {imobId}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                       <span className="text-xl">{isPT ? '🇵🇹' : '🇧🇷'}</span>
+                       <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{isPT ? 'PORTUGAL' : 'BRASIL'}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{isPT ? 'NIF / NIPC' : 'CNPJ'}</span>
+                      <div className="text-sm font-mono font-bold text-slate-700 bg-slate-50 px-6 py-4 rounded-2xl border border-slate-100">{fiscalId}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{isPT ? 'Licença AMI' : 'CRECI PJ'}</span>
+                      <div className="text-sm font-bold text-slate-700 bg-slate-50 px-6 py-4 rounded-2xl border border-slate-100">{regId}</div>
+                    </div>
+                    <div className="md:col-span-2 p-6 rounded-3xl bg-indigo-50/50 border border-indigo-100 flex items-start gap-4">
+                       <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">ℹ️</div>
+                       <p className="text-xs text-indigo-700 font-bold leading-relaxed">
+                         As configurações regionais (Moeda e Terminologia) são fixadas no registro da agência e não podem ser alteradas para garantir a integridade dos históricos de leads e vendas.
+                       </p>
+                    </div>
+                  </div>
+               </div>
 
-      {/* Channels */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Canais de entrada</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Form - Global */}
-          <div className={`rounded-xl border-2 p-4 ${channels.form ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📝</span>
-                <h3 className="font-medium text-text-primary">Formulário</h3>
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.form ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                Ativo
-              </span>
-            </div>
-            <p className="text-xs text-text-muted">Leads recebidos via formulário público do site</p>
-          </div>
-
-          {/* Email - PT Only */}
-          {isPT && (
-            <div className={`rounded-xl border-2 p-4 ${channels.email ? 'border-purple-200 bg-purple-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">📧</span>
-                  <h3 className="font-medium text-text-primary">E-mail eGO</h3>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.email ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-500'}`}>
-                  Ativo
-                </span>
-              </div>
-              <p className="text-xs text-text-muted">Parser de notificações de portais via IMAP (Idealista, Imovirtual, etc.)</p>
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                  <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-6">Dicionário Ativo Global</h2>
+                  <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-center text-4xl shadow-inner">
+                      {isPT ? '🇵🇹' : '🇧🇷'}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900">{isPT ? 'Portugal' : 'Brasil'}</h3>
+                      <div className="flex items-center gap-4 mt-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        <span className="bg-slate-50 px-3 py-1 rounded-lg">Moeda: <strong className="text-slate-900">{isPT ? 'EUR (€)' : 'BRL (R$)'}</strong></span>
+                        <span className="bg-slate-50 px-3 py-1 rounded-lg">{isPT ? 'Tipologia: T0–T5+' : 'Quartos: 1–4+'}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold italic mt-3">
+                        Reflete de forma dinâmica no Motor em todo o Hub.
+                      </p>
+                    </div>
+                  </div>
+               </div>
             </div>
           )}
 
-          {/* Webhook - BR Only */}
-          {!isPT && (
-            <div className={`rounded-xl border-2 p-4 ${channels.webhook ? 'border-orange-200 bg-orange-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🌐</span>
-                  <h3 className="font-medium text-text-primary">Webhook Grupo OLX</h3>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.webhook ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
-                  Ativo
-                </span>
-              </div>
-              <p className="text-xs text-text-muted">Recebe leads de ZAP Imóveis, OLX e VivaReal via Canal Pro</p>
+          {/* 🤖 ATENDIMENTO TAB */}
+          {activeTab === 'atendimento' && (
+            <div className="space-y-8">
+               {activeModules.includes('bot') && (
+                 <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                   <div className="flex items-center justify-between mb-10">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100">
+                          <IoChatbubbleEllipsesOutline size={28} />
+                        </div>
+                        <div>
+                           <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Inteligência de Agendamento</h2>
+                           <p className="text-sm text-slate-500 font-medium">Horários que o bot pode sugerir aos clientes</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={async () => {
+                          setSaving(true);
+                          try {
+                            const res = await fetch('/api/imobiliaria', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ horario_inicio: horarioInicio, horario_fim: horarioFim })
+                            });
+                            if (res.ok) alert('✅ Horários salvos com sucesso!');
+                            else alert('❌ Falha ao salvar horários');
+                          } catch {
+                            alert('❌ Erro de conexão');
+                          } finally {
+                            setSaving(false);
+                          }
+                        }}
+                        disabled={saving}
+                        className="px-8 py-4 rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-200 disabled:opacity-50"
+                      >
+                        {saving ? 'Salvando...' : 'Salvar Preferências'}
+                      </button>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                         <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                            <IoTimeOutline size={14} className="text-indigo-500" /> Início Expediente
+                         </label>
+                         <input 
+                           type="time" 
+                           value={horarioInicio}
+                           onChange={(e) => setHorarioInicio(e.target.value)}
+                           className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-50 outline-none font-bold text-slate-700 transition-all"
+                         />
+                      </div>
+                      <div className="space-y-3">
+                         <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                            <IoTimeOutline size={14} className="text-indigo-500" /> Fim Expediente
+                         </label>
+                         <input 
+                           type="time" 
+                           value={horarioFim}
+                           onChange={(e) => setHorarioFim(e.target.value)}
+                           className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-50 outline-none font-bold text-slate-700 transition-all"
+                         />
+                      </div>
+                   </div>
+                   
+                   <div className="mt-10 p-6 rounded-[2rem] bg-amber-50 border border-amber-100">
+                      <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                         <strong>Nota:</strong> O bot usará estas janelas para procurar espaços vazios na agenda dos corretores e sugerir opções aos leads. Fora deste horário, o bot informará que o atendimento humano retornará no próximo período.
+                      </p>
+                   </div>
+                 </div>
+               )}
+
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                  <div className="flex items-center justify-between mb-10">
+                     <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-100">
+                          <IoCalendarOutline size={28} />
+                        </div>
+                        <div>
+                           <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Briefing Diário (WhatsApp)</h2>
+                           <p className="text-sm text-slate-500 font-medium">Resumo matinal para cada corretor</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-6">
+                       <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativar</span>
+                          <button 
+                            onClick={() => setBriefingAtivo(!briefingAtivo)}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${briefingAtivo ? 'bg-emerald-500 shadow-lg shadow-emerald-100' : 'bg-slate-200'}`}
+                          >
+                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${briefingAtivo ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                       </div>
+                       <button 
+                         onClick={async () => {
+                           setSaving(true);
+                           try {
+                             const res = await fetch('/api/imobiliaria', {
+                               method: 'PATCH',
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify({ 
+                                 briefing_diario_ativo: briefingAtivo, 
+                                 briefing_diario_hora: briefingHora 
+                               })
+                             });
+                             if (res.ok) alert('✅ Briefing salvo!');
+                             else alert('❌ Falha ao salvar');
+                           } catch {
+                             alert('❌ Erro de conexão');
+                           } finally {
+                             setSaving(false);
+                           }
+                         }}
+                         disabled={saving}
+                         className="px-8 py-4 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                       >
+                         {saving ? '...' : 'Salvar'}
+                       </button>
+                     </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                     <div className="space-y-3">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário de Envio</label>
+                        <input 
+                          type="time" 
+                          value={briefingHora}
+                          onChange={(e) => setBriefingHora(e.target.value)}
+                          className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-emerald-50 outline-none font-bold text-slate-700"
+                        />
+                     </div>
+                     <div className="p-8 rounded-[2.5rem] bg-indigo-50/50 border border-indigo-100 flex flex-col justify-center">
+                        <ul className="text-xs text-indigo-700 font-bold space-y-2">
+                          <li className="flex items-center gap-2">🚀 Novos Leads Pendentes</li>
+                          <li className="flex items-center gap-2">📅 Visitas & Reuniões Hoje</li>
+                          <li className="flex items-center gap-2">📈 Status da Carteira</li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
             </div>
           )}
 
-          {/* WhatsApp - BR Only (Currently) */}
-          {!isPT && activeModules.includes('bot') && (
-            <div className={`rounded-xl border-2 p-4 ${channels.whatsapp ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-50'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">💬</span>
-                  <h3 className="font-medium text-text-primary">WhatsApp</h3>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${channels.whatsapp ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                  Ativo
-                </span>
-              </div>
-              <p className="text-xs text-text-muted">Recepção de leads diretos pelo WhatsApp Business</p>
+          {/* 📬 CANAIS TAB */}
+          {activeTab === 'canais' && (
+            <div className="space-y-8">
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                 <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-10">Canais de Entrada Ativos</h2>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className={`rounded-[2.5rem] border-2 p-8 transition-all ${channels.form ? 'border-emerald-100 bg-emerald-50/20' : 'border-slate-100 bg-slate-50/50 opacity-50'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-emerald-50 flex items-center justify-center text-2xl shadow-sm">📝</div>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${channels.form ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>Ativo</span>
+                      </div>
+                      <h3 className="font-black text-slate-900 uppercase tracking-tight mb-1">Formulário Site</h3>
+                      <p className="text-xs text-slate-500 font-medium">Leads vindos do seu portal público</p>
+                    </div>
+
+                    {isPT && (
+                      <div className={`rounded-[2.5rem] border-2 p-8 transition-all ${channels.email ? 'border-purple-100 bg-purple-50/20' : 'border-slate-100 bg-slate-50/50 opacity-50'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white border border-purple-50 flex items-center justify-center text-2xl shadow-sm">📧</div>
+                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-purple-100 text-purple-700">Ativo</span>
+                        </div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tight mb-1">E-mail eGO</h3>
+                        <p className="text-xs text-slate-500 font-medium">Portais via IMAP (Idealista, etc.)</p>
+                      </div>
+                    )}
+
+                    {!isPT && (
+                      <div className={`rounded-[2.5rem] border-2 p-8 transition-all ${channels.webhook ? 'border-orange-100 bg-orange-50/20' : 'border-slate-100 bg-slate-50/50 opacity-50'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white border border-orange-50 flex items-center justify-center text-2xl shadow-sm">🌐</div>
+                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-orange-100 text-orange-700">Ativo</span>
+                        </div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tight mb-1">Webhook OLX</h3>
+                        <p className="text-xs text-slate-500 font-medium">ZAP, OLX e VivaReal via Canal Pro</p>
+                      </div>
+                    )}
+
+                    {!isPT && activeModules.includes('bot') && (
+                      <div className={`rounded-[2.5rem] border-2 p-8 transition-all ${channels.whatsapp ? 'border-emerald-100 bg-emerald-50/20' : 'border-slate-100 bg-slate-50/50 opacity-50'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white border border-emerald-50 flex items-center justify-center text-2xl shadow-sm">💬</div>
+                          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">Ativo</span>
+                        </div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tight mb-1">WhatsApp Biz</h3>
+                        <p className="text-xs text-slate-500 font-medium">Recepção direta via API Evolution</p>
+                      </div>
+                    )}
+                 </div>
+               </div>
+
+               {!isPT && (
+                 <div className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl shadow-slate-300">
+                    <div className="flex items-center gap-4 mb-8">
+                       <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl">🌐</div>
+                       <div>
+                          <h2 className="text-lg font-black uppercase tracking-tight">Webhook URL</h2>
+                          <p className="text-xs text-white/50 font-medium">Cole este endereço no painel do Canal Pro</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+                       <code className="flex-1 text-emerald-400 font-mono text-xs overflow-x-auto">POST {webhookUrl}</code>
+                       <button 
+                         onClick={() => { navigator.clipboard.writeText(webhookUrl); alert('Copiado!'); }}
+                         className="p-3 bg-white text-slate-900 rounded-xl hover:bg-emerald-400 transition-all font-black text-xs"
+                       >📋 COPIAR</button>
+                    </div>
+                    <div className="mt-8 p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[10px] font-medium leading-relaxed italic">
+                       Header obrigatório: <span className="bg-white/10 px-1 rounded text-white">x-webhook-secret</span> configurado nas variáveis de ambiente do sistema.
+                    </div>
+                 </div>
+               )}
             </div>
           )}
-        </div>
-      </div>
 
-      {/* INTEGRAÇÕES - WIDESYS */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">🔄 Integração de Imóveis (Widesys / Joomla)</h2>
-            <p className="text-sm text-text-secondary mt-1">
-              Configure a sincronização automática de imóveis a partir do site da imobiliária.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-text-secondary">Sincronização Ativa?</span>
-            <button 
-              onClick={() => setWidesysActive(!widesysActive)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${widesysActive ? 'bg-emerald-500' : 'bg-slate-300'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${widesysActive ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-        </div>
+          {/* 🔄 INTEGRAÇÕES TAB */}
+          {activeTab === 'integracoes' && (
+            <div className="space-y-8">
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                  <div className="flex items-center justify-between mb-10">
+                    <div>
+                      <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Sincronização Imóveis (Widesys)</h2>
+                      <p className="text-sm text-slate-500 font-medium">Importação automática do seu site Joomla/Widesys</p>
+                    </div>
+                    <button 
+                      onClick={() => setWidesysActive(!widesysActive)}
+                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${widesysActive ? 'bg-emerald-500 shadow-lg shadow-emerald-100' : 'bg-slate-200'}`}
+                    >
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${widesysActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="col-span-1 sm:col-span-2">
-            <label className="block text-xs font-bold text-text-muted uppercase mb-1">URL da API (ex: https://site.com.br/api/index.php/v1)</label>
-            <input 
-              type="text" 
-              value={widesysUrl}
-              onChange={(e) => setWidesysUrl(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-text-muted uppercase mb-1">E-mail (Autenticação)</label>
-            <input 
-              type="email" 
-              value={widesysUser}
-              onChange={(e) => setWidesysUser(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-text-muted uppercase mb-1">Senha (API)</label>
-            <input 
-              type="password" 
-              value={widesysPass}
-              onChange={(e) => setWidesysPass(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
-            />
-          </div>
-        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                    <div className="md:col-span-2 space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">API Endpoint URL</label>
+                       <input type="text" value={widesysUrl} onChange={e => setWidesysUrl(e.target.value)} className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-indigo-50 outline-none font-bold text-slate-700" placeholder="https://..." />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Usuário</label>
+                       <input type="text" value={widesysUser} onChange={e => setWidesysUser(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-700" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha API</label>
+                       <input type="password" value={widesysPass} onChange={e => setWidesysPass(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-700" />
+                    </div>
+                  </div>
 
-        <div className="flex items-center justify-between border-t border-border-light pt-4">
-          <div className="text-xs text-text-muted">
-            {widesysLastSync ? (
-              <span>Última sincronização: <strong className="text-text-primary">{widesysLastSync}</strong></span>
-            ) : (
-              <span>Nenhuma sincronização realizada ainda.</span>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={async () => {
-                setSavingWidesys(true);
-                try {
-                  const res = await fetch('/api/admin/integrations', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      imobiliaria_id: imobId,
-                      active: widesysActive,
-                      config: { url: widesysUrl, username: widesysUser, password: widesysPass }
-                    })
-                  });
-                  if (res.ok) alert('✅ Integração salva com sucesso!');
-                  else alert('❌ Erro ao salvar integração.');
-                } catch {
-                  alert('❌ Falha na conexão.');
-                } finally {
-                  setSavingWidesys(false);
-                }
-              }}
-              disabled={savingWidesys}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-all disabled:opacity-50"
-            >
-              {savingWidesys ? 'Salvando...' : 'Salvar Configuração'}
-            </button>
+                  <div className="flex items-center justify-between pt-8 border-t border-slate-50">
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        {widesysLastSync ? `Última Sync: ${widesysLastSync}` : 'Sem histórico'}
+                     </span>
+                     <div className="flex gap-4">
+                        <button 
+                          onClick={async () => {
+                            setSavingWidesys(true);
+                            try {
+                              const res = await fetch('/api/admin/integrations', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  imobiliaria_id: imobId,
+                                  active: widesysActive,
+                                  config: { url: widesysUrl, username: widesysUser, password: widesysPass }
+                                })
+                              });
+                              if (res.ok) alert('✅ Salvo!');
+                            } catch { alert('❌ Erro'); } finally { setSavingWidesys(false); }
+                          }}
+                          disabled={savingWidesys}
+                          className="px-6 py-3 rounded-xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+                        >Salvar</button>
+                        <button 
+                          onClick={async () => {
+                            setSyncingWidesys(true);
+                            try {
+                               const res = await fetch('/api/master/integrations/sync', {
+                                 method: 'POST',
+                                 headers: { 'Content-Type': 'application/json' },
+                                 body: JSON.stringify({ imobiliaria_id: imobId, provider: 'widesys' })
+                               });
+                               const data = await res.json();
+                               if (res.ok) {
+                                  alert('✅ Sincronizado!');
+                                  setWidesysLastSync(new Date().toLocaleString('pt-BR'));
+                               }
+                            } catch { alert('❌ Falha'); } finally { setSyncingWidesys(false); }
+                          }}
+                          disabled={syncingWidesys || !widesysActive}
+                          className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
+                        >Sincronizar Agora</button>
+                     </div>
+                  </div>
+               </div>
 
-            <button
-              onClick={async () => {
-                if (!widesysUrl) return alert('Configure e salve a URL primeiro.');
-                setSyncingWidesys(true);
-                try {
-                  const res = await fetch('/api/master/integrations/sync', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imobiliaria_id: imobId, provider: 'widesys' })
-                  });
-                  const data = await res.json();
-                  if (res.ok && data.results) {
-                    if (data.results.length === 0) {
-                      alert('Aviso: Nenhuma integração ativa encontrada para sincronizar. Verifique se a integração está marcada como "Ativa".');
-                    } else {
-                      const r = data.results[0];
-                      alert(`✅ Sincronização concluída!\nInseridos: ${r.totalInserted || 0}\nAtualizados: ${r.totalUpdated || 0}\nDesativados: ${r.totalDeactivated || 0}`);
-                      setWidesysLastSync(new Date().toLocaleString('pt-BR'));
-                    }
-                  } else {
-                    alert('❌ Erro na sincronização: ' + (data.error || 'Desconhecido'));
-                  }
-                } catch (err: any) {
-                  alert('❌ Falha na comunicação: ' + err.message);
-                } finally {
-                  setSyncingWidesys(false);
-                }
-              }}
-              disabled={syncingWidesys || !widesysActive}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-2"
-            >
-              {syncingWidesys ? (
-                <>
-                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Sincronizando...
-                </>
-              ) : (
-                <>🔄 Forçar Sincronização</>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                  <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-8">Diagnóstico de Conectividade</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="bg-indigo-50/50 p-8 rounded-[2.5rem] border border-indigo-100 space-y-6">
+                        <div className="flex items-center gap-3">
+                           <span className="text-2xl">💬</span>
+                           <p className="text-xs font-black text-indigo-900 uppercase tracking-widest">WhatsApp Engine</p>
+                        </div>
+                        <input type="text" placeholder="Número 55..." id="waTest" className="w-full px-6 py-4 rounded-2xl bg-white border border-indigo-100 outline-none text-sm font-bold" />
+                        <button 
+                          onClick={async () => {
+                            const phone = (document.getElementById('waTest') as HTMLInputElement).value;
+                            if (!phone) return alert('Número?');
+                            const res = await fetch('/api/leads/debug-wa', { method: 'POST', body: JSON.stringify({ phone }), headers: {'Content-Type': 'application/json'}});
+                            const data = await res.json();
+                            alert(JSON.stringify(data, null, 2));
+                          }}
+                          className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg"
+                        >Testar Envio</button>
+                     </div>
 
-      {/* Email Config (PT only) */}
-      {isPT && (
-        <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">📧 Configuração E-mail (IMAP)</h2>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-text-muted">Host IMAP:</span>
-                <span className="ml-2 text-text-primary font-medium">{process.env.EMAIL_IMAP_HOST || '(não configurado)'}</span>
-              </div>
-              <div>
-                <span className="text-text-muted">Porta:</span>
-                <span className="ml-2 text-text-primary font-medium">{process.env.EMAIL_IMAP_PORT || '993'}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-text-muted">Utilizador:</span>
-                <span className="ml-2 text-text-primary font-medium">{process.env.EMAIL_IMAP_USER || '(não configurado)'}</span>
-              </div>
+                     <div className="bg-purple-50/50 p-8 rounded-[2.5rem] border border-purple-100 space-y-6">
+                        <div className="flex items-center gap-3">
+                           <span className="text-2xl">📧</span>
+                           <p className="text-xs font-black text-purple-900 uppercase tracking-widest">IMAP eGO (E-mail)</p>
+                        </div>
+                        <div className="text-[10px] text-purple-700/60 font-bold leading-relaxed">
+                           Verifica a conexão com o servidor de e-mail e processa pendentes.
+                        </div>
+                        <button 
+                          onClick={testEmailConnection}
+                          disabled={testing}
+                          className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50"
+                        >{testing ? 'Testando...' : 'Testar IMAP'}</button>
+                     </div>
+                  </div>
+               </div>
             </div>
+          )}
 
-            <div className="pt-3 border-t border-border-light">
-              <button
-                onClick={testEmailConnection}
-                disabled={testing}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium transition-all disabled:opacity-50"
-              >
-                {testing ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Testando...
-                  </>
-                ) : (
-                  <>📧 Testar conexão e-mail</>
-                )}
-              </button>
+          {/* 🛡️ AVANÇADO TAB */}
+          {activeTab === 'avancado' && (
+            <div className="space-y-8">
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+                  <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-8">📡 Endpoints de Integração</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                       <thead>
+                          <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                             <th className="pb-4">Método</th>
+                             <th className="pb-4">Endpoint</th>
+                             <th className="pb-4">Função</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                          <tr>
+                             <td className="py-4"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-lg font-black">POST</span></td>
+                             <td className="py-4 font-mono font-bold text-slate-600">/api/leads?imob_id={imobId}</td>
+                             <td className="py-4 text-slate-500 font-bold">Criação manual/externa de leads</td>
+                          </tr>
+                          <tr>
+                             <td className="py-4"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-black">GET</span></td>
+                             <td className="py-4 font-mono font-bold text-slate-600">/api/stats</td>
+                             <td className="py-4 text-slate-500 font-bold">Relatórios e Métricas</td>
+                          </tr>
+                       </tbody>
+                    </table>
+                  </div>
+               </div>
 
-              {emailTestResult && (
-                <p className={`mt-3 text-sm ${emailTestResult.startsWith('✅') ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {emailTestResult}
-                </p>
-              )}
+               <div className="bg-rose-50 rounded-[3rem] border border-rose-100 p-10 shadow-xl shadow-rose-200/20">
+                  <div className="flex items-center gap-4 mb-8">
+                     <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl">⚠️</div>
+                     <div>
+                        <h2 className="text-lg font-black text-rose-900 uppercase tracking-tight">Zona de Perigo</h2>
+                        <p className="text-sm text-rose-700 font-medium italic">Estas ações são permanentes e irreversíveis.</p>
+                     </div>
+                  </div>
+                  <div className="p-8 rounded-[2.5rem] bg-white border border-rose-100 flex flex-col md:flex-row items-center justify-between gap-8">
+                     <div className="flex-1">
+                        <h3 className="font-black text-rose-900 uppercase tracking-tight mb-2">Limpar Todos os Leads</h3>
+                        <p className="text-xs text-slate-500 font-medium">Exclui todos os leads, eventos e históricos desta agência.</p>
+                     </div>
+                     <button 
+                        onClick={async () => {
+                           if (window.confirm("VOCÊ TEM CERTEZA?")) {
+                              const code = window.prompt("Digite EXCLUIR:");
+                              if (code === 'EXCLUIR') {
+                                 await fetch('/api/admin/purge', { method: 'POST' });
+                                 window.location.reload();
+                              }
+                           }
+                        }}
+                        className="px-10 py-5 rounded-[1.5rem] bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-rose-200 active:scale-95"
+                     >Excluir Tudo</button>
+                  </div>
+               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* WhatsApp Diagnostic (Pragmatic Fix) */}
-      {!isPT && activeModules.includes('bot') && (
-         <div className="bg-indigo-50/50 rounded-xl border border-indigo-200 p-6 mb-6">
-           <div className="flex items-center gap-3 mb-4">
-             <span className="text-2xl text-indigo-600">🛠️</span>
-             <div>
-               <h2 className="text-lg font-bold text-indigo-900">Diagnóstico WhatsApp</h2>
-               <p className="text-xs text-indigo-700">Teste o envio e veja a resposta bruta da API</p>
-             </div>
-           </div>
-
-           <div className="flex flex-col sm:flex-row gap-4 mb-4">
-             <input 
-               type="text" 
-               placeholder="Número (Ex: 55119...)"
-               id="testPhone"
-               className="flex-1 px-4 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-300 outline-none text-sm"
-             />
-             <button 
-               onClick={async () => {
-                 const phone = (document.getElementById('testPhone') as HTMLInputElement).value;
-                 const logArea = document.getElementById('debugLog');
-                 if (!phone) return alert('Digite um número');
-                 if (logArea) logArea.innerText = '⏳ Enviando teste...';
-                 
-                 try {
-                   const res = await fetch('/api/leads/debug-wa', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({ phone })
-                   });
-                   const data = await res.json();
-                   if (logArea) logArea.innerText = JSON.stringify(data, null, 2);
-                 } catch (err: any) {
-                   if (logArea) logArea.innerText = '❌ Erro na requisição: ' + err.message;
-                 }
-               }}
-               className="px-6 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all shadow-md active:scale-95"
-             >
-               🚀 Testar Agora
-             </button>
-           </div>
-
-           <div className="bg-slate-900 rounded-lg p-4">
-             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Log da Resposta:</span>
-             <pre id="debugLog" className="text-[11px] font-mono text-emerald-400 overflow-x-auto whitespace-pre-wrap min-h-[40px]">
-               Aguardando teste...
-             </pre>
-           </div>
-         </div>
-      )}
-
-      {/* Slack Diagnostic */}
-      {user?.app_role === 'master' && (
-         <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 mb-6">
-           <div className="flex items-center gap-3 mb-4">
-             <span className="text-2xl text-slate-600">💬</span>
-             <div>
-               <h2 className="text-lg font-bold text-slate-900">Teste de Alertas Slack</h2>
-               <p className="text-xs text-slate-600">Envie um alerta de teste para o canal configurado via Webhook</p>
-             </div>
-           </div>
-
-           <div className="flex flex-col sm:flex-row gap-4 mb-4">
-             <input 
-               type="text" 
-               placeholder="Mensagem de teste..."
-               id="slackMsg"
-               className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-slate-300 outline-none text-sm"
-             />
-             <button 
-               onClick={async () => {
-                 const message = (document.getElementById('slackMsg') as HTMLInputElement).value;
-                 const logArea = document.getElementById('slackLog');
-                 if (logArea) logArea.innerText = '⏳ Enviando para Slack...';
-                 
-                 try {
-                   const res = await fetch('/api/admin/slack-test', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({ message })
-                   });
-                   const data = await res.json();
-                   if (logArea) logArea.innerText = JSON.stringify(data, null, 2);
-                 } catch (err: any) {
-                   if (logArea) logArea.innerText = '❌ Erro: ' + err.message;
-                 }
-               }}
-               className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
-             >
-               <span>📤</span> Enviar Teste
-             </button>
-           </div>
-
-           <div className="bg-slate-900 rounded-lg p-4">
-             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Status do Envio:</span>
-             <pre id="slackLog" className="text-[11px] font-mono text-emerald-400 overflow-x-auto whitespace-pre-wrap min-h-[40px]">
-               Aguardando teste...
-             </pre>
-           </div>
-         </div>
-      )}
-
-      {/* Webhook URL (BR only) */}
-      {!isPT && (
-        <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">🌐 Webhook Grupo OLX</h2>
-          <p className="text-sm text-text-secondary mb-3">
-            Configure esta URL no painel do Canal Pro para receber leads automaticamente:
-          </p>
-
-          <div className="flex items-center gap-2">
-            <code className="flex-1 bg-slate-900 text-emerald-400 px-4 py-3 rounded-lg text-sm font-mono">
-              POST {webhookUrl}
-            </code>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(webhookUrl);
-                alert('URL copiada!');
-              }}
-              className="px-3 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm transition-all"
-              title="Copiar URL"
-            >
-              📋
-            </button>
-          </div>
-
-          <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
-            <p className="text-xs text-amber-700">
-              <strong>Header de autenticação:</strong> Adicione o header <code className="bg-amber-100 px-1 rounded">x-webhook-secret</code> ou <code className="bg-amber-100 px-1 rounded">Authorization: Bearer {'<secret>'}</code> com o valor definido em <code className="bg-amber-100 px-1 rounded">GRUPOZAP_WEBHOOK_SECRET</code>.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* API Endpoints Reference */}
-      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">📡 Endpoints da API</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-light">
-                <th className="text-left py-2 px-3 text-text-muted font-medium">Método</th>
-                <th className="text-left py-2 px-3 text-text-muted font-medium">Endpoint</th>
-                <th className="text-left py-2 px-3 text-text-muted font-medium">Descrição</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-light">
-              <tr>
-                <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
-                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads?imob_id={`\${id}`}</td>
-                <td className="py-2 px-3 text-text-secondary">Criar lead (formulário)</td>
-              </tr>
-              {isPT && (
-                <tr>
-                  <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
-                  <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/email</td>
-                  <td className="py-2 px-3 text-text-secondary">Trigger parse e-mail (PT)</td>
-                </tr>
-              )}
-              {!isPT && (
-                <tr>
-                  <td className="py-2 px-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">POST</span></td>
-                  <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/ingest/grupozap</td>
-                  <td className="py-2 px-3 text-text-secondary">Webhook Grupo OLX (BR)</td>
-                </tr>
-              )}
-              <tr>
-                <td className="py-2 px-3"><span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">GET</span></td>
-                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads</td>
-                <td className="py-2 px-3 text-text-secondary">Listar leads</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3"><span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">PATCH</span></td>
-                <td className="py-2 px-3 font-mono text-xs text-text-primary">/api/leads/[id]</td>
-                <td className="py-2 px-3 text-text-secondary">Atualizar status lead</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* DANGER ZONE */}
-      <div className="bg-rose-50 rounded-xl border border-rose-200 overflow-hidden mb-12">
-        <div className="bg-rose-100/50 px-6 py-4 border-b border-rose-200">
-           <h2 className="text-rose-800 font-bold flex items-center gap-2">
-             <span className="text-xl">⚠️</span> ZONA DE PERIGO
-           </h2>
-        </div>
-        <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-           <div className="flex-1">
-              <h3 className="text-lg font-bold text-rose-900 mb-1">Limpar Todos os Leads</h3>
-              <p className="text-sm text-rose-700">
-                Esta ação exclui permanentemente todos os leads e agendamentos/eventos de sua imobiliária. 
-                Use com cautela para limpar dados de teste antes de uma demonstração real.
-              </p>
-           </div>
-           
-           <button 
-             onClick={async () => {
-               if (window.confirm("VOCÊ TEM CERTEZA? Esta ação não pode ser desfeita. Todos os leads e eventos serão excluídos.")) {
-                   const code = window.prompt("Para confirmar, digite 'EXCLUIR' abaixo:");
-                   if (code === 'EXCLUIR') {
-                      try {
-                        const res = await fetch('/api/admin/purge', { method: 'POST' });
-                        if (res.ok) {
-                           alert('✅ Sucesso! Os leads e eventos foram removidos.');
-                           window.location.reload();
-                        } else {
-                           alert('❌ Falha ao limpar banco.');
-                        }
-                      } catch {
-                        alert('❌ Erro na comunicação com o servidor.');
-                      }
-                   }
-               }
-             }}
-             className="whitespace-nowrap px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-lg shadow-rose-200 transition-all hover:scale-105 active:scale-95"
-           >
-             🗑️ Limpar Todos os Leads
-           </button>
+          )}
         </div>
       </div>
     </div>
