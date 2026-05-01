@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import { runSyncForImobiliaria } from '@/lib/engine/sync';
 
-export async function POST(request: Request) {
+async function handleSync(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    
     // Check if it's a cron request from Vercel
     const isCron = request.headers.get('x-vercel-cron') === '1';
-    
-    // If not cron, require some auth or admin token (simplified here, should integrate with next-auth if triggered by UI)
-    // Actually, we'll allow an admin to trigger it with imobiliaria_id in the body
     
     if (isCron) {
       console.log('⏰ Executando Vercel Cron: Sincronização de Integrações');
@@ -17,19 +12,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Cron job executado com sucesso', results });
     }
 
-    const body = await request.json().catch(() => ({}));
+    // Handle manual triggers (usually POST with body)
+    let body: any = {};
+    if (request.method === 'POST') {
+      body = await request.json().catch(() => ({}));
+    } else {
+      // Allow GET for manual triggers via query params if needed
+      const { searchParams } = new URL(request.url);
+      body = {
+        imobiliaria_id: searchParams.get('imobiliaria_id'),
+        provider: searchParams.get('provider')
+      };
+    }
+
     const { imobiliaria_id, provider } = body;
 
-    if (!imobiliaria_id) {
-      return NextResponse.json({ error: 'imobiliaria_id é obrigatório.' }, { status: 400 });
+    if (!imobiliaria_id && !isCron) {
+      return NextResponse.json({ error: 'imobiliaria_id é obrigatório para disparo manual.' }, { status: 400 });
     }
 
     const results = await runSyncForImobiliaria(imobiliaria_id, provider);
-
     return NextResponse.json({ success: true, results });
 
   } catch (error: any) {
     console.error('API Sync Error:', error);
     return NextResponse.json({ error: error.message || 'Erro interno no servidor' }, { status: 500 });
   }
+}
+
+export async function POST(request: Request) {
+  return handleSync(request);
+}
+
+export async function GET(request: Request) {
+  return handleSync(request);
 }
