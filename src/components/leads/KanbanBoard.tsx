@@ -123,9 +123,15 @@ function SortableLeadCard({
              if (confirm('Marcar como "Não é Lead"? Isso ajudará a IA a aprender e o lead será removido.')) {
                try {
                  const res = await fetch(`/api/leads/${lead.id}/feedback`, { method: 'POST' });
-                 if (res.ok) window.location.reload();
+                 if (res.ok) {
+                   window.location.reload();
+                 } else {
+                   const data = await res.json();
+                   alert(data.error || 'Erro ao enviar feedback');
+                 }
                } catch (err) {
                  console.error('Erro ao enviar feedback:', err);
+                 alert('Erro de conexão ao enviar feedback');
                }
              }
            }}

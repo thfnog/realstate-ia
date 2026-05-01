@@ -21,7 +21,6 @@ const navGroups = [
     items: [
       { href: '/admin/leads', label: 'Leads', icon: '👤' },
       { href: '/admin/equipe', label: 'Equipe', icon: '👥' },
-      { href: '/admin/webhook-logs', label: 'Fila de Ingestão', icon: '🔄' },
     ]
   },
   {

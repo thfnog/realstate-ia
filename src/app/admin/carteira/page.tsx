@@ -15,8 +15,8 @@ export default function CarteiraPage() {
         const res = await fetch('/api/leads');
         const data = await res.json();
         if (Array.isArray(data)) {
-          // Only show leads that have an assigned broker (attended leads)
-          setLeads(data.filter((l: LeadComCorretor) => l.corretor_id));
+          // Show all leads so the admin can manage assignments
+          setLeads(data);
         }
       } catch (err) {
         console.error('Erro:', err);

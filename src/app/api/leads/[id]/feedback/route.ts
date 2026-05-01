@@ -15,7 +15,7 @@ export async function POST(
     // 1. Get the lead data
     const { data: lead, error: fetchError } = await supabaseAdmin
       .from('leads')
-      .select('text, imobiliaria_id, descricao_interesse')
+      .select('imobiliaria_id, descricao_interesse')
       .eq('id', id)
       .single();
 
@@ -23,8 +23,8 @@ export async function POST(
       return NextResponse.json({ error: 'Lead não encontrado' }, { status: 404 });
     }
 
-    // Use the description or the raw text if available
-    const feedbackText = lead.descricao_interesse || lead.text || '';
+    // Use the description if available
+    const feedbackText = lead.descricao_interesse || '';
 
     if (!feedbackText) {
       return NextResponse.json({ error: 'Nenhum texto associado a este lead para treinamento' }, { status: 400 });

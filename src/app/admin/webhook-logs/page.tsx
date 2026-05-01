@@ -33,9 +33,17 @@ export default function WebhookLogsPage() {
     try {
       const res = await fetch('/api/admin/webhook-logs');
       const data = await res.json();
-      setLogs(data);
+      
+      if (!res.ok) {
+        console.error('API Error:', data.error);
+        setLogs([]);
+        return;
+      }
+      
+      setLogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }

@@ -142,6 +142,9 @@ export function AgendaModal({
                       toast.success('Feedback enviado para a IA. O lead será removido.');
                       setSelectedLead(null);
                       if (onRefresh) onRefresh();
+                    } else {
+                      const data = await res.json();
+                      toast.error(data.error || 'Erro ao processar feedback');
                     }
                   } catch (err) {
                     toast.error('Erro ao enviar feedback para a IA');
