@@ -33,7 +33,7 @@ export const statusConfig: Record<string, { label: string; color: string; bg: st
 };
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
+  return new Date(dateStr).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -207,7 +207,7 @@ function SortableLeadCard({
              )}
              <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">{lead.corretores?.nome.split(' ')[0] || 'Ninguém'}</span>
           </div>
-          <span className="text-[9px] font-black text-text-tertiary uppercase">{formatDate(lead.criado_em).split(',')[0]}</span>
+          <span className="text-[9px] font-black text-text-tertiary uppercase">{formatDate(lead.criado_em)}</span>
        </div>
     </div>
   );
