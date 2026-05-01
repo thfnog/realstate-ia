@@ -14,6 +14,19 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function getProfileSummary(lead: LeadComCorretor): string {
+  const parts: string[] = [];
+  if (lead.finalidade) {
+    const f: Record<string, string> = { comprar: 'Compra', alugar: 'Aluguel', investir: 'Investimento' };
+    parts.push(f[lead.finalidade] || lead.finalidade);
+  }
+  if (lead.tipo_interesse) parts.push(lead.tipo_interesse);
+  if (lead.quartos_interesse) parts.push(`${lead.quartos_interesse}q`);
+  if (lead.orcamento) parts.push(`R$${(lead.orcamento / 1000).toFixed(0)}k`);
+  if (lead.bairros_interesse?.length) parts.push(lead.bairros_interesse.slice(0, 2).join(', '));
+  return parts.join(' • ') || 'Sem detalhes';
+}
+
 interface AgendaModalProps {
   selectedLead: LeadComCorretor;
   setSelectedLead: (lead: LeadComCorretor | null) => void;
@@ -180,34 +193,48 @@ export function AgendaModal({
           {/* Left col: Event history & Match */}
           <div className="flex-1 p-6 border-r border-border-light bg-slate-50/30 overflow-y-auto">
             
-             {/* 📩 MENSAGEM ORIGINAL DO CLIENTE */}
-             {selectedLead.descricao_interesse && (
-               <div className="mb-8 p-4 rounded-xl bg-amber-50/50 border border-amber-200/50 shadow-sm">
-                 <h3 className="text-[10px] font-black text-amber-900 uppercase tracking-widest mb-2 flex items-center gap-2">
-                   <span>📩</span> Resumo da Solicitação
-                 </h3>
-                 {selectedLead.imoveis && (
-                    <div className="mb-3 p-3 bg-white rounded-lg border border-amber-100 flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary text-xl">🏠</div>
-                          <div>
-                             <p className="text-[10px] font-black text-primary uppercase">Imóvel de Interesse</p>
-                             <p className="text-sm font-bold text-text-primary">{selectedLead.imoveis.referencia} — {selectedLead.imoveis.titulo}</p>
-                          </div>
-                       </div>
-                       <Link 
-                         href={`/admin/imoveis/${selectedLead.imovel_id}`}
-                         className="px-3 py-1.5 bg-primary text-white text-[10px] font-black uppercase rounded-lg hover:bg-primary-hover transition-all"
-                       >
-                          Ver Imóvel
-                       </Link>
-                    </div>
-                 )}
-                 <p className="text-sm text-amber-800 italic leading-relaxed">
-                   "{selectedLead.descricao_interesse}"
-                 </p>
+             {/* 📩 RESUMO E MENSAGEM ORIGINAL */}
+             <div className="mb-8 p-4 rounded-xl bg-amber-50/50 border border-amber-200/50 shadow-sm">
+               <h3 className="text-[10px] font-black text-amber-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                 <span>🎯</span> Resumo da Solicitação
+               </h3>
+               
+               {/* Perfil IA Identificado */}
+               <div className="mb-3 p-3 bg-white rounded-lg border border-amber-100 flex items-center gap-3">
+                 <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-lg">🤖</div>
+                 <div>
+                   <p className="text-[10px] font-black text-amber-700 uppercase">Perfil Extraído (IA)</p>
+                   <p className="text-sm font-bold text-amber-900">{getProfileSummary(selectedLead)}</p>
+                 </div>
                </div>
-             )}
+
+               {selectedLead.imoveis && (
+                  <div className="mb-3 p-3 bg-white rounded-lg border border-amber-100 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary text-lg">🏠</div>
+                        <div>
+                           <p className="text-[10px] font-black text-primary uppercase">Imóvel de Interesse</p>
+                           <p className="text-sm font-bold text-text-primary">{selectedLead.imoveis.referencia} — {selectedLead.imoveis.titulo}</p>
+                        </div>
+                     </div>
+                     <Link 
+                       href={`/admin/imoveis/${selectedLead.imovel_id}`}
+                       className="px-3 py-1.5 bg-primary text-white text-[10px] font-black uppercase rounded-lg hover:bg-primary-hover transition-all"
+                     >
+                        Ver Imóvel
+                     </Link>
+                  </div>
+               )}
+               
+               {selectedLead.descricao_interesse && (
+                 <div className="mt-4 p-3 bg-white/50 rounded-lg border border-amber-100/50">
+                   <p className="text-[10px] font-black text-amber-700 uppercase mb-1">Mensagem Inicial</p>
+                   <p className="text-sm text-amber-900 italic leading-relaxed">
+                     "{selectedLead.descricao_interesse}"
+                   </p>
+                 </div>
+               )}
+             </div>
 
             <h3 className="font-semibold text-text-primary mb-5 flex items-center gap-2">
               <span>📅</span> Histórico de Processos
