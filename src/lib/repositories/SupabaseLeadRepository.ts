@@ -16,15 +16,16 @@ export class SupabaseLeadRepository implements ILeadRepository {
       query = query.neq('status', 'descartado');
     }
     if (filters.corretor_id) query = query.eq('corretor_id', filters.corretor_id);
-    if (filters.origem) query = query.eq('origem', filters.origem);
-    if (filters.finalidade) query = query.eq('finalidade', filters.finalidade);
-    
-    if (filters.whatsapp_type === 'group') {
-      query = query.ilike('portal_origem', '%Grupo%');
-    } else if (filters.whatsapp_type === 'particular') {
-      query = query.not('portal_origem', 'ilike', '%Grupo%');
-      query = query.eq('origem', 'whatsapp');
+    if (filters.origem) {
+      if (filters.origem === 'whatsapp_direto') {
+        query = query.eq('origem', 'whatsapp').not('portal_origem', 'ilike', '%Grupo%');
+      } else if (filters.origem === 'whatsapp_grupo') {
+        query = query.ilike('portal_origem', '%Grupo%');
+      } else {
+        query = query.eq('origem', filters.origem);
+      }
     }
+    if (filters.finalidade) query = query.eq('finalidade', filters.finalidade);
     
     if (filters.search) {
       const s = filters.search.trim();

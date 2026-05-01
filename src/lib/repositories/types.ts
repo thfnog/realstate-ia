@@ -12,7 +12,6 @@ export interface LeadFilters extends PaginationParams {
   search?: string;
   origem?: string;
   finalidade?: string;
-  whatsapp_type?: 'group' | 'particular';
 }
 
 export interface ILeadRepository {
