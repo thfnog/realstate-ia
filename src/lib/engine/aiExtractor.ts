@@ -12,6 +12,7 @@ export interface AILeadProfile {
   concelho?: string;  // Cidade
   orcamento?: number;
   quartos?: number;
+  vagas?: number;
   finalidade?: 'comprar' | 'alugar' | 'investir';
   is_lead: boolean; // TRUE if it is real estate related, FALSE if noise/social
   resumo_ia?: string;
@@ -72,8 +73,9 @@ REGRAS DE EXTRAÇÃO:
 2. Identifique o tipo: 'apartamento', 'casa' ou 'terreno'.
 3. Identifique a finalidade: 'comprar', 'alugar' ou 'investir'.
 4. Identifique o bairro (freguesia) e cidade (concelho).
-5. Converta valores monetários para números puros.
-6. Retorne APENAS um objeto JSON puro.
+5. Identifique o número de vagas de garagem (vagas).
+6. Converta valores monetários para números puros.
+7. Retorne APENAS um objeto JSON puro.
 
 EXEMPLO DE SAÍDA (LEAD):
 {
