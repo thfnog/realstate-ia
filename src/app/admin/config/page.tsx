@@ -23,6 +23,11 @@ export default function ConfigPage() {
   
   const [horarioInicio, setHorarioInicio] = useState('09:00');
   const [horarioFim, setHorarioFim] = useState('18:00');
+  
+  // Briefing state
+  const [briefingAtivo, setBriefingAtivo] = useState(false);
+  const [briefingHora, setBriefingHora] = useState('08:00');
+
   const [saving, setSaving] = useState(false);
   const [activeModules, setActiveModules] = useState<string[]>([]);
   
@@ -55,6 +60,10 @@ export default function ConfigPage() {
           // Set business hours from DB if exist
           if (data.horario_inicio) setHorarioInicio(data.horario_inicio);
           if (data.horario_fim) setHorarioFim(data.horario_fim);
+          
+          // Set briefing from DB
+          setBriefingAtivo(data.briefing_diario_ativo || false);
+          if (data.briefing_diario_hora) setBriefingHora(data.briefing_diario_hora.slice(0, 5));
           
           // Fetch integrations
           fetch(`/api/admin/integrations?imobiliaria_id=${data.id}`)
@@ -233,6 +242,71 @@ export default function ConfigPage() {
           </div>
         </div>
       )}
+
+      {/* 📅 DAILY BRIEFING CONFIG */}
+      <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
+        <div className="flex items-center justify-between mb-6">
+           <div>
+              <h2 className="text-lg font-semibold text-text-primary">📅 Briefing Diário (WhatsApp)</h2>
+              <p className="text-sm text-text-secondary mt-0.5">Envio automático de resumo e agenda para cada corretor</p>
+           </div>
+           <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase">Ativar?</span>
+                <button 
+                  onClick={() => setBriefingAtivo(!briefingAtivo)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${briefingAtivo ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${briefingAtivo ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+             </div>
+             <button 
+               onClick={async () => {
+                 setSaving(true);
+                 try {
+                   const res = await fetch('/api/imobiliaria', {
+                     method: 'PATCH',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ 
+                       briefing_diario_ativo: briefingAtivo, 
+                       briefing_diario_hora: briefingHora 
+                     })
+                   });
+                   if (res.ok) alert('✅ Configurações de briefing salvas!');
+                   else alert('❌ Falha ao salvar configurações');
+                 } catch {
+                   alert('❌ Erro de conexão');
+                 } finally {
+                   setSaving(false);
+                 }
+               }}
+               disabled={saving}
+               className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all disabled:opacity-50"
+             >
+               {saving ? 'Salvando...' : 'Salvar Briefing'}
+             </button>
+           </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+           <div className="space-y-2">
+              <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Horário de Envio</label>
+              <input 
+                type="time" 
+                value={briefingHora}
+                onChange={(e) => setBriefingHora(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-indigo-200 outline-none font-medium"
+              />
+           </div>
+           <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
+              <ul className="text-[11px] text-indigo-800 space-y-1.5 list-disc ml-4">
+                <li>Leads novos pendentes de atendimento</li>
+                <li>Visitas e Reuniões agendadas para o dia</li>
+                <li>Resumo de progresso da carteira ativa</li>
+              </ul>
+           </div>
+        </div>
+      </div>
 
       {/* Channels */}
       <div className="bg-white rounded-xl border border-border-light p-6 mb-6">
