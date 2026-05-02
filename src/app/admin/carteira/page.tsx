@@ -14,10 +14,12 @@ export default function CarteiraPage() {
       try {
         const res = await fetch('/api/leads');
         const data = await res.json();
-        if (Array.isArray(data)) {
-          // Show all leads so the admin can manage assignments
-          setLeads(data);
-        }
+        
+        // Handle both paginated { data: [], count: X } and flat array responses
+        const leadsArray = data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+        
+        // Show all leads so the admin can manage assignments
+        setLeads(leadsArray);
       } catch (err) {
         console.error('Erro:', err);
       } finally {
