@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       let name = payload.name;
       let instanceName = payload.instance;
       let isGroup = false;
+      let isTestMode = false;
 
       const event = payload.event?.toLowerCase() || '';
       let remoteJid = payload.data?.key?.remoteJid || '';
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
 
         // Extract text early to check for test keyword
         const tempText = messageObj?.conversation || messageObj?.extendedTextMessage?.text || messageObj?.text || '';
-        const isTestMode = tempText.toLowerCase().trim().startsWith('#testebot');
+        isTestMode = tempText.toLowerCase().trim().startsWith('#testebot');
 
         if (isTestMode) {
           console.log(`🧪 MODO DE TESTE ATIVADO (#testebot). JID: ${remoteJid}`);
