@@ -73,13 +73,19 @@ export async function POST(request: Request) {
         const isTestMode = tempText.toLowerCase().trim().startsWith('#testebot');
 
         if (isTestMode) {
-          console.log(`🧪 MODO DE TESTE ATIVADO (#testebot). Ignorando trava de 'fromMe' para JID: ${remoteJid}`);
+          console.log(`🧪 MODO DE TESTE ATIVADO (#testebot). JID: ${remoteJid}`);
         }
         
         // Outbound Message Detection: Ignore messages sent from our own instance (unless in test mode)
         if (fromMe && !isTestMode) {
           console.log(`📤 Mensagem de saída detectada (fromMe: true) para JID: ${remoteJid}. Ignorando processamento de lead.`);
-          const phone = remoteJid.split('@')[0] || '';
+          // Clean sender phone number (Evolution API sends @s.whatsapp.net or @g.us)
+          // For messages to self, it might be the same number
+          sender = remoteJid.split('@')[0] || '';
+          if (sender.includes(':')) sender = sender.split(':')[0]; // Remove device/session suffix if present
+          
+          console.log(`📱 Remetente: ${sender} | Texto: "${tempText.slice(0, 50)}..." | fromMe: ${fromMe}`);
+          const phone = sender;
           if (!phone) return;
 
           let lead;
@@ -134,7 +140,9 @@ export async function POST(request: Request) {
         text = messageObj?.conversation || 
                messageObj?.extendedTextMessage?.text || 
                messageObj?.text ||
-               msgData.messageContent || '';
+               msgData.messageContent || tempText || '';
+        
+        if (sender.includes(':')) sender = sender.split(':')[0];
         
         name = msgData.pushName || (msgData.messages && msgData.messages[0]?.pushName) || '';
       }
@@ -152,7 +160,7 @@ export async function POST(request: Request) {
       console.log(`📩 Nova mensagem de ${maskName(name)} (${maskPhone(sender)}): "${text.slice(0, 15)}..."`);
 
       const { shouldIgnoreMessage } = await import('@/lib/messageFilter');
-      if (shouldIgnoreMessage(text)) {
+      if (shouldIgnoreMessage(text) && !isTestMode) {
         console.log(`♻️ Filtro Manual: Lixo detectado e descartado antes da IA.`);
         return;
       }
