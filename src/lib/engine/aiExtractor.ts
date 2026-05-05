@@ -18,9 +18,7 @@ export interface AILeadProfile {
   resumo_ia?: string;
 }
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
+import { callAIWithFallback } from './aiUtils';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function extractLeadWithAI(
@@ -29,11 +27,6 @@ export async function extractLeadWithAI(
   context: 'group' | 'private' = 'private'
 ): Promise<AILeadProfile> {
   console.log(`🤖 Consultando Groq para extração de dados (${context === 'group' ? 'GRUPO' : 'PRIVADO'})...`);
-
-  if (!GROQ_API_KEY) {
-    console.warn('⚠️ GROQ_API_KEY não configurada. Usando fallback seguro (ignorar).');
-    return { is_lead: false };
-  }
 
   // ... (feedback fetch logic same as before)
   let feedbackExamples = '';
@@ -106,73 +99,25 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
   `;
 
   try {
-    const response = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0,
-        response_format: { type: 'json_object' }
-      })
+    const data = await callAIWithFallback({
+      imobiliaria_id,
+      feature: 'extraction',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0,
+      response_format: { type: 'json_object' }
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erro na API do Groq:', response.status, errorText);
-      return { is_lead: false };
-    }
-
-    const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content;
-    const usage = data.usage || {};
-
-    if (!rawContent) {
-      console.error('⚠️ Resposta do Groq sem conteúdo:', data);
-      return { is_lead: false };
-    }
+    if (!rawContent) return { is_lead: false };
 
     const cleanJson = rawContent.replace(/```json\n?|```/g, '').trim();
     const result = JSON.parse(cleanJson);
     
-    // Log success
-    if (imobiliaria_id) {
-      try {
-        await supabaseAdmin.from('ai_usage_logs').insert([{
-          imobiliaria_id,
-          provider: 'groq',
-          model: 'mixtral-8x7b-32768',
-          feature: 'extraction',
-          input_tokens: usage.prompt_tokens || 0,
-          output_tokens: usage.completion_tokens || 0,
-          status: 'success'
-        }]);
-      } catch (e) {
-        console.error('Error logging AI usage:', e);
-      }
-    }
-
     console.log('✅ Dados extraídos via IA:', result);
     return result as AILeadProfile;
 
   } catch (error: any) {
-    console.error('❌ Erro na extração via Groq:', error);
-    if (imobiliaria_id) {
-      try {
-        await supabaseAdmin.from('ai_usage_logs').insert([{
-          imobiliaria_id,
-          provider: 'groq',
-          feature: 'extraction',
-          status: 'error',
-          error_log: error.message
-        }]);
-      } catch (e) {
-        console.error('Error logging AI error:', e);
-      }
-    }
+    console.error('❌ Erro na extração via Fallback AI:', error.message);
     return { is_lead: false };
   }
 }

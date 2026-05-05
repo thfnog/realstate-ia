@@ -1,8 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabase';
-import * as mock from '@/lib/mockDb';
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+import { callAIWithFallback } from './aiUtils';
 
 export async function processFollowUpIntelligence(
   text: string, 
@@ -10,8 +6,6 @@ export async function processFollowUpIntelligence(
   imobiliaria_id: string
 ): Promise<string | null> {
   console.log('🤖 Analisando intenção de follow-up / agendamento...');
-
-  if (!GROQ_API_KEY) return null;
 
   // 1. Identificar intenção e disponibilidade mencionada
   const intentPrompt = `
@@ -26,19 +20,15 @@ REGRAS:
 `;
 
   try {
-    const resIntent = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{ role: 'user', content: intentPrompt }],
-        response_format: { type: 'json_object' }
-      })
+    const dataIntent = await callAIWithFallback({
+      imobiliaria_id,
+      feature: 'scheduler_intent',
+      model: 'llama-3.1-8b-instant', // Usar o pequeno para velocidade
+      messages: [{ role: 'user', content: intentPrompt }],
+      response_format: { type: 'json_object' }
     });
 
-    if (!resIntent.ok) return null;
-    const { choices } = await resIntent.json();
-    const result = JSON.parse(choices[0].message.content);
+    const result = JSON.parse(dataIntent.choices[0].message.content);
 
     if (!result.scheduling_intent) {
       console.log('ℹ️ Sem intenção de agendamento detectada.');
@@ -47,6 +37,10 @@ REGRAS:
 
     console.log('📅 Intenção de agendamento detectada. Buscando agenda do corretor...');
 
+    // ... (calendar logic same as before)
+    const { supabaseAdmin } = await import('@/lib/supabase');
+    const mock = await import('@/lib/mockDb');
+    
     // 2. Buscar agenda do corretor (Próximos 7 dias)
     const now = new Date();
     const nextWeek = new Date();
@@ -102,17 +96,12 @@ Qual desses fica melhor para você?"
 Retorne APENAS o texto da mensagem final.
 `;
 
-    const resFinal = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'mixtral-8x7b-32768', // Melhor para linguagem natural
-        messages: [{ role: 'user', content: schedulerPrompt }]
-      })
+    const dataFinal = await callAIWithFallback({
+      imobiliaria_id,
+      feature: 'scheduler_generation',
+      messages: [{ role: 'user', content: schedulerPrompt }]
     });
 
-    if (!resFinal.ok) return null;
-    const dataFinal = await resFinal.json();
     return dataFinal.choices[0].message.content;
 
   } catch (err) {

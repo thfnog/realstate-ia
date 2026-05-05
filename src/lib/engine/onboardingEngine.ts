@@ -1,9 +1,7 @@
+import { callAIWithFallback } from './aiUtils';
 import { supabaseAdmin } from '@/lib/supabase';
-import type { Lead, Imovel } from '@/lib/database.types';
+import type { Lead } from '@/lib/database.types';
 import { recommendImoveis } from './recommendImoveis';
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export async function generateOnboardingResponse(
   text: string,
@@ -12,8 +10,6 @@ export async function generateOnboardingResponse(
   history: any[] = []
 ): Promise<string | null> {
   console.log('🤖 Gerando resposta de onboarding inteligente com contexto...');
-
-  if (!GROQ_API_KEY) return null;
 
   // Formatar histórico para a IA
   const historyText = history.reverse().map(h => 
@@ -52,19 +48,14 @@ Retorne JSON:
 `;
 
   try {
-    const res = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
-        messages: [{ role: 'user', content: contextPrompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.1 // Menor temperatura para ser mais assertivo
-      })
+    const data = await callAIWithFallback({
+      imobiliaria_id,
+      feature: 'onboarding',
+      messages: [{ role: 'user', content: contextPrompt }],
+      temperature: 0.1,
+      response_format: { type: 'json_object' }
     });
 
-    if (!res.ok) return null;
-    const data = await res.json();
     const result = JSON.parse(data.choices[0].message.content);
 
     // 1. Tratar Venda
