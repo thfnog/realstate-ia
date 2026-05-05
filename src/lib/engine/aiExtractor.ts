@@ -80,11 +80,11 @@ REGRAS DE EXTRAÇÃO:
 EXEMPLO DE SAÍDA (LEAD):
 {
   "is_lead": true,
-  "nome": "Roberto",
+  "nome": "[NOME DO CLIENTE]",
   "tipo_interesse": "casa",
   "finalidade": "comprar",
-  "freguesia": "Swiss Park",
-  "resumo_ia": "Cliente busca casa de alto padrão para compra."
+  "freguesia": "[BAIRRO]",
+  "resumo_ia": "Cliente busca casa de alto padrão para compra no bairro [BAIRRO]."
 }
 
 EXEMPLO DE SAÍDA (RUÍDO/STATUS):
@@ -102,7 +102,7 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama-3.1-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0,
         response_format: { type: 'json_object' }
@@ -133,7 +133,7 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
         await supabaseAdmin.from('ai_usage_logs').insert([{
           imobiliaria_id,
           provider: 'groq',
-          model: 'llama-3.1-8b-instant',
+          model: 'llama-3.1-70b-versatile',
           feature: 'extraction',
           input_tokens: usage.prompt_tokens || 0,
           output_tokens: usage.completion_tokens || 0,

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { extractLeadWithAI } from '@/lib/engine/aiExtractor';
 import { processLead } from '@/lib/engine/processLead';
 import { processFollowUpIntelligence } from '@/lib/engine/aiScheduler';
+import { generateOnboardingResponse } from '@/lib/engine/onboardingEngine';
 import { saveMessageToHistory } from '@/lib/whatsapp';
 import * as mock from '@/lib/mockDb';
 import { waitUntil } from '@vercel/functions';
@@ -59,12 +60,24 @@ export async function POST(request: Request) {
         const msgData = payload.data;
         const messageObj = msgData.message || (msgData.messages && msgData.messages[0]?.message);
         const key = msgData.key || (msgData.messages && msgData.messages[0]?.key);
-        const fromMe = key?.fromMe === true || key?.fromMe === 'true';
+        
+        // Detailed logging for debugging fromMe issues
+        console.log(`🔑 Key detectada:`, JSON.stringify(key));
+
+        const fromMe = key?.fromMe === true || key?.fromMe === 'true' || key?.fromMe === 1;
         
         remoteJid = key?.remoteJid || '';
+
+        // Extract text early to check for test keyword
+        const tempText = messageObj?.conversation || messageObj?.extendedTextMessage?.text || messageObj?.text || '';
+        const isTestMode = tempText.toLowerCase().trim().startsWith('#testebot');
+
+        if (isTestMode) {
+          console.log(`🧪 MODO DE TESTE ATIVADO (#testebot). Ignorando trava de 'fromMe' para JID: ${remoteJid}`);
+        }
         
-        // Outbound Message Detection: Ignore messages sent from our own instance
-        if (fromMe) {
+        // Outbound Message Detection: Ignore messages sent from our own instance (unless in test mode)
+        if (fromMe && !isTestMode) {
           console.log(`📤 Mensagem de saída detectada (fromMe: true) para JID: ${remoteJid}. Ignorando processamento de lead.`);
           const phone = remoteJid.split('@')[0] || '';
           if (!phone) return;
@@ -242,7 +255,14 @@ export async function POST(request: Request) {
             }
           }
 
-          const aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
+          // Try Onboarding Engine first (handles more intents)
+          let aiResponse = await generateOnboardingResponse(text, lead, imobiliaria_id);
+          
+          // If onboarding didn't produce a specific reply, try the scheduler
+          if (!aiResponse) {
+             aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
+          }
+
           if (aiResponse) {
               await processLead(lead, { 
                 forceAutoReply: !skipAutoReply && !isGroup, 
@@ -363,7 +383,12 @@ export async function POST(request: Request) {
         }
       }
 
-      await processLead(newLead, { skipAutoReply });
+      const onboardingReply = await generateOnboardingResponse(text, newLead, imobiliaria_id);
+      
+      await processLead(newLead, { 
+        skipAutoReply,
+        customReply: onboardingReply || undefined
+      });
     })();
 
     // Non-blocking background task
