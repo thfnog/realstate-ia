@@ -356,7 +356,16 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
                 )}
               </div>
 
-              {/* WhatsApp Connector Removed - Moved to Personal Profile for security */}
+              {editingId && activeModules.includes('bot') && (
+                <div className="space-y-4 pt-4 border-t border-slate-50">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Integração do Bot (WhatsApp)</label>
+                  <WhatsAppConnector 
+                    instanceName={`realstate-iabroker-${editingId}`} 
+                    brokerId={editingId} 
+                    onStatusChange={() => fetchCorretores()}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-4 pt-4">
                 <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
