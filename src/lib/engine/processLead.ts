@@ -40,6 +40,7 @@ export interface ProcessOptions {
   skipAutoReply?: boolean;
   forceAutoReply?: boolean;
   customReply?: string;
+  forceIgnoreStatus?: boolean;
 }
 
 export async function processLead(lead: Lead, options: ProcessOptions = {}): Promise<ProcessResult> {
@@ -212,6 +213,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
 
       // For form leads, use shorter delay (lead is waiting on the form page)
       if (isFormLead) delaySec = Math.min(delaySec, 5);
+      if (options?.forceIgnoreStatus) delaySec = 0;
 
       console.log(`⏳ Aguardando ${delaySec}s antes de enviar resposta automática (prioridade humana)...`);
       
@@ -233,7 +235,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
         currentStatus = checkLead?.status || 'novo';
       }
 
-      if (currentStatus !== 'novo') {
+      if (currentStatus !== 'novo' && !options?.forceIgnoreStatus) {
         console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${maskName(lead.nome)} (${currentStatus}).`);
       } else {
         // 5.3 Check if name is pending — ask for it instead of standard reply

@@ -146,6 +146,10 @@ export async function POST(request: Request) {
         if (sender.includes(':')) sender = sender.split(':')[0];
         
         name = msgData.pushName || (msgData.messages && msgData.messages[0]?.pushName) || '';
+        
+        if (isTestMode) {
+          console.log(`🧪 PROCESSO DE TESTE: Remetente=${sender}, Texto="${text}"`);
+        }
       }
 
       const supportedEvents = ['messages.upsert', 'messages_upsert', 'messages_update', 'connection.update', 'status.instance', 'qrcode.updated'];
@@ -276,7 +280,8 @@ export async function POST(request: Request) {
               await processLead(lead, { 
                 forceAutoReply: !skipAutoReply && !isGroup, 
                 customReply: isGroup ? undefined : aiResponse,
-                skipAutoReply: skipAutoReply || isGroup
+                skipAutoReply: skipAutoReply || isGroup,
+                forceIgnoreStatus: isTestMode
               });
           }
           return;
@@ -396,7 +401,8 @@ export async function POST(request: Request) {
       
       await processLead(newLead, { 
         skipAutoReply,
-        customReply: onboardingReply || undefined
+        customReply: onboardingReply || undefined,
+        forceIgnoreStatus: isTestMode
       });
     })();
 
