@@ -30,6 +30,9 @@ export async function POST(request: Request) {
       let isGroup = false;
       let isTestMode = false;
       let groupName = '';
+      let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
+      let fallback_corretor_id: string | null = null;
+      let instanceMatch: RegExpMatchArray | null = null;
 
       const event = payload.event?.toLowerCase() || '';
       let remoteJid = payload.data?.key?.remoteJid || '';
@@ -74,8 +77,32 @@ export async function POST(request: Request) {
         const tempText = messageObj?.conversation || messageObj?.extendedTextMessage?.text || messageObj?.text || '';
         isTestMode = tempText.toLowerCase().trim().startsWith('#testebot');
 
+        // --- EARLY BROKER RESOLUTION ---
+        let broker;
+        
+        instanceMatch = instanceName?.match(/realstate-iabroker-(.+)/);
+        if (instanceMatch) {
+          const brokerId = instanceMatch[1];
+          if (mock.isMockMode()) {
+            broker = mock.getCorretorById(brokerId);
+          } else {
+            const { data } = await supabaseAdmin.from('corretores').select('id, imobiliaria_id, whatsapp_number').eq('id', brokerId).single();
+            broker = data;
+          }
+
+          if (broker) {
+            imobiliaria_id = broker.imobiliaria_id;
+            fallback_corretor_id = broker.id;
+          }
+        }
+
+        // AUTO TEST MODE: If chatting with self
+        if (broker?.whatsapp_number && remoteJid.includes(broker.whatsapp_number.replace(/\D/g, ''))) {
+          isTestMode = true;
+        }
+
         if (isTestMode) {
-          console.log(`🧪 MODO DE TESTE ATIVADO (#testebot). JID: ${remoteJid}`);
+          console.log(`🧪 MODO DE TESTE ATIVADO. JID: ${remoteJid}`);
         }
         
         // Outbound Message Detection: Ignore messages sent from our own instance (unless in test mode)
@@ -157,6 +184,9 @@ export async function POST(request: Request) {
         
         if (isTestMode) {
           console.log(`🧪 PROCESSO DE TESTE: Remetente=${sender}, Texto="${text}"`);
+        } else if (broker?.whatsapp_number && remoteJid.includes(broker.whatsapp_number.replace(/\D/g, ''))) {
+          isTestMode = true;
+          console.log(`🧪 MODO DE TESTE AUTOMÁTICO (Chat Comigo Mesmo). JID: ${remoteJid}`);
         }
       }
 
@@ -179,26 +209,6 @@ export async function POST(request: Request) {
       }
 
       // --- IMOBILIARIA RESOLUTION ---
-      let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
-      let fallback_corretor_id: string | null = null;
-      
-      const instanceMatch = instanceName?.match(/realstate-iabroker-(.+)/);
-      if (instanceMatch) {
-        const brokerId = instanceMatch[1];
-        let broker;
-        if (mock.isMockMode()) {
-          broker = mock.getCorretorById(brokerId);
-        } else {
-          const { data } = await supabaseAdmin.from('corretores').select('id, imobiliaria_id').eq('id', brokerId).single();
-          broker = data;
-        }
-
-        if (broker) {
-          imobiliaria_id = broker.imobiliaria_id;
-          fallback_corretor_id = broker.id;
-        }
-      }
-
       if (!mock.isMockMode() && !instanceMatch) {
          const { data: imobs } = await supabaseAdmin.from('imobiliarias').select('id').limit(1);
          if (imobs && imobs.length > 0) imobiliaria_id = imobs[0].id;
