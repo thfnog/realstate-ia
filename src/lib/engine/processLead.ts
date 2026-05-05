@@ -253,7 +253,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             corretor,
             config,
             customMessage: nameAskMsg,
-            useDefaultInstance: (isFormLead && !isSoloBroker) || options?.forceIgnoreStatus,
+            useDefaultInstance: isFormLead && !isSoloBroker,
           });
           console.log('  → Pergunta de nome enviada.');
         } else {
@@ -271,7 +271,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             corretor,
             config,
             customMessage: replyMsg,
-            useDefaultInstance: (isFormLead && !isSoloBroker) || options?.forceIgnoreStatus,
+            useDefaultInstance: isFormLead && !isSoloBroker,
           });
           console.log('  → Resposta automática enviada com sucesso.');
         }
