@@ -113,7 +113,7 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0,
         response_format: { type: 'json_object' }
@@ -144,7 +144,7 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
         await supabaseAdmin.from('ai_usage_logs').insert([{
           imobiliaria_id,
           provider: 'groq',
-          model: 'llama-3.3-70b-versatile',
+          model: 'mixtral-8x7b-32768',
           feature: 'extraction',
           input_tokens: usage.prompt_tokens || 0,
           output_tokens: usage.completion_tokens || 0,
