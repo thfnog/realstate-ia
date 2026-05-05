@@ -142,6 +142,11 @@ export async function POST(request: Request) {
                messageObj?.extendedTextMessage?.text || 
                messageObj?.text ||
                msgData.messageContent || tempText || '';
+
+        if (isTestMode) {
+          text = text.replace(/#testebot/gi, '').trim();
+          if (!text) text = 'Olá'; // Fallback if it was just the keyword
+        }
         
         if (sender.includes(':')) sender = sender.split(':')[0];
         
@@ -203,7 +208,7 @@ export async function POST(request: Request) {
       const textClean = text.toLowerCase().trim().replace(/[?!.]/g, '');
       const isSimpleGreeting = textClean.length < 15 && simpleGreetings.includes(textClean);
 
-      if (extracted.is_lead === false || (isSimpleGreeting && !extracted.tipo_interesse && !extracted.freguesia)) {
+      if ((extracted.is_lead === false && !isTestMode) || (isSimpleGreeting && !extracted.tipo_interesse && !extracted.freguesia && !isTestMode)) {
         console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia || 'Saudação genérica'})`);
         return;
       }
