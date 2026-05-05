@@ -26,22 +26,20 @@ export async function POST(
     // Use the description if available
     const feedbackText = lead.descricao_interesse || '';
 
-    if (!feedbackText) {
-      return NextResponse.json({ error: 'Nenhum texto associado a este lead para treinamento' }, { status: 400 });
-    }
+    // 2. Save to feedback table (only if text is available)
+    if (feedbackText) {
+      const { error: feedbackError } = await supabaseAdmin
+        .from('ai_feedback')
+        .insert({
+          imobiliaria_id: lead.imobiliaria_id,
+          text: feedbackText,
+          is_lead_actual: false
+        });
 
-    // 2. Save to feedback table
-    const { error: feedbackError } = await supabaseAdmin
-      .from('ai_feedback')
-      .insert({
-        imobiliaria_id: lead.imobiliaria_id,
-        text: feedbackText,
-        is_lead_actual: false
-      });
-
-    if (feedbackError) {
-      console.error('Erro ao salvar feedback:', feedbackError);
-      return NextResponse.json({ error: 'Erro ao salvar feedback no banco' }, { status: 500 });
+      if (feedbackError) {
+        console.error('Erro ao salvar feedback:', feedbackError);
+        // We continue to delete anyway to not block the UI
+      }
     }
 
     // 3. Delete the lead
