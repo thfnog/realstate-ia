@@ -273,8 +273,16 @@ export async function POST(request: Request) {
             }
           }
 
+          // Fetch recent history for context
+          const { data: history } = await supabaseAdmin
+            .from('mensagens_historico')
+            .select('direction, message_text')
+            .eq('lead_id', lead.id)
+            .order('created_at', { ascending: false })
+            .limit(6);
+
           // Try Onboarding Engine first (handles more intents)
-          let aiResponse = await generateOnboardingResponse(text, lead, imobiliaria_id);
+          let aiResponse = await generateOnboardingResponse(text, lead, imobiliaria_id, history || []);
           
           // If onboarding didn't produce a specific reply, try the scheduler
           if (!aiResponse) {
@@ -402,7 +410,15 @@ export async function POST(request: Request) {
         }
       }
 
-      const onboardingReply = await generateOnboardingResponse(text, newLead, imobiliaria_id);
+      // Fetch recent history for context (even for new leads, there might be a few previous messages)
+      const { data: history } = await supabaseAdmin
+        .from('mensagens_historico')
+        .select('direction, message_text')
+        .eq('lead_id', newLead.id)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      const onboardingReply = await generateOnboardingResponse(text, newLead, imobiliaria_id, history || []);
       
       await processLead(newLead, { 
         skipAutoReply,
