@@ -238,6 +238,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
       if (currentStatus !== 'novo' && !options?.forceIgnoreStatus) {
         console.log(`✅🤖 Bot cancelado: O corretor já assumiu o atendimento do lead ${maskName(lead.nome)} (${currentStatus}).`);
       } else {
+        if (options?.forceIgnoreStatus) console.log(`🧪 Modo Teste: Ignorando status ${currentStatus} e forçando resposta.`);
         // 5.3 Check if name is pending — ask for it instead of standard reply
         const isNamePending = lead.nome?.startsWith('Lead #');
         
@@ -252,7 +253,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             corretor,
             config,
             customMessage: nameAskMsg,
-            useDefaultInstance: isFormLead && !isSoloBroker,
+            useDefaultInstance: (isFormLead && !isSoloBroker) || options?.forceIgnoreStatus,
           });
           console.log('  → Pergunta de nome enviada.');
         } else {
@@ -270,7 +271,7 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
             corretor,
             config,
             customMessage: replyMsg,
-            useDefaultInstance: isFormLead && !isSoloBroker,
+            useDefaultInstance: (isFormLead && !isSoloBroker) || options?.forceIgnoreStatus,
           });
           console.log('  → Resposta automática enviada com sucesso.');
         }

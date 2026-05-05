@@ -54,7 +54,9 @@ export async function sendAutoReplyToLead(data: AutoReplyData): Promise<string> 
     : (data.corretor.whatsapp_instance || `realstate-iabroker-${data.corretor.id}`);
   
   try {
+    console.log(`📱 Enviando resposta automática para ${lead.telefone} via instância ${instanceName}...`);
     const result = await sendWhatsAppMessage(lead.telefone, message, instanceName, data.config?.code);
+    console.log(`✅ Resposta automática enviada com sucesso para ${lead.telefone}. ID: ${result}`);
     
     // Persist outbound bot message
     await saveMessageToHistory({
