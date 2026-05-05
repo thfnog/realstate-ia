@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       let instanceName = payload.instance;
       let isGroup = false;
       let isTestMode = false;
+      let groupName = '';
 
       const event = payload.event?.toLowerCase() || '';
       let remoteJid = payload.data?.key?.remoteJid || '';
@@ -126,15 +127,17 @@ export async function POST(request: Request) {
         }
 
         isGroup = remoteJid.includes('@g.us');
-        const participantJid = key?.participant || '';
+        // Prefer participantAlt as it contains the real phone number, participant often has the LID
+        const participantJid = key?.participantAlt || key?.participant || '';
         
         if (isGroup) {
+          groupName = msgData.groupName || (msgData.messages && msgData.messages[0]?.groupName) || '';
           if (!participantJid) {
             console.log(`🚫 Mensagem de grupo ignorada (sem participante identificado): ${remoteJid}`);
             return;
           }
           sender = participantJid.split('@')[0] || '';
-          console.log(`👥 Mensagem de grupo detectada. Remetente: ${sender} (Grupo: ${remoteJid})`);
+          console.log(`👥 Mensagem de grupo detectada. Remetente: ${sender} (Grupo: ${groupName || remoteJid})`);
         } else {
           sender = remoteJid.split('@')[0] || '';
         }
@@ -201,7 +204,7 @@ export async function POST(request: Request) {
          if (imobs && imobs.length > 0) imobiliaria_id = imobs[0].id;
       }
 
-      const extracted = await extractLeadWithAI(text, imobiliaria_id);
+      const extracted = await extractLeadWithAI(text, imobiliaria_id, isGroup ? 'group' : 'private');
 
       // Salvaguarda: Se for apenas saudação e a IA não identificou interesse, descartamos como ruído
       const simpleGreetings = ['oi', 'olá', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'td bem', 'opa', 'blz', 'beleza'];
@@ -330,7 +333,7 @@ export async function POST(request: Request) {
         corretor_id: fallback_corretor_id,
         status: 'novo' as const,
         origem: 'whatsapp' as const,
-        portal_origem: isGroup ? `Grupo WhatsApp (${remoteJid.split('@')[0]})` : (instanceName || 'WhatsApp Bot')
+        portal_origem: isGroup ? `WhatsApp Grupo: ${groupName || remoteJid.split('@')[0]}` : (instanceName || 'WhatsApp Bot')
       };
 
       let newLead;

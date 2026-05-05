@@ -7,7 +7,7 @@
 
 export interface AILeadProfile {
   nome?: string;
-  tipo_interesse?: 'apartamento' | 'casa' | 'terreno';
+  tipo_interesse?: 'apartamento' | 'casa' | 'terreno' | 'chacara' | 'sitio' | 'fazenda' | 'lote';
   freguesia?: string; // Bairro
   concelho?: string;  // Cidade
   orcamento?: number;
@@ -23,15 +23,19 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 import { supabaseAdmin } from '@/lib/supabase';
 
-export async function extractLeadWithAI(text: string, imobiliaria_id?: string): Promise<AILeadProfile> {
-  console.log('🤖 Consultando Groq para extração de dados...');
+export async function extractLeadWithAI(
+  text: string, 
+  imobiliaria_id?: string, 
+  context: 'group' | 'private' = 'private'
+): Promise<AILeadProfile> {
+  console.log(`🤖 Consultando Groq para extração de dados (${context === 'group' ? 'GRUPO' : 'PRIVADO'})...`);
 
   if (!GROQ_API_KEY) {
     console.warn('⚠️ GROQ_API_KEY não configurada. Usando fallback seguro (ignorar).');
     return { is_lead: false };
   }
 
-  // Fetch recent feedback examples to improve accuracy (Few-Shot Learning)
+  // ... (feedback fetch logic same as before)
   let feedbackExamples = '';
   try {
     if (imobiliaria_id) {
@@ -52,25 +56,32 @@ export async function extractLeadWithAI(text: string, imobiliaria_id?: string): 
     console.warn('⚠️ Falha ao buscar exemplos de feedback:', err);
   }
 
+  const groupStrictness = context === 'group' 
+    ? `ATENÇÃO: Esta mensagem veio de um GRUPO de WhatsApp. 
+       Ignore conversas paralelas, piadas, sugestões de locais que não sejam imóveis (ex: padarias, farmácias), saudações casuais ou discussões gerais.
+       SÓ marque "is_lead": true se a pessoa estiver claramente buscando um imóvel para COMPRAR/ALUGAR ou oferecendo um para VENDER.`
+    : '';
+
   const prompt = `
 Você é um classificador e extrator de dados para uma imobiliária brasileira.
 Sua tarefa é triar mensagens do WhatsApp e extrair informações apenas se forem relevantes para o negócio imobiliário (compra, venda, aluguel, dúvidas sobre imóveis).
+
+${groupStrictness}
 
 MENSAGEM DO CLIENTE:
 "${text}"
 
 REGRAS DE CLASSIFICAÇÃO (is_lead):
 - Marque "is_lead": true apenas se houver intenção EXPLÍCITA de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, agendamento de visitas, interesse em vender/alugar, pedido de catálogo).
-- Marque "is_lead": false para RELATOS DE STATUS, conversas sociais, saudações genéricas isoladas ou SERVIÇOS TERCEIRIZADOS (ex: "frete", "mudança", "pintura", "limpeza", "reforma", "ofereço meus serviços", "parceria de marketing").
-- IMPORTANTE: Se o usuário estiver buscando ou oferecendo serviços que não sejam a COMPRA, VENDA ou ALUGUEL de IMÓVEIS (ex: perguntando preço de frete de mudança), marque como false.
-- Mensagens que são APENAS saudações sem acompanhamento de uma dúvida ou pedido NÃO são leads. Se o usuário só disse "Oi", marque como false.
-- Se a mensagem for muito curta (menos de 10 caracteres) e for apenas social, SEMPRE marque false.
+- Marque "is_lead": false para conversas sobre o bairro, padarias, trânsito, segurança ou sugestões genéricas que NÃO sejam transações imobiliárias.
+- Se o usuário só disse "Oi" ou "Bom dia" sem contexto, é FALSE.
+- Se a mensagem for muito curta ou sem sentido comercial, é FALSE.
 
 ${feedbackExamples ? `EXEMPLOS DE APRENDIZADO (FEEDBACK DO USUÁRIO):\n${feedbackExamples}\n` : ''}
 
 REGRAS DE EXTRAÇÃO:
-1. Extraia o nome se mencionado de forma clara (ex: "Sou o Carlos").
-2. Identifique o tipo: 'apartamento', 'casa' ou 'terreno'.
+1. Extraia o nome se mencionado de forma clara.
+2. Identifique o tipo: 'apartamento', 'casa', 'terreno', 'chacara', 'sitio', 'fazenda' ou 'lote'.
 3. Identifique a finalidade: 'comprar', 'alugar' ou 'investir'.
 4. Identifique o bairro (freguesia) e cidade (concelho).
 5. Identifique o número de vagas de garagem (vagas).
