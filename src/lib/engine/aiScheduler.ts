@@ -106,7 +106,7 @@ Retorne APENAS o texto da mensagem final.
       method: 'POST',
       headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile', // Melhor para linguagem natural
+        model: 'llama-3.3-70b-versatile', // Melhor para linguagem natural
         messages: [{ role: 'user', content: schedulerPrompt }]
       })
     });

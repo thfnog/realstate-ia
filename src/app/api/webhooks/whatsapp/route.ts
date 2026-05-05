@@ -281,10 +281,10 @@ export async function POST(request: Request) {
              aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
           }
 
-          if (aiResponse) {
+          if (aiResponse || !skipAutoReply) {
               await processLead(lead, { 
                 forceAutoReply: !skipAutoReply && !isGroup, 
-                customReply: isGroup ? undefined : aiResponse,
+                customReply: isGroup ? undefined : (aiResponse || undefined),
                 skipAutoReply: skipAutoReply || isGroup,
                 forceIgnoreStatus: isTestMode
               });
