@@ -24,6 +24,7 @@ export default function AgendaPage() {
   const [loading, setLoading] = useState(true);
   
   const [modoEscala, setModoEscala] = useState(false);
+  const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
   const [selectedCorretorId, setSelectedCorretorId] = useState('');
   
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -200,14 +201,28 @@ export default function AgendaPage() {
             <p className="text-slate-500 font-medium mt-1">Acompanhamento centralizado de visitas, vistorias e contratos.</p>
           </div>
           <div className="flex items-center gap-3">
-          <button 
-            onClick={fetchData}
-            className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-primary hover:shadow-lg transition-all"
-            title="Atualizar Dados"
-          >
-            <IoSyncOutline size={20} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+            <div className="flex bg-white border border-slate-100 p-1 rounded-2xl shadow-sm mr-2">
+              <button 
+                onClick={() => setViewMode('month')}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'month' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}
+              >
+                Mês
+              </button>
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}
+              >
+                Lista
+              </button>
+            </div>
+            <button 
+              onClick={fetchData}
+              className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-primary hover:shadow-lg transition-all"
+              title="Atualizar Dados"
+            >
+              <IoSyncOutline size={20} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex-1 flex flex-col min-h-0 shadow-2xl shadow-slate-200/50">
@@ -280,112 +295,195 @@ export default function AgendaPage() {
           )}
         </div>
 
-        {/* Calendar Grid */}
+        {/* Calendar Content */}
         <div className="flex-1 min-h-0 flex flex-col border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50/30">
-          <div className="min-w-[1000px] flex-1 flex flex-col h-full overflow-x-auto">
-            {/* Days Header */}
-            <div className="grid grid-cols-7 bg-white border-b border-slate-100 shrink-0">
-              {daysOfWeek.map((day, idx) => (
-                <div key={day} className={`px-4 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest ${idx > 0 ? 'border-l border-slate-50' : ''}`}>
-                  {day}
-                </div>
-              ))}
-            </div>
-            
-            {/* Calendar Body */}
-            <div className="flex-1 grid grid-cols-7 auto-rows-fr overflow-y-auto custom-scrollbar">
-              {/* Empty boxes for offset */}
-              {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                <div key={`empty-${i}`} className={`bg-slate-50/20 border-b border-slate-100 ${i > 0 ? 'border-l border-slate-50' : ''}`} />
-              ))}
-              
-              {/* Actual Days */}
-              {loading ? (
-                Array.from({ length: daysInMonth }).map((_, i) => (
-                  <div key={`skeleton-${i}`} className="p-4 border-b border-slate-100 border-l border-slate-50 bg-white animate-pulse">
-                    <LoadingSkeleton className="w-8 h-8 rounded-full mb-4" />
-                    <LoadingSkeleton className="h-4 w-full rounded-lg mb-2" />
-                    <LoadingSkeleton className="h-4 w-3/4 rounded-lg" />
+          {viewMode === 'month' ? (
+            <div className="min-w-[1000px] flex-1 flex flex-col h-full overflow-x-auto">
+              {/* Days Header */}
+              <div className="grid grid-cols-7 bg-white border-b border-slate-100 shrink-0">
+                {daysOfWeek.map((day, idx) => (
+                  <div key={day} className={`px-4 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest ${idx > 0 ? 'border-l border-slate-50' : ''}`}>
+                    {day}
                   </div>
-                ))
-              ) : Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const isToday = 
-                  day === new Date().getDate() && 
-                  currentDate.getMonth() === new Date().getMonth() && 
-                  currentDate.getFullYear() === new Date().getFullYear();
+                ))}
+              </div>
+              
+              {/* Calendar Body */}
+              <div className="flex-1 grid grid-cols-7 auto-rows-fr overflow-y-auto custom-scrollbar">
+                {/* Empty boxes for offset */}
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                  <div key={`empty-${i}`} className={`bg-slate-50/20 border-b border-slate-100 ${i > 0 ? 'border-l border-slate-50' : ''}`} />
+                ))}
                 
-                const dayEvents = getEventsForDay(day);
-                const colIdx = (firstDayOfMonth + i) % 7;
-                
-                const dayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const escalaHoje = getEscalaForDay(dayStr);
-                
-                return (
-                  <div 
-                    key={day} 
-                    onClick={() => modoEscala && toggleEscalaDia(dayStr, selectedCorretorId)}
-                    className={`group relative p-4 flex flex-col border-b border-slate-100 bg-white ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      {/* Escala Badges */}
-                      <div className="flex flex-wrap gap-1.5 items-start flex-1 min-w-0 pr-2">
-                        {escalaHoje.map(esc => {
-                          const init = esc.corretores?.nome.substring(0, 2).toUpperCase() || '??';
+                {/* Actual Days */}
+                {loading ? (
+                  Array.from({ length: daysInMonth }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="p-4 border-b border-slate-100 border-l border-slate-50 bg-white animate-pulse">
+                      <LoadingSkeleton className="w-8 h-8 rounded-full mb-4" />
+                      <LoadingSkeleton className="h-4 w-full rounded-lg mb-2" />
+                      <LoadingSkeleton className="h-4 w-3/4 rounded-lg" />
+                    </div>
+                  ))
+                ) : Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const isToday = 
+                    day === new Date().getDate() && 
+                    currentDate.getMonth() === new Date().getMonth() && 
+                    currentDate.getFullYear() === new Date().getFullYear();
+                  
+                  const dayEvents = getEventsForDay(day);
+                  const colIdx = (firstDayOfMonth + i) % 7;
+                  
+                  const dayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  const escalaHoje = getEscalaForDay(dayStr);
+                  
+                  return (
+                    <div 
+                      key={day} 
+                      onClick={() => modoEscala && toggleEscalaDia(dayStr, selectedCorretorId)}
+                      className={`group relative p-4 flex flex-col border-b border-slate-100 bg-white ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        {/* Escala Badges */}
+                        <div className="flex flex-wrap gap-1.5 items-start flex-1 min-w-0 pr-2">
+                          {escalaHoje.map(esc => {
+                            const init = esc.corretores?.nome.substring(0, 2).toUpperCase() || '??';
+                            return (
+                              <div 
+                                key={esc.id}
+                                title={esc.corretores?.nome}
+                                onClick={(e) => { 
+                                  if (modoEscala) { e.stopPropagation(); toggleEscalaDia(dayStr, esc.corretor_id); }
+                                }}
+                                className={`flex items-center justify-center w-7 h-7 text-[9px] font-black rounded-xl border-2 shrink-0 transition-all ${modoEscala ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 hover:bg-rose-500 hover:border-rose-500 scale-110' : 'bg-slate-50 text-slate-500 border-slate-100 group-hover:border-slate-200'}`}
+                              >
+                                {init}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        
+                        {/* Day Number */}
+                        <div className="shrink-0">
+                          <span className={`inline-flex items-center justify-center w-9 h-9 text-xs font-black tracking-tighter rounded-2xl transition-all ${isToday ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-110' : 'text-slate-900 group-hover:scale-110'}`}>
+                            {day}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className={`flex-1 space-y-2 pr-1 transition-all duration-500 ${modoEscala ? 'opacity-20 pointer-events-none blur-[1px]' : ''}`}>
+                        {dayEvents.slice(0, 2).map(evt => {
+                          const ec = eventConfig[evt.tipo] || eventConfig.outro;
                           return (
                             <div 
-                              key={esc.id}
-                              title={esc.corretores?.nome}
-                              onClick={(e) => { 
-                                if (modoEscala) { e.stopPropagation(); toggleEscalaDia(dayStr, esc.corretor_id); }
-                              }}
-                              className={`flex items-center justify-center w-7 h-7 text-[9px] font-black rounded-xl border-2 shrink-0 transition-all ${modoEscala ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 hover:bg-rose-500 hover:border-rose-500 scale-110' : 'bg-slate-50 text-slate-500 border-slate-100 group-hover:border-slate-200'}`}
+                              key={evt.id} 
+                              onClick={() => setSelectedEvent(evt)}
+                              className={`flex flex-col px-3 py-2.5 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all ${ec.bg} ${evt.status === 'realizado' ? 'opacity-50' : ''}`}
                             >
-                              {init}
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-900/60">{formatTime(evt.data_hora)}</span>
+                                {evt.status === 'agendado' && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                )}
+                              </div>
+                              <span className={`text-[10px] font-black uppercase tracking-widest leading-tight line-clamp-1 ${ec.color}`}>{evt.titulo}</span>
+                              {evt.lead && <span className="text-[9px] font-bold text-slate-500 mt-1 line-clamp-1">{evt.lead.nome}</span>}
                             </div>
                           )
                         })}
-                      </div>
-                      
-                      {/* Day Number */}
-                      <div className="shrink-0">
-                        <span className={`inline-flex items-center justify-center w-9 h-9 text-xs font-black tracking-tighter rounded-2xl transition-all ${isToday ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-110' : 'text-slate-900 group-hover:scale-110'}`}>
-                          {day}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className={`flex-1 space-y-2 pr-1 transition-all duration-500 ${modoEscala ? 'opacity-20 pointer-events-none blur-[1px]' : ''}`}>
-                      {dayEvents.map(evt => {
-                        const ec = eventConfig[evt.tipo] || eventConfig.outro;
-                        return (
-                          <div 
-                            key={evt.id} 
-                            onClick={() => setSelectedEvent(evt)}
-                            className={`flex flex-col px-3 py-2.5 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all ${ec.bg} ${evt.status === 'realizado' ? 'opacity-50' : ''}`}
-                          >
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-slate-900/60">{formatTime(evt.data_hora)}</span>
-                              {evt.status === 'agendado' && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                              )}
-                            </div>
-                            <span className={`text-[10px] font-black uppercase tracking-widest leading-tight line-clamp-1 ${ec.color}`}>{evt.titulo}</span>
-                            {evt.lead && <span className="text-[9px] font-bold text-slate-500 mt-1 line-clamp-1">{evt.lead.nome}</span>}
+                        {dayEvents.length > 2 && (
+                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center py-2 bg-slate-50 rounded-xl border border-slate-100 mt-1 shadow-sm">
+                            + {dayEvents.length - 2} eventos
                           </div>
-                        )
-                      })}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              
-              {/* Trailing empty boxes */}
-              {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
-                <div key={`trail-${i}`} className={`bg-slate-50/20 border-b border-slate-100 border-l border-slate-50`} />
-              ))}
+                  );
+                })}
+                
+                {/* Trailing empty boxes */}
+                {Array.from({ length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7 }).map((_, i) => (
+                  <div key={`trail-${i}`} className={`bg-slate-50/20 border-b border-slate-100 border-l border-slate-50`} />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-white">
+              <div className="max-w-4xl mx-auto space-y-12">
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dayEvents = getEventsForDay(day);
+                  if (dayEvents.length === 0) return null;
+
+                  const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                  const isToday = date.toDateString() === new Date().toDateString();
+
+                  return (
+                    <div key={`list-day-${day}`} className="animate-fade-in group">
+                      <div className="flex items-start gap-8">
+                        <div className="w-24 shrink-0 pt-2 sticky top-0">
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-primary' : 'text-slate-400'}`}>
+                            {daysOfWeek[date.getDay()]}
+                          </p>
+                          <p className={`text-4xl font-black tracking-tighter ${isToday ? 'text-primary' : 'text-slate-900'}`}>
+                            {day}
+                          </p>
+                        </div>
+                        <div className="flex-1 space-y-4">
+                          {dayEvents.map(evt => {
+                            const ec = eventConfig[evt.tipo] || eventConfig.outro;
+                            return (
+                              <div 
+                                key={`list-evt-${evt.id}`}
+                                onClick={() => setSelectedEvent(evt)}
+                                className={`flex items-center gap-6 p-6 rounded-[2rem] border-2 border-transparent hover:border-primary/20 hover:bg-slate-50 hover:shadow-xl hover:shadow-slate-200/50 cursor-pointer transition-all ${ec.bg} border-slate-100/50 shadow-sm`}
+                              >
+                                <div className="w-20 text-center shrink-0 border-r border-slate-200/50 pr-6">
+                                  <p className="text-sm font-black text-slate-900">{formatTime(evt.data_hora)}</p>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Hór.</p>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${ec.bg} ${ec.color}`}>
+                                      {ec.label}
+                                    </span>
+                                    {evt.status === 'agendado' && (
+                                      <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-500 border border-blue-100">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                        Agendado
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h3 className="text-lg font-black text-slate-900 tracking-tight line-clamp-1">{evt.titulo}</h3>
+                                  <div className="flex items-center gap-4 mt-2">
+                                    {evt.lead && (
+                                      <div className="flex items-center gap-1.5">
+                                        <IoPersonOutline className="text-slate-400" size={12} />
+                                        <span className="text-xs font-bold text-slate-500">{evt.lead.nome}</span>
+                                      </div>
+                                    )}
+                                    {evt.local && (
+                                      <div className="flex items-center gap-1.5">
+                                        <IoLocationOutline className="text-slate-400" size={12} />
+                                        <span className="text-xs font-bold text-slate-500 line-clamp-1">{evt.local}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="p-3 rounded-2xl bg-white border border-slate-100 text-slate-400 group-hover:text-primary group-hover:scale-110 transition-all shadow-sm">
+                                  <IoChevronForwardOutline size={20} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -498,7 +596,7 @@ export default function AgendaPage() {
               </div>
             </div>
 
-            <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+            <div className="p-6 md:p-8 bg-slate-50/50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
               <button 
                 onClick={() => deleteEvent(selectedEvent.id)}
                 disabled={updating}
@@ -507,12 +605,12 @@ export default function AgendaPage() {
                 <IoTrashOutline size={18} /> Excluir Registro
               </button>
               
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-3">
                 {!editMode && (
                   <button 
                     onClick={() => setEditMode(true)}
                     disabled={updating}
-                    className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:border-primary hover:text-primary transition-all shadow-sm"
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:border-primary hover:text-primary transition-all shadow-sm"
                   >
                     <IoCreateOutline size={18} /> Editar Dados
                   </button>
@@ -522,17 +620,17 @@ export default function AgendaPage() {
                   <button 
                     onClick={saveEventChanges}
                     disabled={updating}
-                    className="px-10 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
+                    className="px-8 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
                   >
                     {updating ? 'Sincronizando...' : 'Confirmar Alterações'}
                   </button>
                 ) : (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
                     {selectedEvent.status !== 'cancelado' && (
                       <button 
                         onClick={() => updateEventStatus(selectedEvent.id, 'cancelado')}
                         disabled={updating}
-                        className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-all shadow-sm"
+                        className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-all shadow-sm"
                       >
                         <IoCloseCircleOutline size={18} /> Cancelar
                       </button>
@@ -541,7 +639,7 @@ export default function AgendaPage() {
                       <button 
                         onClick={() => updateEventStatus(selectedEvent.id, 'realizado')}
                         disabled={updating}
-                        className="flex items-center gap-2 px-10 py-4 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-slate-900/10"
+                        className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-slate-900/10"
                       >
                         <IoCheckmarkCircleOutline size={18} /> Marcar Realizado
                       </button>

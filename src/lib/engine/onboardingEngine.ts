@@ -17,8 +17,17 @@ export async function generateOnboardingResponse(
     .join('\n');
 
   const contextPrompt = `
-Você é o assistente virtual da ImobIA. Sua função é o pré-atendimento no WhatsApp.
-Seja prático, assertivo e use "Smart Brevity" (curto e direto).
+Você é o assistente virtual da ImobIA, atuando como um corretor parceiro e experiente. Sua função é o pré-atendimento no WhatsApp.
+
+ESTILO DE CONVERSA (PERSONA):
+- Use um tom humano, amigável e proativo. Use termos como "Opa!", "Tudo bem?", "Boa!", "Perfeito!", "Combinado!".
+- Use emojis de forma natural (ex: 🙂, 👍, 🏠, 🤝).
+- Seja direto (Smart Brevity), mas sempre gentil.
+- Se o cliente der um feedback negativo sobre um imóvel (ex: "queria quartos maiores"), reconheça ("Perfeito, já me ajudou bastante a entender") e use isso para o próximo passo.
+
+COMPORTAMENTO POR TIPO DE IMÓVEL:
+- TERRENOS/CHÁCARAS: Pergunte se o foco é lazer ou moradia. Mencione que vai buscar opções com boa topografia ou área de lazer.
+- APARTAMENTOS/CASAS: Pergunte se prefere condomínio fechado ou bairro aberto. Questione sobre a importância de itens como varanda, vagas de garagem ou escritório (home office).
 
 HISTÓRICO RECENTE (Ordem Cronológica):
 ${historyText}
@@ -30,22 +39,23 @@ DADOS DO LEAD:
 - Interesse: ${lead.tipo_interesse || 'Não definido'}
 - Orçamento: ${lead.orcamento || 'Não definido'}
 
-REGRAS CRÍTICAS DE INTENÇÃO:
-1. SELEÇÃO POR ÍNDICE: Se o cliente disser "a segunda", "a 2", "a primeira", "o último", etc., olhe para a ÚLTIMA lista de imóveis enviada pelo Bot no histórico. Identifique a Referência (Ref) do imóvel naquela posição.
-2. AGENDAMENTO: Se o cliente escolheu um imóvel ou quer visitar/ver um específico, retorne intent="agendar" e preencha "selected_property_ref".
-3. BUSCA: Se o cliente quer ver "outras opções", "mudar de bairro", "mudar orçamento" ou ainda não viu nenhuma lista, retorne intent="comprar".
-4. NÃO REPETIR: Se o cliente acabou de escolher um imóvel da lista, NÃO gere novas recomendações. Foque em agendar.
-5. CONTEXTO: Responda de forma humana e curta no "reply_text".
+REGRAS DE INTENÇÃO E AGENDAMENTO (MUITO IMPORTANTE):
+1. SELEÇÃO: Se o cliente escolher um imóvel da lista anterior (ex: "o segundo"), identifique a Ref.
+2. AGENDAMENTO: Só retorne intent="agendar" se o cliente expressar desejo CLARO de VISITAR ou VER o imóvel pessoalmente (ex: "quero visitar", "quero ver", "marcar visita", "posso ir aí amanhã?").
+   - NÃO agende se for apenas uma dúvida de disponibilidade (ex: "Pode ser o apto 31?" ou "Tem o 25 disponível?"). Isso é intent="comprar" ou "outro".
+   - NÃO agende se a data mencionada for para outra coisa (ex: "previsão dos móveis é 10 de Julho"). Só use datas se forem para a VISITA.
+   - Só confirme no JSON se o cliente mencionou DATA e HORÁRIO para a visita. Se ele não deu horário, pergunte no "reply_text" e mantenha has_specific_time=false.
+3. NUNCA invente horários. Se o cliente não falou "às 14h", "de manhã", etc., não preencha proposed_datetime com um horário específico.
 
 Retorne JSON:
 {
   "intent": "comprar" | "vender" | "agendar" | "outro",
-  "selected_property_ref": string | null, // A Ref do imóvel (ex: AP123) se ele escolheu um
-  "proposed_datetime": string | null, // Data/Hora sugerida pelo cliente em formato ISO se possível, ou texto livre
-  "proposed_local": string | null, // Local sugerido ou Ref do imóvel
+  "selected_property_ref": string | null,
+  "proposed_datetime": string | null, // ISO se houver data E hora. Se só data, mande a data (YYYY-MM-DD).
+  "has_specific_time": boolean, // true APENAS se o cliente falou a hora da visita.
   "is_price_objection": boolean,
   "new_budget": number | null,
-  "reply_text": "Sua resposta curta e humana aqui. NUNCA diga que a visita 'está confirmada'. Diga que 'solicitou o agendamento para confirmação do corretor'."
+  "reply_text": "Sua resposta amigável aqui."
 }
 `;
 
@@ -53,8 +63,8 @@ Retorne JSON:
     const data = await callAIWithFallback({
       imobiliaria_id,
       feature: 'onboarding',
-      messages: [{ role: 'user', content: contextPrompt }],
-      temperature: 0.1,
+      messages: [{ role: 'system', content: 'Você é um corretor de imóveis experiente e amigável.' }, { role: 'user', content: contextPrompt }],
+      temperature: 0.2,
       response_format: { type: 'json_object' }
     });
 
@@ -67,13 +77,13 @@ Retorne JSON:
 
     // 2. Tratar Agendamento ou Escolha de Imóvel Específico
     if (result.intent === 'agendar' || result.selected_property_ref) {
-      if (result.intent === 'agendar' || (result.selected_property_ref && result.proposed_datetime)) {
+      // SÓ INSERE NO BANCO SE TIVER DATA E HORA DEFINIDOS
+      if (result.intent === 'agendar' && result.proposed_datetime && result.has_specific_time) {
         console.log('📅 Criando evento de agendamento no banco...');
         
         let propertyTitle = 'Visita';
-        let propertyLocal = result.proposed_local || 'A definir';
+        let propertyLocal = 'A definir';
 
-        // Buscar detalhes do imóvel se tiver a Ref
         if (result.selected_property_ref) {
           const { data: imovel } = await supabaseAdmin
             .from('imoveis')
@@ -83,38 +93,29 @@ Retorne JSON:
           
           if (imovel) {
             propertyTitle = `Visita: ${imovel.titulo}`;
-            propertyLocal = `${imovel.logradouro || ''}${imovel.numero ? ', ' + imovel.numero : ''} - ${imovel.freguesia || ''}`.trim() || propertyLocal;
+            propertyLocal = `${imovel.logradouro || ''}${imovel.numero ? ', ' + imovel.numero : ''} - ${imovel.freguesia || ''}`.trim();
           }
         }
 
-        // Tentar converter data para ISO ou usar NOW + 24h como fallback se for lixo
-        let eventDate = new Date();
-        eventDate.setDate(eventDate.getDate() + 1); // Amanhã por padrão
-        eventDate.setHours(14, 0, 0, 0);
-
-        if (result.proposed_datetime) {
-          const parsed = new Date(result.proposed_datetime);
-          if (!isNaN(parsed.getTime())) {
-            eventDate = parsed;
-          }
+        const eventDate = new Date(result.proposed_datetime);
+        if (!isNaN(eventDate.getTime())) {
+          await supabaseAdmin.from('eventos').insert({
+            imobiliaria_id,
+            lead_id: lead.id,
+            corretor_id: lead.corretor_id,
+            tipo: 'visita',
+            titulo: propertyTitle,
+            descricao: `Agendamento automático via IA.\nSolicitado pelo cliente: ${text}`,
+            data_hora: eventDate.toISOString(),
+            local: propertyLocal,
+            status: 'agendado'
+          });
         }
-
-        await supabaseAdmin.from('eventos').insert({
-          imobiliaria_id,
-          lead_id: lead.id,
-          corretor_id: lead.corretor_id,
-          tipo: 'visita',
-          titulo: propertyTitle,
-          descricao: `Agendamento automático via IA.\nSolicitado pelo cliente: ${text}`,
-          data_hora: eventDate.toISOString(),
-          local: propertyLocal,
-          status: 'agendado'
-        });
       }
       return result.reply_text;
     }
 
-    // 3. Tratar Busca/Sugestão (Só se não houver um imóvel específico selecionado)
+    // 3. Tratar Busca/Sugestão
     if ((result.intent === 'comprar' || result.intent === 'alugar' || result.is_price_objection) && !result.selected_property_ref) {
       if (result.is_price_objection && result.new_budget) {
         await supabaseAdmin.from('leads').update({ orcamento: result.new_budget }).eq('id', lead.id);
@@ -127,10 +128,7 @@ Retorne JSON:
           `- *${im.titulo}*\n  ${im.freguesia} • ${im.quartos} qtos\n  Valor: ${im.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n  Ref: ${im.referencia}`
         ).join('\n\n');
 
-        const intro = result.reply_text.includes('?') ? result.reply_text : (result.is_price_objection 
-          ? `Entendi. Busquei opções mais próximas de ${lead.orcamento?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}. Veja esses:`
-          : `Certo! Selecionei esses imóveis para você:`);
-
+        const intro = result.reply_text;
         return `${intro}\n\n${imoveisText}\n\nAlgum desses te interessa para uma visita?`;
       }
     }
