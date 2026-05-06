@@ -41,9 +41,11 @@ Retorne JSON:
 {
   "intent": "comprar" | "vender" | "agendar" | "outro",
   "selected_property_ref": string | null, // A Ref do imóvel (ex: AP123) se ele escolheu um
+  "proposed_datetime": string | null, // Data/Hora sugerida pelo cliente em formato ISO se possível, ou texto livre
+  "proposed_local": string | null, // Local sugerido ou Ref do imóvel
   "is_price_objection": boolean,
   "new_budget": number | null,
-  "reply_text": "Sua resposta curta e humana aqui"
+  "reply_text": "Sua resposta curta e humana aqui. NUNCA diga que a visita 'está confirmada'. Diga que 'solicitou o agendamento para confirmação do corretor'."
 }
 `;
 
@@ -65,7 +67,50 @@ Retorne JSON:
 
     // 2. Tratar Agendamento ou Escolha de Imóvel Específico
     if (result.intent === 'agendar' || result.selected_property_ref) {
-      // Se ele escolheu um mas não falou de data, a IA sugere horários
+      if (result.intent === 'agendar' || (result.selected_property_ref && result.proposed_datetime)) {
+        console.log('📅 Criando evento de agendamento no banco...');
+        
+        let propertyTitle = 'Visita';
+        let propertyLocal = result.proposed_local || 'A definir';
+
+        // Buscar detalhes do imóvel se tiver a Ref
+        if (result.selected_property_ref) {
+          const { data: imovel } = await supabaseAdmin
+            .from('imoveis')
+            .select('titulo, freguesia, logradouro, numero')
+            .eq('referencia', result.selected_property_ref)
+            .maybeSingle();
+          
+          if (imovel) {
+            propertyTitle = `Visita: ${imovel.titulo}`;
+            propertyLocal = `${imovel.logradouro || ''}${imovel.numero ? ', ' + imovel.numero : ''} - ${imovel.freguesia || ''}`.trim() || propertyLocal;
+          }
+        }
+
+        // Tentar converter data para ISO ou usar NOW + 24h como fallback se for lixo
+        let eventDate = new Date();
+        eventDate.setDate(eventDate.getDate() + 1); // Amanhã por padrão
+        eventDate.setHours(14, 0, 0, 0);
+
+        if (result.proposed_datetime) {
+          const parsed = new Date(result.proposed_datetime);
+          if (!isNaN(parsed.getTime())) {
+            eventDate = parsed;
+          }
+        }
+
+        await supabaseAdmin.from('eventos').insert({
+          imobiliaria_id,
+          lead_id: lead.id,
+          corretor_id: lead.corretor_id,
+          tipo: 'visita',
+          titulo: propertyTitle,
+          descricao: `Agendamento automático via IA.\nSolicitado pelo cliente: ${text}`,
+          data_hora: eventDate.toISOString(),
+          local: propertyLocal,
+          status: 'agendado'
+        });
+      }
       return result.reply_text;
     }
 

@@ -41,6 +41,7 @@ export interface ProcessOptions {
   forceAutoReply?: boolean;
   customReply?: string;
   forceIgnoreStatus?: boolean;
+  skipBriefing?: boolean;
 }
 
 export async function processLead(lead: Lead, options: ProcessOptions = {}): Promise<ProcessResult> {
@@ -187,6 +188,8 @@ export async function processLead(lead: Lead, options: ProcessOptions = {}): Pro
     if (isFormLead && isSoloBroker) {
       console.log('📱 Step 4: Corretor solo — briefing via painel (não envia WA pra si mesmo).');
       // Don't send WhatsApp briefing to yourself, it's your own number
+    } else if (options?.skipBriefing) {
+      console.log('📱 Step 4: Briefing pulado (skipBriefing=true).');
     } else {
       console.log('📱 Step 4: Enviando briefing regionalizado...');
       whatsappResult = await sendBriefing({

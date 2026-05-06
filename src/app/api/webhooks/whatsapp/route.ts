@@ -324,7 +324,8 @@ export async function POST(request: Request) {
                 forceAutoReply: !skipAutoReply && !isGroup, 
                 customReply: isGroup ? undefined : (aiResponse || undefined),
                 skipAutoReply: skipAutoReply || isGroup,
-                forceIgnoreStatus: isTestMode
+                forceIgnoreStatus: isTestMode,
+                skipBriefing: true
               });
           }
           return;
