@@ -47,18 +47,34 @@ export async function recommendImoveis(lead: Lead, configIn?: any): Promise<Scor
     const breakdown: string[] = [];
 
     // 0. Finalidade Match (Mandatory)
-    if (lead.finalidade && imovel.finalidade !== 'ambos') {
+    if (lead.finalidade) {
       const isBuy = lead.finalidade === 'comprar' || lead.finalidade === 'investir';
       const isRent = lead.finalidade === 'alugar';
       
-      if (isBuy && imovel.finalidade === 'arrendamento') return null;
-      if (isRent && imovel.finalidade === 'venda') return null;
+      const imobFinalidade = imovel.finalidade?.toLowerCase() || '';
+      
+      if (isBuy && (imobFinalidade === 'arrendamento' || imobFinalidade === 'aluguel')) return null;
+      if (isRent && imobFinalidade === 'venda') return null;
     }
 
-    // 1. Tipo match (+5)
-    if (lead.tipo_interesse && imovel.tipo === lead.tipo_interesse) {
-      score += 5;
-      breakdown.push(`Tipo ${imovel.tipo}: +5`);
+    // 1. Tipo match (+5 exact, +3 affinity)
+    if (lead.tipo_interesse) {
+      if (imovel.tipo === lead.tipo_interesse) {
+        score += 5;
+        breakdown.push(`Tipo ${imovel.tipo}: +5`);
+      } else {
+        // Affinity matching (e.g., Chacara matches Sitio, Terreno matches Lote)
+        const ruralTypes = ['chacara', 'sitio', 'fazenda'];
+        const landTypes = ['terreno', 'lote'];
+        
+        const isRuralAffinity = ruralTypes.includes(lead.tipo_interesse) && ruralTypes.includes(imovel.tipo || '');
+        const isLandAffinity = landTypes.includes(lead.tipo_interesse) && landTypes.includes(imovel.tipo || '');
+        
+        if (isRuralAffinity || isLandAffinity) {
+          score += 3;
+          breakdown.push(`Afinidade ${imovel.tipo} vs ${lead.tipo_interesse}: +3`);
+        }
+      }
     }
 
     // 2. Quartos match (+4 exact, +2 if ±1)

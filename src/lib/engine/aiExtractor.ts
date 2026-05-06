@@ -66,7 +66,9 @@ MENSAGEM DO CLIENTE:
 
 REGRAS DE CLASSIFICAÇÃO (is_lead):
 - Marque "is_lead": true apenas se houver intenção EXPLÍCITA de NEGÓCIO IMOBILIÁRIO (ex: busca por imóveis, perguntas sobre preços, agendamento de visitas, interesse em vender/alugar, pedido de catálogo).
-- Marque "is_lead": false para conversas sobre o bairro, padarias, trânsito, segurança ou sugestões genéricas que NÃO sejam transações imobiliárias.
+- Marque "is_lead": false para conversas sobre o bairro, padarias, trânsito, segurança, política, piadas ou sugestões genéricas que NÃO sejam transações imobiliárias.
+- EXEMPLO DE RUÍDO: "Dica de padaria: Padaria Central" -> is_lead: false.
+- EXEMPLO DE RUÍDO: "O bairro é muito seguro" -> is_lead: false.
 - Se o usuário só disse "Oi" ou "Bom dia" sem contexto, é FALSE.
 - Se a mensagem for muito curta ou sem sentido comercial, é FALSE.
 

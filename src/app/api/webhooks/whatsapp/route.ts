@@ -154,19 +154,36 @@ export async function POST(request: Request) {
         }
 
         isGroup = remoteJid.includes('@g.us');
-        // Prefer participantAlt as it contains the real phone number, participant often has the LID
+        
+        // 🔍 Resolve Sender (Handle Group Participants and LIDs)
         const participantJid = key?.participantAlt || key?.participant || '';
         
         if (isGroup) {
-          groupName = msgData.groupName || (msgData.messages && msgData.messages[0]?.groupName) || '';
+          // Attempt to get group name from various payload locations
+          groupName = msgData.groupName || 
+                      (msgData.messages && msgData.messages[0]?.groupName) || 
+                      payload.data?.groupName || 
+                      '';
+          
           if (!participantJid) {
             console.log(`🚫 Mensagem de grupo ignorada (sem participante identificado): ${remoteJid}`);
             return;
           }
-          sender = participantJid.split('@')[0] || '';
-          console.log(`👥 Mensagem de grupo detectada. Remetente: ${sender} (Grupo: ${groupName || remoteJid})`);
+
+          // Prioritize real phone number over LID
+          // LIDs usually contain ":", real phones in Evolution/WA usually don't or follow a specific pattern
+          let rawSender = participantJid.split('@')[0] || '';
+          if (rawSender.includes(':')) {
+            // If it's a device suffix (e.g. 55119...:1), keep the phone
+            // If it's a LID (e.g. 12345:1), this might still be wrong, but we'll try to sanitize
+            rawSender = rawSender.split(':')[0];
+          }
+          
+          sender = rawSender;
+          console.log(`👥 Grupo: ${groupName || remoteJid} | Remetente: ${sender}`);
         } else {
           sender = remoteJid.split('@')[0] || '';
+          if (sender.includes(':')) sender = sender.split(':')[0];
         }
         text = messageObj?.conversation || 
                messageObj?.extendedTextMessage?.text || 
@@ -289,10 +306,10 @@ export async function POST(request: Request) {
           // Fetch recent history for context
           const { data: history } = await supabaseAdmin
             .from('mensagens_historico')
-            .select('direction, message_text')
+            .select('direction, message_text, criado_em')
             .eq('lead_id', lead.id)
-            .order('created_at', { ascending: false })
-            .limit(6);
+            .order('criado_em', { ascending: false })
+            .limit(10);
 
           // Try Onboarding Engine first (handles more intents)
           let aiResponse = await generateOnboardingResponse(text, lead, imobiliaria_id, history || []);

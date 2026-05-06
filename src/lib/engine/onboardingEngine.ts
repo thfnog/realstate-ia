@@ -11,16 +11,16 @@ export async function generateOnboardingResponse(
 ): Promise<string | null> {
   console.log('🤖 Gerando resposta de onboarding inteligente com contexto...');
 
-  // Formatar histórico para a IA
-  const historyText = history.reverse().map(h => 
-    `${h.direction === 'inbound' ? 'Cliente' : 'Bot'}: ${h.message_text}`
-  ).join('\n');
+  // Formatar histórico para a IA (usar cópia para não mutar a original)
+  const historyText = [...history].sort((a, b) => new Date(a.criado_em).getTime() - new Date(b.criado_em).getTime())
+    .map(h => `${h.direction === 'inbound' ? 'Cliente' : 'Bot'}: ${h.message_text}`)
+    .join('\n');
 
   const contextPrompt = `
 Você é o assistente virtual da ImobIA. Sua função é o pré-atendimento no WhatsApp.
 Seja prático, assertivo e use "Smart Brevity" (curto e direto).
 
-HISTÓRICO RECENTE:
+HISTÓRICO RECENTE (Ordem Cronológica):
 ${historyText}
 
 MENSAGEM ATUAL DO CLIENTE: "${text}"
@@ -30,17 +30,17 @@ DADOS DO LEAD:
 - Interesse: ${lead.tipo_interesse || 'Não definido'}
 - Orçamento: ${lead.orcamento || 'Não definido'}
 
-REGRAS CRÍTICAS:
-1. Se o cliente mencionou algo como "o segundo", "o primeiro" ou citou uma Referência (ex: AP123), identifique qual imóvel do histórico ele se refere.
-2. Se o cliente quer AGENDAR ou visitar um imóvel específico, retorne intent="agendar".
-3. NÃO pergunte coisas que já estão nos DADOS DO LEAD ou que ele acabou de dizer.
-4. Se o cliente quer COMPRAR/ALUGAR mas ainda não viu imóveis ou quer ver OUTROS, retorne intent="comprar".
-5. Se houver objeção de preço, identifique o novo orçamento.
+REGRAS CRÍTICAS DE INTENÇÃO:
+1. SELEÇÃO POR ÍNDICE: Se o cliente disser "a segunda", "a 2", "a primeira", "o último", etc., olhe para a ÚLTIMA lista de imóveis enviada pelo Bot no histórico. Identifique a Referência (Ref) do imóvel naquela posição.
+2. AGENDAMENTO: Se o cliente escolheu um imóvel ou quer visitar/ver um específico, retorne intent="agendar" e preencha "selected_property_ref".
+3. BUSCA: Se o cliente quer ver "outras opções", "mudar de bairro", "mudar orçamento" ou ainda não viu nenhuma lista, retorne intent="comprar".
+4. NÃO REPETIR: Se o cliente acabou de escolher um imóvel da lista, NÃO gere novas recomendações. Foque em agendar.
+5. CONTEXTO: Responda de forma humana e curta no "reply_text".
 
 Retorne JSON:
 {
   "intent": "comprar" | "vender" | "agendar" | "outro",
-  "selected_property_ref": string | null, // Se ele escolheu um imóvel específico
+  "selected_property_ref": string | null, // A Ref do imóvel (ex: AP123) se ele escolheu um
   "is_price_objection": boolean,
   "new_budget": number | null,
   "reply_text": "Sua resposta curta e humana aqui"
