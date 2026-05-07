@@ -26,6 +26,7 @@ export default function AgendaPage() {
   const [modoEscala, setModoEscala] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
   const [selectedCorretorId, setSelectedCorretorId] = useState('');
+  const [filterCorretorId, setFilterCorretorId] = useState('');
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -120,7 +121,11 @@ export default function AgendaPage() {
 
   function getEventsForDay(day: number) {
     const targetDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return eventos.filter(e => e.data_hora.startsWith(targetDateStr));
+    let filtered = eventos.filter(e => e.data_hora.startsWith(targetDateStr));
+    if (filterCorretorId) {
+      filtered = filtered.filter(e => e.corretor_id === filterCorretorId);
+    }
+    return filtered;
   }
 
   function formatTime(isoStr: string) {
@@ -284,7 +289,19 @@ export default function AgendaPage() {
           </div>
           
           {!modoEscala && (
-            <div className="flex flex-wrap gap-4 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="flex flex-wrap gap-4 items-center px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+              {corretores.length > 1 && (
+                <select
+                  value={filterCorretorId}
+                  onChange={(e) => setFilterCorretorId(e.target.value)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-900 focus:ring-2 focus:ring-primary/20 outline-none shadow-sm min-w-[180px]"
+                >
+                  <option value="">Todos os Corretores</option>
+                  {corretores.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
+                  ))}
+                </select>
+              )}
               {Object.entries(eventConfig).map(([key, conf]) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className={`w-3 h-3 rounded-full ${conf.bg.split(' ')[0]} border ${conf.bg.split(' ')[1]}`}></span>
@@ -341,7 +358,7 @@ export default function AgendaPage() {
                     <div 
                       key={day} 
                       onClick={() => modoEscala && toggleEscalaDia(dayStr, selectedCorretorId)}
-                      className={`group relative p-4 flex flex-col border-b border-slate-100 bg-white ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
+                      className={`group relative p-3 flex flex-col border-b border-slate-100 bg-white overflow-hidden ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
                     >
                       <div className="flex items-start justify-between mb-4">
                         {/* Escala Badges */}
