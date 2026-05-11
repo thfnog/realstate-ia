@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { extractLeadWithAI } from '@/lib/engine/aiExtractor';
 import { processLead } from '@/lib/engine/processLead';
-import { processFollowUpIntelligence } from '@/lib/engine/aiScheduler';
-import { generateOnboardingResponse } from '@/lib/engine/onboardingEngine';
+import { processConversation, loadOrCreateState, shouldBotRespond } from '@/lib/engine/conversationEngine';
 import { saveMessageToHistory } from '@/lib/whatsapp';
 import * as mock from '@/lib/mockDb';
 import { waitUntil } from '@vercel/functions';
@@ -233,13 +232,15 @@ export async function POST(request: Request) {
 
       const extracted = await extractLeadWithAI(text, imobiliaria_id, isGroup ? 'group' : 'private');
 
-      // Salvaguarda: Se for apenas saudação e a IA não identificou interesse, descartamos como ruído
-      const simpleGreetings = ['oi', 'olá', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'td bem', 'opa', 'blz', 'beleza'];
+      // Salvaguarda: Saudações simples são ACEITAS (bot responde como corretor).
+      // Só descarta se a IA identificou como ruído real E NÃO é saudação.
+      const simpleGreetings = ['oi', 'olá', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'td bem', 'opa', 'blz', 'e aí', 'eai'];
       const textClean = text.toLowerCase().trim().replace(/[?!.]/g, '');
-      const isSimpleGreeting = textClean.length < 15 && simpleGreetings.includes(textClean);
+      const isSimpleGreeting = simpleGreetings.includes(textClean);
 
-      if ((extracted.is_lead === false && !isTestMode) || (isSimpleGreeting && !extracted.tipo_interesse && !extracted.freguesia && !isTestMode)) {
-        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia || 'Saudação genérica'})`);
+      // Greetings are valid first-contact messages — don't discard them
+      if (extracted.is_lead === false && !isTestMode && !isSimpleGreeting) {
+        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia || 'Sem interesse'})`);
         return;
       }
 
@@ -311,19 +312,14 @@ export async function POST(request: Request) {
             .order('criado_em', { ascending: false })
             .limit(10);
 
-          // Try Onboarding Engine first (handles more intents)
-          let aiResponse = await generateOnboardingResponse(text, lead, imobiliaria_id, history || []);
-          
-          // If onboarding didn't produce a specific reply, try the scheduler
-          if (!aiResponse) {
-             aiResponse = await processFollowUpIntelligence(text, lead.corretor_id, imobiliaria_id);
-          }
+          // Use unified Conversation Engine v2
+          const convResult = await processConversation(text, lead, imobiliaria_id, history || []);
 
-          if (aiResponse || !skipAutoReply) {
+          if (convResult.shouldRespond && convResult.reply && !skipAutoReply && !isGroup) {
               await processLead(lead, { 
-                forceAutoReply: !skipAutoReply && !isGroup, 
-                customReply: isGroup ? undefined : (aiResponse || undefined),
-                skipAutoReply: skipAutoReply || isGroup,
+                forceAutoReply: true, 
+                customReply: convResult.reply,
+                skipAutoReply: false,
                 forceIgnoreStatus: isTestMode,
                 skipBriefing: true
               });
@@ -441,19 +437,19 @@ export async function POST(request: Request) {
         }
       }
 
-      // Fetch recent history for context (even for new leads, there might be a few previous messages)
+      // Use unified Conversation Engine v2 for new leads
       const { data: history } = await supabaseAdmin
         .from('mensagens_historico')
-        .select('direction, message_text')
+        .select('direction, message_text, criado_em')
         .eq('lead_id', newLead.id)
-        .order('created_at', { ascending: false })
+        .order('criado_em', { ascending: false })
         .limit(6);
 
-      const onboardingReply = await generateOnboardingResponse(text, newLead, imobiliaria_id, history || []);
+      const convResult = await processConversation(text, newLead, imobiliaria_id, history || []);
       
       await processLead(newLead, { 
-        skipAutoReply,
-        customReply: onboardingReply || undefined,
+        skipAutoReply: skipAutoReply || !convResult.shouldRespond,
+        customReply: convResult.reply || undefined,
         forceIgnoreStatus: isTestMode
       });
     })();

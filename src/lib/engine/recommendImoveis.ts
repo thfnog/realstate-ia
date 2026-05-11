@@ -18,12 +18,15 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { formatCurrency, getConfig } from '@/lib/countryConfig';
 import type { Imovel, Lead } from '@/lib/database.types';
 
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://realstate-ia.vercel.app').replace(/\/$/, '');
+
 export type ScoredImovel = Imovel & {
   score: number;
   scoreBreakdown: string[];
+  publicUrl: string;
 };
 
-export async function recommendImoveis(lead: Lead, configIn?: any): Promise<ScoredImovel[]> {
+export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: number = 3): Promise<ScoredImovel[]> {
   const config = configIn || getConfig();
   // Fetch all available properties
   const { data: imoveis, error } = await supabaseAdmin
@@ -138,14 +141,15 @@ export async function recommendImoveis(lead: Lead, configIn?: any): Promise<Scor
       ...imovel,
       score,
       scoreBreakdown: breakdown,
+      publicUrl: `${APP_URL}/imoveis/${imovel.id}`,
     } as ScoredImovel;
   }).filter((i): i is ScoredImovel => i !== null);
 
-  // Filter minimum 5 points, sort descending, return top 3
+  // Filter minimum 5 points, sort descending, return up to maxResults
   const recommended = scored
     .filter((i) => i.score >= 5)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    .slice(0, maxResults);
 
   console.log(`🏠 ${recommended.length} imóveis recomendados (de ${imoveis.length} disponíveis)`);
   recommended.forEach((r) => {

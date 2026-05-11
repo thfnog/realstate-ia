@@ -11,11 +11,8 @@ const JUNK_URL_PATTERNS = [
   'calendly.com',
 ];
 
-const GREETINGS_ONLY = [
-  'oi', 'olá', 'ola', 'opa', 'hey', 'hi', 'hello',
-  'bom dia', 'boa tarde', 'boa noite',
-  'tudo bem', 'tudo bom',
-];
+// Greetings are NOT filtered — they are valid first-contact messages.
+// The bot should respond to "Oi", "Bom dia", etc. as new leads.
 
 /**
  * Returns true if the message should be ignored by the bot.
@@ -45,10 +42,9 @@ export function shouldIgnoreMessage(text: string): boolean {
      return true;
   }
 
-  // 3. Very short random words (e.g., "Goodie!", "Ok", "K")
-  // We allow common greetings even if short, but "Goodie" is suspicious.
-  // However, "Oi" is only 2 chars.
-  if (normalized.length < 3 && !GREETINGS_ONLY.includes(normalized)) {
+  // 3. Very short random words — but allow greetings (oi, olá, etc.)
+  const greetings = ['oi', 'olá', 'ola', 'opa', 'hey', 'hi', 'hello', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'tudo bom', 'td bem', 'blz', 'e aí', 'eai'];
+  if (normalized.length < 3 && !greetings.includes(normalized)) {
     console.log(`[Filter] Ignorando mensagem muito curta e estranha: "${normalized}"`);
     return true;
   }
