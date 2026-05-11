@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       let instanceName = payload.instance;
       let isGroup = false;
       let isTestMode = false;
+      let explicitTest = false;
       let groupName = '';
       let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
       let fallback_corretor_id: string | null = null;
@@ -74,7 +75,10 @@ export async function POST(request: Request) {
 
         // Extract text early to check for test keyword
         const tempText = messageObj?.conversation || messageObj?.extendedTextMessage?.text || messageObj?.text || '';
-        isTestMode = tempText.toLowerCase().trim().startsWith('#testebot');
+        if (tempText.toLowerCase().trim().startsWith('#testebot')) {
+          isTestMode = true;
+          explicitTest = true;
+        }
 
         // --- EARLY BROKER RESOLUTION ---
         let broker;
@@ -311,6 +315,12 @@ export async function POST(request: Request) {
             .eq('lead_id', lead.id)
             .order('criado_em', { ascending: false })
             .limit(10);
+
+          if (explicitTest && !mock.isMockMode()) {
+             console.log(`🧹 Resetando state machine e histórico para teste explícito (#testebot)...`);
+             await supabaseAdmin.from('conversation_state').delete().eq('lead_id', lead.id);
+             await supabaseAdmin.from('mensagens_historico').delete().eq('lead_id', lead.id);
+          }
 
           // Use unified Conversation Engine v2
           const convResult = await processConversation(text, lead, imobiliaria_id, history || []);
