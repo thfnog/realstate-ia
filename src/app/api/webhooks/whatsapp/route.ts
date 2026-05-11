@@ -236,14 +236,8 @@ export async function POST(request: Request) {
 
       const extracted = await extractLeadWithAI(text, imobiliaria_id, isGroup ? 'group' : 'private');
 
-      // Salvaguarda: Saudações simples são ACEITAS (bot responde como corretor).
-      // Só descarta se a IA identificou como ruído real E NÃO é saudação.
-      const simpleGreetings = ['oi', 'olá', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'td bem', 'opa', 'blz', 'e aí', 'eai'];
-      const textClean = text.toLowerCase().trim().replace(/[?!.]/g, '');
-      const isSimpleGreeting = simpleGreetings.includes(textClean);
-
-      // Greetings are valid first-contact messages — don't discard them
-      if (extracted.is_lead === false && !isTestMode && !isSimpleGreeting) {
+      // Só descarta se a IA identificou como ruído real (não é lead e sem interesse real)
+      if (extracted.is_lead === false && !isTestMode) {
         console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia || 'Sem interesse'})`);
         return;
       }
