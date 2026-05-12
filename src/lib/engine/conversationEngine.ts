@@ -173,7 +173,7 @@ async function findAvailableSlots(corretorId: string, imobId: string, preferredD
       if (slots.length === 0 || (slots.length === 1 && hour >= 14) || slots.length === 2) {
         slots.push({
           label: `${dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1)} (${dayNum}/${monthNum}) às ${hour.toString().padStart(2, '0')}:00`,
-          isoDateTime: `${dateStr}T${hour.toString().padStart(2, '0')}:00:00`,
+          isoDateTime: `${dateStr}T${hour.toString().padStart(2, '0')}:00:00-03:00`,
           slotId: `slot_${slots.length + 1}`
         });
       }
@@ -425,6 +425,7 @@ REGRAS DE RESPOSTA:
               propertyTitle = `Visita: ${imovel.titulo}`;
               const parts = [imovel.logradouro, imovel.numero, imovel.bairro || imovel.freguesia, imovel.cidade].filter(Boolean);
               propertyLocal = parts.join(', ') || 'A definir';
+              finalReply = `${finalReply}\n\n📍 O endereço para a nossa visita é: *${propertyLocal}*.`;
             }
           }
 
