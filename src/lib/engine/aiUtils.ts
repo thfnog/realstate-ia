@@ -9,6 +9,24 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export type AIModel = 'llama-3.3-70b-versatile' | 'llama-3.1-8b-instant' | 'llama-3.2-11b-vision-preview' | 'gpt-4o-mini' | 'gpt-4o';
 
+export function parseSafeJSON(str: string): any {
+  if (!str) return {};
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    const match = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (match) {
+      return JSON.parse(match[1]);
+    }
+    const firstBrace = str.indexOf('{');
+    const lastBrace = str.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+       return JSON.parse(str.substring(firstBrace, lastBrace + 1));
+    }
+    throw e;
+  }
+}
+
 interface AICallOptions {
   model?: AIModel;
   messages: any[];

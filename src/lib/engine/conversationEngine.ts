@@ -3,7 +3,7 @@
  * Replaces onboardingEngine + aiScheduler with a single stateful engine.
  */
 
-import { callAIWithFallback } from './aiUtils';
+import { callAIWithFallback, parseSafeJSON } from './aiUtils';
 import { supabaseAdmin } from '@/lib/supabase';
 import { recommendImoveis } from './recommendImoveis';
 import { buildPropertyMessage, buildTimeSlotsMessage, type PropertyCard, type TimeSlot } from '@/lib/whatsapp/interactiveMessages';
@@ -320,7 +320,7 @@ REGRAS DE RESPOSTA:
       response_format: { type: 'json_object' }
     });
 
-    const result = JSON.parse(data.choices[0].message.content);
+    const result = parseSafeJSON(data.choices[0].message.content);
     const actions: EngineAction[] = [];
     let finalReply = result.reply_text || '';
     const nextState: ConversationState = result.next_state || stateRecord.state;

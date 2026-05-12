@@ -16,9 +16,7 @@ export interface AILeadProfile {
   finalidade?: 'comprar' | 'alugar' | 'investir';
   is_lead: boolean; // TRUE if it is real estate related, FALSE if noise/social
   resumo_ia?: string;
-}
-
-import { callAIWithFallback } from './aiUtils';
+import { callAIWithFallback, parseSafeJSON } from './aiUtils';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function extractLeadWithAI(
@@ -113,8 +111,7 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
     const rawContent = data.choices?.[0]?.message?.content;
     if (!rawContent) return { is_lead: false };
 
-    const cleanJson = rawContent.replace(/```json\n?|```/g, '').trim();
-    const result = JSON.parse(cleanJson);
+    const result = parseSafeJSON(rawContent);
     
     console.log('✅ Dados extraídos via IA:', result);
     return result as AILeadProfile;
