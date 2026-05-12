@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       let imobiliaria_id = mock.DEFAULT_IMOBILIARIA_ID;
       let fallback_corretor_id: string | null = null;
       let instanceMatch: RegExpMatchArray | null = null;
+      let broker: any = null;
 
       const event = payload.event?.toLowerCase() || '';
       let remoteJid = payload.data?.key?.remoteJid || '';
@@ -84,7 +85,6 @@ export async function POST(request: Request) {
         }
 
         // --- EARLY BROKER RESOLUTION ---
-        let broker;
         
         instanceMatch = instanceName?.match(/realstate-iabroker-(.+)/);
         if (instanceMatch) {
