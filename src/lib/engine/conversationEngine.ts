@@ -40,8 +40,8 @@ export type EngineAction =
   | { type: 'update_lead'; data: Record<string, any> }
   | { type: 'handoff'; reason: string };
 
-const MAX_TURNS = 4;
-const MAX_SCHEDULING_ATTEMPTS = 2;
+const MAX_TURNS = 10;
+const MAX_SCHEDULING_ATTEMPTS = 3;
 const MAX_RECOMMENDATION_CYCLES = 2;
 const COOLDOWN_MS = 30 * 60 * 1000; // 30 min
 
@@ -283,7 +283,7 @@ REGRAS ESTRITAS DE INTENÇÃO (MUITO IMPORTANTE):
 - Se o cliente já respondeu tudo e você vai recomendar, NÃO FAÇA MAIS PERGUNTAS DE QUALIFICAÇÃO. Apenas diga "Separei estas opções para você:" e use intent="recomendar".
 
 REGRAS ANTI-LOOP:
-- Se turn_count >= ${MAX_TURNS - 1}, termine com: "Vou pedir para te ligarem do escritório pra gente alinhar os detalhes finais, combinado? 🤝"
+- Se turn_count >= ${MAX_TURNS - 1}, encerre com: "Vou te dar uma ligada em breve pra gente alinhar os detalhes finais, combinado? 🤝"
 - NÃO repita a mesma pergunta que já está no histórico.
 
 HISTÓRICO:
