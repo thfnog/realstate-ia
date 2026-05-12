@@ -77,7 +77,10 @@ export async function POST(request: Request) {
         const tempText = messageObj?.conversation || messageObj?.extendedTextMessage?.text || messageObj?.text || '';
         if (tempText.toLowerCase().trim().startsWith('#testebot')) {
           isTestMode = true;
-          explicitTest = true;
+          const pureCommand = tempText.toLowerCase().trim();
+          if (pureCommand === '#testebot' || pureCommand === '#testebot reset') {
+            explicitTest = true;
+          }
         }
 
         // --- EARLY BROKER RESOLUTION ---
