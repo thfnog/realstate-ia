@@ -189,7 +189,8 @@ export async function processConversation(
   text: string,
   lead: Lead,
   imobiliariaId: string,
-  history: any[] = []
+  history: any[] = [],
+  brokerName?: string
 ): Promise<EngineResult> {
   const stateRecord = await loadOrCreateState(lead.id, imobiliariaId);
 
@@ -221,7 +222,19 @@ export async function processConversation(
   if (lead.corretor_id && ['feedback', 'scheduling', 'recommending'].includes(stateRecord.state)) {
     availableSlots = await findAvailableSlots(lead.corretor_id, imobiliariaId);
     if (availableSlots.length > 0) {
-      slotsInfo = `\nHORÁRIOS DISPONÍVEIS NA AGENDA DO CORRETOR:\n${availableSlots.map((s, i) => `${i + 1}. ${s.label}`).join('\n')}`;
+      slotsInfo = `\nHORÁRIOS DISPONÍVEIS NA AGENDA:\n${availableSlots.map((s, i) => `${i + 1}. ${s.label}`).join('\n')}`;
+    }
+  }
+
+  // Pre-fetch properties to provide context to the LLM
+  let preFetchedImoveis: any[] = [];
+  let imoveisSummary = '';
+  if (['qualifying', 'recommending', 'feedback'].includes(stateRecord.state)) {
+    preFetchedImoveis = await recommendImoveis(lead);
+    if (preFetchedImoveis.length > 0) {
+      imoveisSummary = `\nIMÓVEIS ENCONTRADOS PARA RECOMENDAR:\n${preFetchedImoveis.map(im => `- ${im.tipo} em ${im.freguesia || 'bairro não inf.'} (${im.quartos || 0} qtos, orç. ${im.valor || 0})`).join('\n')}\nIMPORTANTE: Se o cliente pediu um bairro e os imóveis acima são de outros bairros, VOCÊ DEVE explicar isso na resposta (Ex: "Não encontrei no [Bairro Pedido], mas tenho opções ótimas no [Bairro do Imóvel]").`;
+    } else {
+      imoveisSummary = `\nNENHUM IMÓVEL DISPONÍVEL NO MOMENTO para o perfil.`;
     }
   }
 
@@ -239,7 +252,7 @@ export async function processConversation(
   }
 
   const prompt = `
-Você é o assistente virtual de uma imobiliária, atuando como um corretor parceiro no WhatsApp.
+Você é o corretor ${brokerName || 'da imobiliária'}, conversando com o cliente no WhatsApp. Fale sempre em 1ª pessoa ("Eu tenho", "Eu separei"). Não diga que você é um assistente.
 
 DATA DE HOJE: ${todayISO} (${todayWeekday})
 
@@ -257,12 +270,12 @@ PERSONA (REGRAS DE OURO):
 - Seja DIRETO. Corretor bom não enrola.
 
 COMPORTAMENTO POR ESTADO:
-- GREETING: Saudação curta + pergunte tipo de imóvel e faixa de valor. Ex: "Vi seu interesse, posso te ajudar! Busca mais casa ou apartamento? E faixa de valor?"
-- QUALIFYING: Refine com 1-2 perguntas específicas (condomínio/aberto? lazer/moradia? quartos?). Depois siga para RECOMMENDING.
-- RECOMMENDING: Se há imóveis, diga que vai enviar opções. Responda APENAS com uma frase curta de introdução.
-- FEEDBACK: O cliente reagiu a um imóvel. Use o feedback para recomendar melhor ou oferecer visita.
-- SCHEDULING: Horários disponíveis serão enviados em mensagem separada. Confirme a intenção de agendar.
-- VISIT_CONFIRMED: Confirme data, hora e endereço. Encerre com "Nos vemos lá! 🤝".
+- GREETING: Saudação curta + pergunte tipo de imóvel e faixa de valor. Ex: "Vi seu interesse, posso te ajudar! Busca casa ou apartamento? E faixa de valor?"
+- QUALIFYING: Refine com 1-2 perguntas (condomínio/aberto? moradia? quartos?). Depois siga para RECOMMENDING.
+- RECOMMENDING: Baseado nos "IMÓVEIS ENCONTRADOS", faça uma frase curta de introdução. Se o bairro não bater com o pedido, EXPLIQUE a diferença gentilmente.
+- FEEDBACK: O cliente escolheu um imóvel ou deu feedback. Responda comentando sobre a escolha e PERGUNTE SE ELE QUER MAIS DETALHES OU AGENDAR VISITA.
+- SCHEDULING: Envie a introdução para os horários (enviados à parte). Confirme a intenção de agendar.
+- VISIT_CONFIRMED: Confirme os detalhes da visita. Encerre com "Nos vemos lá! 🤝".
 
 REGRAS ESTRITAS DE INTENÇÃO (MUITO IMPORTANTE):
 - SE VOCÊ FIZER UMA PERGUNTA (ex: quantos quartos? qual bairro?), SEU INTENT **DEVE** SER "qualificar".
@@ -270,7 +283,7 @@ REGRAS ESTRITAS DE INTENÇÃO (MUITO IMPORTANTE):
 - Se o cliente já respondeu tudo e você vai recomendar, NÃO FAÇA MAIS PERGUNTAS DE QUALIFICAÇÃO. Apenas diga "Separei estas opções para você:" e use intent="recomendar".
 
 REGRAS ANTI-LOOP:
-- Se turn_count >= ${MAX_TURNS - 1}, termine com: "Vou pedir pro corretor [nome] te ligar pra gente avançar, combinado? 🤝"
+- Se turn_count >= ${MAX_TURNS - 1}, termine com: "Vou pedir para te ligarem do escritório pra gente alinhar os detalhes finais, combinado? 🤝"
 - NÃO repita a mesma pergunta que já está no histórico.
 
 HISTÓRICO:
@@ -286,6 +299,7 @@ DADOS DO LEAD:
 - Quartos: ${lead.quartos_interesse || 'Não definido'}
 - Bairros: ${(lead.bairros_interesse || []).join(', ') || 'Não definido'}
 - Finalidade: ${lead.finalidade || 'Não definida'}
+${imoveisSummary}
 ${slotsInfo}
 
 REFS DE IMÓVEIS JÁ RECOMENDADOS: ${stateRecord.last_recommended_refs.join(', ') || 'Nenhum'}
@@ -343,7 +357,7 @@ REGRAS DE RESPOSTA:
 
     // --- Handle RECOMMEND intent ---
     if (result.intent === 'recomendar' || nextState === 'recommending') {
-      const imoveis = await recommendImoveis(lead);
+      const imoveis = preFetchedImoveis; // Uses pre-fetched to match LLM context
       if (imoveis.length > 0) {
         const cards: PropertyCard[] = imoveis.map(im => ({
           titulo: im.titulo, tipo: im.tipo, freguesia: im.freguesia,
@@ -356,7 +370,7 @@ REGRAS DE RESPOSTA:
         stateRecord.last_recommended_refs = imoveis.map(im => im.referencia);
         stateRecord.recommendation_cycles++;
       } else {
-        finalReply += '\n\nAinda não encontrei imóveis com esse perfil, mas vou pedir pro corretor buscar opções especiais pra você 🔍';
+        finalReply += '\n\nAinda não encontrei imóveis com esse perfil exato, mas estou de olho nas novidades para te enviar! 👀';
       }
     }
 

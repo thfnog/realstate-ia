@@ -338,7 +338,7 @@ export async function POST(request: Request) {
           }
 
           // Use unified Conversation Engine v2
-          const convResult = await processConversation(text, lead, imobiliaria_id, history || []);
+          const convResult = await processConversation(text, lead, imobiliaria_id, history || [], broker?.nome);
 
           if (convResult.shouldRespond && convResult.reply && !skipAutoReply && !isGroup) {
               await processLead(lead, { 
@@ -470,7 +470,7 @@ export async function POST(request: Request) {
         .order('criado_em', { ascending: false })
         .limit(6);
 
-      const convResult = await processConversation(text, newLead, imobiliaria_id, history || []);
+      const convResult = await processConversation(text, newLead, imobiliaria_id, history || [], broker?.nome);
       
       await processLead(newLead, { 
         skipAutoReply: skipAutoReply || !convResult.shouldRespond,
