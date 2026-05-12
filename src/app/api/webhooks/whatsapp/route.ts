@@ -316,6 +316,24 @@ export async function POST(request: Request) {
              await supabaseAdmin.from('mensagens_historico').delete().eq('lead_id', lead.id);
           }
 
+          // Merge early extracted data so the bot remembers the first message context
+          const leadUpdates: any = {};
+          if (extracted.tipo_interesse && !lead.tipo_interesse) leadUpdates.tipo_interesse = extracted.tipo_interesse;
+          if (extracted.quartos && !lead.quartos_interesse) leadUpdates.quartos_interesse = extracted.quartos;
+          if (extracted.orcamento && !lead.orcamento) leadUpdates.orcamento = extracted.orcamento;
+          if (extracted.finalidade && !lead.finalidade) leadUpdates.finalidade = extracted.finalidade;
+          if (extracted.freguesia) {
+             const bairros = lead.bairros_interesse || [];
+             if (!bairros.includes(extracted.freguesia)) leadUpdates.bairros_interesse = [...bairros, extracted.freguesia];
+          }
+          if (Object.keys(leadUpdates).length > 0) {
+             console.log(`🧠 Atualizando contexto do lead existente com novos dados:`, leadUpdates);
+             if (!mock.isMockMode()) {
+                await supabaseAdmin.from('leads').update(leadUpdates).eq('id', lead.id);
+             }
+             Object.assign(lead, leadUpdates);
+          }
+
           // Use unified Conversation Engine v2
           const convResult = await processConversation(text, lead, imobiliaria_id, history || []);
 

@@ -200,11 +200,15 @@ export async function processConversation(
     return { reply: null, newState: stateRecord.state, actions: [], shouldRespond: false };
   }
 
-  // Format history
+  // Format history (truncate long bot messages like property lists to save tokens)
   const historyText = [...history]
     .sort((a, b) => new Date(a.criado_em || a.created_at || 0).getTime() - new Date(b.criado_em || b.created_at || 0).getTime())
     .slice(-8)
-    .map(h => `${h.direction === 'inbound' ? 'Cliente' : 'Bot'}: ${h.message_text}`)
+    .map(h => {
+       let txt = h.message_text || '';
+       if (txt.length > 150) txt = txt.substring(0, 150) + '...[truncado]';
+       return `${h.direction === 'inbound' ? 'Cliente' : 'Bot'}: ${txt}`;
+    })
     .join('\n');
 
   const today = new Date();

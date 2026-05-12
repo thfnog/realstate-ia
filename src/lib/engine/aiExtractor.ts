@@ -102,6 +102,7 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
 
   try {
     const data = await callAIWithFallback({
+      model: 'llama-3.1-8b-instant',
       imobiliaria_id,
       feature: 'extraction',
       messages: [{ role: 'user', content: prompt }],
