@@ -321,7 +321,7 @@ Retorne EXCLUSIVAMENTE um JSON válido:
 REGRAS DE RESPOSTA:
 1. "intent"="recomendar" → Eu vou buscar e enviar imóveis separadamente. Sua reply_text deve ser APENAS uma frase de introdução.
 2. "intent"="agendar" → Eu vou enviar horários separadamente. Sua reply_text deve confirmar a intenção.
-3. "intent"="confirmar_horario" → O cliente escolheu um slot. Preencha selected_slot_index (1-3) e proposed_datetime ISO.
+3. "intent"="confirmar_horario" → O cliente escolheu um slot. Preencha selected_slot_index (1-3). OBRIGATÓRIO: Mantenha "selected_property_ref" preenchido com a Ref do imóvel.
 4. "intent"="handoff" → Bot encerra. reply_text de despedida mencionando o corretor.
 5. NÃO inclua lista de imóveis nem horários no reply_text — isso é feito pelo sistema.
 6. Se for ÚLTIMO TURNO (${MAX_TURNS}), force intent="handoff".
@@ -387,10 +387,13 @@ REGRAS DE RESPOSTA:
     }
 
     // --- Handle CONFIRM SLOT ---
-    if (result.intent === 'confirmar_horario' && result.proposed_datetime) {
-      let eventDate = new Date(result.proposed_datetime);
+    if (result.intent === 'confirmar_horario' && (result.proposed_datetime || result.selected_slot_index)) {
+      let eventDate = new Date();
+      if (result.proposed_datetime) {
+        eventDate = new Date(result.proposed_datetime);
+      }
 
-      // If AI returned slot index, use the real slot data
+      // If AI returned slot index, derive the real slot data
       if (result.selected_slot_index && availableSlots[result.selected_slot_index - 1]) {
         const selectedSlot = availableSlots[result.selected_slot_index - 1];
         eventDate = new Date(selectedSlot.isoDateTime);
