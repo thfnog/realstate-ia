@@ -16,6 +16,8 @@ export interface AILeadProfile {
   finalidade?: 'comprar' | 'alugar' | 'investir';
   is_lead: boolean; // TRUE if it is real estate related, FALSE if noise/social
   resumo_ia?: string;
+}
+
 import { callAIWithFallback, parseSafeJSON } from './aiUtils';
 import { supabaseAdmin } from '@/lib/supabase';
 
