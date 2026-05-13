@@ -238,6 +238,21 @@ export async function processConversation(
     }
   }
 
+  // Find target property address for natural confirmation
+  let targetPropertyAddress = '';
+  const candidateRef = stateRecord.selected_property_ref || (stateRecord.last_recommended_refs?.length > 0 ? stateRecord.last_recommended_refs[0] : null);
+  if (candidateRef) {
+    const { data: targetImovel } = await supabaseAdmin
+      .from('imoveis')
+      .select('titulo, logradouro, numero, bairro, freguesia, cidade')
+      .eq('referencia', candidateRef)
+      .maybeSingle();
+    if (targetImovel) {
+      const parts = [targetImovel.logradouro, targetImovel.numero, targetImovel.bairro || targetImovel.freguesia, targetImovel.cidade].filter(Boolean);
+      targetPropertyAddress = parts.join(', ');
+    }
+  }
+
   // Detect numbered response (for interactive fallback)
   const numberedMatch = text.trim().match(/^(\d)$/);
   let numberedContext = '';
@@ -260,6 +275,7 @@ DATA DE HOJE: ${todayISO} (${todayWeekday})
 ESTADO ATUAL DA CONVERSA: ${stateRecord.state}
 TURNO: ${stateRecord.turn_count + 1} de ${MAX_TURNS}
 CICLOS DE RECOMENDAÇÃO: ${stateRecord.recommendation_cycles}
+ENDEREÇO DO IMÓVEL EM PAUTA: ${targetPropertyAddress || 'A definir'}
 
 PERSONA (REGRAS DE OURO):
 - Tom humano, amigável e SUCINTO. Frases curtas.
@@ -276,7 +292,7 @@ COMPORTAMENTO POR ESTADO:
 - RECOMMENDING: Baseado nos "IMÓVEIS ENCONTRADOS", faça uma frase curta de introdução. Se o bairro não bater com o pedido, EXPLIQUE a diferença gentilmente.
 - FEEDBACK: O cliente escolheu um imóvel ou deu feedback. Responda comentando sobre a escolha e PERGUNTE SE ELE QUER MAIS DETALHES OU AGENDAR VISITA.
 - SCHEDULING: Envie a introdução para os horários (enviados à parte). Confirme a intenção de agendar.
-- VISIT_CONFIRMED: Confirme os detalhes da visita. Encerre com "Nos vemos lá! 🤝".
+- VISIT_CONFIRMED: Confirme os detalhes da visita de forma super natural em 1ª pessoa como corretor. OBRIGATÓRIO: Fale do endereço explicitamente na sua resposta. Exemplo: "Combinado então, nos vemos [dia/hora] lá! Segue o endereço: ${targetPropertyAddress || '[endereço do imóvel]'}. Até lá! 🤝"
 
 REGRAS ESTRITAS DE INTENÇÃO (MUITO IMPORTANTE):
 - SE VOCÊ FIZER UMA PERGUNTA (ex: quantos quartos? qual bairro?), SEU INTENT **DEVE** SER "qualificar".
@@ -423,10 +439,10 @@ REGRAS DE RESPOSTA:
         } else {
           // Fetch property info for event title
           let propertyTitle = 'Visita';
-          let propertyLocal = 'A definir';
+          let propertyLocal = targetPropertyAddress || 'A definir';
 
           // Robustly extract property reference if not saved yet
-          let currentRef = stateRecord.selected_property_ref || result.selected_property_ref;
+          let currentRef = stateRecord.selected_property_ref || result.selected_property_ref || candidateRef;
           if (!currentRef) {
             const refRegex = /\b([A-Z]{2}\d+)\b/;
             const match = finalReply.match(refRegex) || text.match(refRegex) || historyText.match(refRegex);
@@ -448,16 +464,16 @@ REGRAS DE RESPOSTA:
             if (imovel) {
               propertyTitle = `Visita: ${imovel.titulo}`;
               const parts = [imovel.logradouro, imovel.numero, imovel.bairro || imovel.freguesia, imovel.cidade].filter(Boolean);
-              propertyLocal = parts.join(', ') || 'A definir';
-              if (!finalReply.includes('📍')) {
-                finalReply = `${finalReply}\n\n📍 O endereço para a nossa visita é: *${propertyLocal}*.`;
-              }
+              propertyLocal = parts.join(', ') || propertyLocal;
             }
           }
 
-          // Fallback if local is still generic or empty
-          if (!finalReply.includes('📍')) {
-            finalReply = `${finalReply}\n\n📍 O endereço detalhado para a nossa visita será enviado pelo corretor ou pode ser consultado na página do imóvel.`;
+          // Force natural first-person broker speech if address is missing natively
+          const lReply = finalReply.toLowerCase();
+          const hasAddressMention = lReply.includes('endereço') || lReply.includes('segue o endereço') || lReply.includes('rua') || lReply.includes('av') || (propertyLocal !== 'A definir' && lReply.includes(propertyLocal.toLowerCase().split(',')[0]));
+          
+          if (!hasAddressMention) {
+            finalReply = `${finalReply.trim()}\n\nSegue o endereço: *${propertyLocal !== 'A definir' ? propertyLocal : 'te passo a localização exata por aqui antes da visita'}*. Nos vemos lá! 🤝`;
           }
 
           stateRecord.state = 'visit_confirmed';
