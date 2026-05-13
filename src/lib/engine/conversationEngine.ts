@@ -243,8 +243,9 @@ export async function processConversation(
   let numberedContext = '';
   if (numberedMatch) {
     const num = parseInt(numberedMatch[1]);
-    if (stateRecord.state === 'scheduling' && availableSlots[num - 1]) {
-      numberedContext = `\nO cliente respondeu "${num}" para escolher o horário: "${availableSlots[num - 1].label}" (${availableSlots[num - 1].isoDateTime})`;
+    const isSlotSelection = stateRecord.state === 'scheduling' || stateRecord.scheduling_attempts > 0 || historyText.includes('HORÁRIOS');
+    if (isSlotSelection && availableSlots[num - 1]) {
+      numberedContext = `\nO cliente respondeu "${num}" para escolher o horário: "${availableSlots[num - 1].label}" (${availableSlots[num - 1].isoDateTime}). REGRA OBRIGATÓRIA: Defina intent="confirmar_horario", selected_slot_index=${num} e next_state="visit_confirmed".`;
     } else if (['recommending', 'feedback'].includes(stateRecord.state) && stateRecord.last_recommended_refs.length > 0) {
       const ref = stateRecord.last_recommended_refs[num - 1];
       if (ref) numberedContext = `\nO cliente respondeu "${num}" para escolher o imóvel de Ref: ${ref}`;
@@ -376,6 +377,7 @@ REGRAS DE RESPOSTA:
 
     // --- Handle SCHEDULE intent ---
     if (result.intent === 'agendar' && lead.corretor_id) {
+      stateRecord.state = 'scheduling'; // Force correct state
       if (availableSlots.length > 0) {
         const propTitle = stateRecord.selected_property_ref || undefined;
         const slotsMsg = buildTimeSlotsMessage(availableSlots, propTitle);
@@ -384,6 +386,12 @@ REGRAS DE RESPOSTA:
       } else {
         finalReply += '\n\nVou verificar com o corretor a melhor disponibilidade e te retorno, combinado? 👍';
       }
+    }
+
+    // Auto-derive slot index if user typed a number during scheduling flow
+    if (numberedMatch && !result.selected_slot_index && (result.intent === 'confirmar_horario' || stateRecord.state === 'scheduling')) {
+      result.selected_slot_index = parseInt(numberedMatch[1]);
+      result.intent = 'confirmar_horario';
     }
 
     // --- Handle CONFIRM SLOT ---
@@ -417,19 +425,44 @@ REGRAS DE RESPOSTA:
           let propertyTitle = 'Visita';
           let propertyLocal = 'A definir';
 
-          if (stateRecord.selected_property_ref) {
+          // Robustly extract property reference if not saved yet
+          let currentRef = stateRecord.selected_property_ref || result.selected_property_ref;
+          if (!currentRef) {
+            const refRegex = /\b([A-Z]{2}\d+)\b/;
+            const match = finalReply.match(refRegex) || text.match(refRegex) || historyText.match(refRegex);
+            if (match) {
+              currentRef = match[1];
+            } else if (stateRecord.last_recommended_refs?.length > 0) {
+              currentRef = stateRecord.last_recommended_refs[0];
+            }
+          }
+
+          if (currentRef) {
+            stateRecord.selected_property_ref = currentRef;
             const { data: imovel } = await supabaseAdmin
               .from('imoveis')
               .select('titulo, freguesia, logradouro, numero, cidade, bairro')
-              .eq('referencia', stateRecord.selected_property_ref)
+              .eq('referencia', currentRef)
               .maybeSingle();
 
             if (imovel) {
               propertyTitle = `Visita: ${imovel.titulo}`;
               const parts = [imovel.logradouro, imovel.numero, imovel.bairro || imovel.freguesia, imovel.cidade].filter(Boolean);
               propertyLocal = parts.join(', ') || 'A definir';
-              finalReply = `${finalReply}\n\n📍 O endereço para a nossa visita é: *${propertyLocal}*.`;
+              if (!finalReply.includes('📍')) {
+                finalReply = `${finalReply}\n\n📍 O endereço para a nossa visita é: *${propertyLocal}*.`;
+              }
             }
+          }
+
+          // Fallback if local is still generic or empty
+          if (!finalReply.includes('📍')) {
+            finalReply = `${finalReply}\n\n📍 O endereço detalhado para a nossa visita será enviado pelo corretor ou pode ser consultado na página do imóvel.`;
+          }
+
+          stateRecord.state = 'visit_confirmed';
+          if (result.next_state !== 'human_handoff') {
+            result.next_state = 'visit_confirmed';
           }
 
           actions.push({
@@ -454,7 +487,7 @@ REGRAS DE RESPOSTA:
     if (result.intent === 'handoff' || nextState === 'human_handoff' || stateRecord.turn_count + 1 >= MAX_TURNS) {
       actions.push({ type: 'handoff', reason: result.intent === 'handoff' ? 'AI decided' : 'Max turns reached' });
       stateRecord.state = 'human_handoff';
-    } else {
+    } else if (stateRecord.state !== 'visit_confirmed') {
       stateRecord.state = nextState;
     }
 

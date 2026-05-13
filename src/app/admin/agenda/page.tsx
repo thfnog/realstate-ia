@@ -326,7 +326,7 @@ export default function AgendaPage() {
               </div>
               
               {/* Calendar Body */}
-              <div className="flex-1 grid grid-cols-7 auto-rows-fr overflow-y-auto custom-scrollbar">
+              <div className="flex-1 grid grid-cols-7 auto-rows-[minmax(120px,auto)] overflow-y-auto custom-scrollbar">
                 {/* Empty boxes for offset */}
                 {Array.from({ length: firstDayOfMonth }).map((_, i) => (
                   <div key={`empty-${i}`} className={`bg-slate-50/20 border-b border-slate-100 ${i > 0 ? 'border-l border-slate-50' : ''}`} />
@@ -358,9 +358,9 @@ export default function AgendaPage() {
                     <div 
                       key={day} 
                       onClick={() => modoEscala && toggleEscalaDia(dayStr, selectedCorretorId)}
-                      className={`group relative p-3 flex flex-col border-b border-slate-100 bg-white overflow-hidden ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
+                      className={`group relative p-3 flex flex-col border-b border-slate-100 ${isToday ? 'bg-primary/[0.03] ring-1 ring-primary/20 ring-inset' : 'bg-white'} overflow-hidden ${colIdx > 0 ? 'border-l border-slate-50' : ''} ${modoEscala ? 'cursor-pointer hover:bg-primary/5 active:scale-[0.98]' : 'hover:bg-slate-50/30'} transition-all duration-300`}
                     >
-                      <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start justify-between mb-2">
                         {/* Escala Badges */}
                         <div className="flex flex-wrap gap-1.5 items-start flex-1 min-w-0 pr-2">
                           {escalaHoje.map(esc => {
@@ -388,31 +388,27 @@ export default function AgendaPage() {
                         </div>
                       </div>
                       
-                      <div className={`flex-1 space-y-2 pr-1 transition-all duration-500 ${modoEscala ? 'opacity-20 pointer-events-none blur-[1px]' : ''}`}>
-                        {dayEvents.slice(0, 2).map(evt => {
-                          const ec = eventConfig[evt.tipo] || eventConfig.outro;
+                      <div className={`flex-1 space-y-0.5 pr-1 transition-all duration-500 ${modoEscala ? 'opacity-20 pointer-events-none blur-[1px]' : ''}`}>
+                        {dayEvents.map(evt => {
+                          const dotColor = evt.tipo === 'visita' ? 'bg-primary' :
+                                           evt.tipo === 'reuniao' ? 'bg-indigo-500' :
+                                           evt.tipo === 'vistoria' ? 'bg-amber-500' :
+                                           evt.tipo === 'assinatura' ? 'bg-emerald-500' : 'bg-slate-500';
                           return (
                             <div 
                               key={evt.id} 
                               onClick={() => setSelectedEvent(evt)}
-                              className={`flex flex-col px-3 py-2.5 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all ${ec.bg} ${evt.status === 'realizado' ? 'opacity-50' : ''}`}
+                              className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-100/80 active:bg-slate-200/80 transition-all ${evt.status === 'realizado' ? 'opacity-50 line-through' : ''}`}
+                              title={`${formatTime(evt.data_hora)} - ${evt.titulo}${evt.lead ? ` (${evt.lead.nome})` : ''}`}
                             >
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-900/60">{formatTime(evt.data_hora)}</span>
-                                {evt.status === 'agendado' && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                )}
-                              </div>
-                              <span className={`text-[10px] font-black uppercase tracking-widest leading-tight line-clamp-1 ${ec.color}`}>{evt.titulo}</span>
-                              {evt.lead && <span className="text-[9px] font-bold text-slate-500 mt-1 line-clamp-1">{evt.lead.nome}</span>}
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${evt.status === 'agendado' ? `${dotColor} animate-pulse` : dotColor}`}></span>
+                              <span className="text-[10px] font-bold text-slate-600 shrink-0">{formatTime(evt.data_hora)}</span>
+                              <span className="text-[10px] font-medium text-slate-900 truncate">
+                                {evt.titulo} {evt.lead ? `• ${evt.lead.nome}` : ''}
+                              </span>
                             </div>
                           )
                         })}
-                        {dayEvents.length > 2 && (
-                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center py-2 bg-slate-50 rounded-xl border border-slate-100 mt-1 shadow-sm">
-                            + {dayEvents.length - 2} eventos
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
