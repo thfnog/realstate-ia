@@ -81,9 +81,10 @@ REGRAS DE EXTRAÇÃO:
 2. Identifique o tipo: 'apartamento', 'casa', 'terreno', 'chacara', 'sitio', 'fazenda' ou 'lote'.
 3. Identifique a finalidade: 'comprar', 'alugar' ou 'investir'.
 4. Identifique o bairro (freguesia) e cidade (concelho).
-5. Identifique o número de vagas de garagem (vagas).
-6. Converta valores monetários para números puros.
-7. Retorne APENAS um objeto JSON puro.
+5. Identifique a quantidade de quartos desejados no campo "quartos" (número puro).
+6. Converta valores monetários para números puros no campo "orcamento" (ex: "900k" vira 900000, "1.5M" vira 1500000, "500 mil" vira 500000).
+7. Identifique o número de vagas de garagem no campo "vagas".
+8. Retorne APENAS um objeto JSON puro.
 
 EXEMPLO DE SAÍDA (LEAD):
 {
@@ -91,8 +92,10 @@ EXEMPLO DE SAÍDA (LEAD):
   "nome": "[NOME DO CLIENTE]",
   "tipo_interesse": "casa",
   "finalidade": "comprar",
+  "quartos": 3,
+  "orcamento": 900000,
   "freguesia": "[BAIRRO]",
-  "resumo_ia": "Cliente busca casa de alto padrão para compra no bairro [BAIRRO]."
+  "resumo_ia": "Cliente busca casa de alto padrão com 3 quartos para compra no bairro [BAIRRO] com orçamento até 900k."
 }
 
 EXEMPLO DE SAÍDA (RUÍDO/STATUS):
