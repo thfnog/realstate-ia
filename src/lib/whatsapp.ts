@@ -262,7 +262,7 @@ export async function saveMessageToHistory({
 /**
  * Downloads a media file from Evolution API as base64
  */
-export async function downloadMedia(instanceName: string, messageObj: any): Promise<{ base64: string; mimeType: string } | null> {
+export async function downloadMedia(instanceName: string, messageContainer: any): Promise<{ base64: string; mimeType: string } | null> {
   if (PROVIDER !== 'evolution' || !EVOLUTION_URL || !EVOLUTION_API_KEY) {
     return null;
   }
@@ -276,7 +276,7 @@ export async function downloadMedia(instanceName: string, messageObj: any): Prom
         'apikey': EVOLUTION_API_KEY
       },
       body: JSON.stringify({
-        message: messageObj
+        message: messageContainer
       })
     });
 

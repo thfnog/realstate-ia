@@ -74,8 +74,9 @@ export async function POST(request: Request) {
 
       if (isMessageEvent && payload.data) {
         const msgData = payload.data;
-        const messageObj = msgData.message || (msgData.messages && msgData.messages[0]?.message);
-        const key = msgData.key || (msgData.messages && msgData.messages[0]?.key);
+        const messageContainer = msgData.messages && msgData.messages[0] ? msgData.messages[0] : msgData;
+        const messageObj = messageContainer?.message;
+        const key = messageContainer?.key;
         
         console.log(`🔑 Key detectada:`, JSON.stringify(key));
 
@@ -220,7 +221,7 @@ export async function POST(request: Request) {
           }
 
           console.log(`🎙️ Baixando áudio de ${sender}...`);
-          const downloaded = await downloadMedia(instanceName, messageObj);
+          const downloaded = await downloadMedia(instanceName, messageContainer);
           if (!downloaded) {
             console.error("❌ Falha ao baixar áudio da Evolution API.");
             await sendWhatsAppMessage(
