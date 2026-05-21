@@ -19,7 +19,10 @@ const navGroups = [
     label: 'CRM',
     module: 'crm',
     items: [
-      { href: '/admin/leads', label: 'Leads', icon: '👤' },
+      { href: '/admin/leads', label: 'Fila de Leads', icon: '📥' },
+      { href: '/admin/crm', label: 'Clientes (CRM)', icon: '👤' },
+      { href: '/admin/oportunidades', label: 'Oportunidades', icon: '🤝' },
+      { href: '/admin/parceiros', label: 'Parceiros', icon: '🏪' },
       { href: '/admin/equipe', label: 'Equipe', icon: '👥' },
     ]
   },

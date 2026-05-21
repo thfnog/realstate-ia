@@ -10,7 +10,7 @@
 
 import type { 
   Corretor, Imovel, Lead, LeadComCorretor, Escala, Moeda, LeadSource, Evento, EventoComDetalhes,
-  Imobiliaria, Usuario, Venda, Contrato, PagamentoContrato, ContratoTemplate
+  Imobiliaria, Usuario, Venda, Contrato, PagamentoContrato, ContratoTemplate, MensagemHistorico
 } from '@/lib/database.types';
 import { getConfig } from '@/lib/countryConfig';
 
@@ -33,6 +33,7 @@ const globalForMock = global as unknown as {
     contratos: Contrato[];
     pagamentos: PagamentoContrato[];
     templates: ContratoTemplate[];
+    mensagens: MensagemHistorico[];
   }
 };
 
@@ -49,10 +50,11 @@ if (!globalForMock.__mockDb) {
     contratos: [],
     pagamentos: [],
     templates: [],
+    mensagens: [],
   };
 }
 
-export const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos, vendas, contratos, pagamentos, templates } = globalForMock.__mockDb;
+export const { imobiliarias, usuarios, corretores, imoveis, leads, escala, eventos, vendas, contratos, pagamentos, templates, mensagens } = globalForMock.__mockDb;
 
 // ===== Check if we should use mock =====
 export function isMockMode(): boolean {
@@ -260,8 +262,29 @@ export function deleteLead(id: string): boolean {
     if (eIdx !== -1) eventos.splice(eIdx, 1);
   });
 
+  // Also delete associated messages
+  for (let i = mensagens.length - 1; i >= 0; i--) {
+    if (mensagens[i].lead_id === id) {
+      mensagens.splice(i, 1);
+    }
+  }
+
   leads.splice(idx, 1);
   return true;
+}
+
+export function getMessagesByLead(leadId: string): MensagemHistorico[] {
+  return mensagens.filter((m) => m.lead_id === leadId).sort((a, b) => a.criado_em.localeCompare(b.criado_em));
+}
+
+export function createMessage(data: Omit<MensagemHistorico, 'id' | 'criado_em'>): MensagemHistorico {
+  const msg: MensagemHistorico = {
+    id: crypto.randomUUID(),
+    criado_em: new Date().toISOString(),
+    ...data,
+  } as MensagemHistorico;
+  mensagens.push(msg);
+  return msg;
 }
 
 export function purgeLeads(imobId: string): void {
@@ -421,17 +444,17 @@ function seedPT() {
   ];
 
   const sampleLeads = [
-    { nome: 'Miguel Silva', telefone: '+351911111111', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 350000, bairros: ['Chiado', 'Alfama'], descricao: 'Interesse em T2 com vista para o rio.' },
-    { nome: 'Sofia Martins', telefone: '+351922222222', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 1, orcamento: 1200, bairros: ['Alfama'] },
-    { nome: 'Ricardo Almeida', telefone: '+351933333333', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 550000, bairros: ['Sintra'] },
-    { nome: 'Inês Pereira', telefone: '+351944444444', finalidade: 'investir' as const, tipo: 'apartamento', quartos: 2, orcamento: 300000, bairros: ['Parque das Nações'] },
-    { nome: 'Tiago Oliveira', telefone: '+351955555555', finalidade: 'comprar' as const, tipo: null, quartos: null, orcamento: null, bairros: null },
-    { nome: 'Beatriz Fernandes', telefone: '+351966666666', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 3, orcamento: 450000, bairros: ['Cascais'] },
+    { nome: 'Miguel Silva', telefone: '+351911111111', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 350000, bairros: ['Chiado', 'Alfama'], descricao: 'Interesse em T2 com vista para o rio.', classificacao: 'comprador', classificacao_motivo: 'Interesse em T2 no Chiado com orçamento de 350.000€.' },
+    { nome: 'Sofia Martins', telefone: '+351922222222', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 1, orcamento: 1200, bairros: ['Alfama'], classificacao: 'locatario', classificacao_motivo: 'Busca aluguel de T1 em Alfama até 1.200€.', grupo_nome: 'Arrendamentos Lisboa', grupo_jid: '12036320@g.us' },
+    { nome: 'Ricardo Almeida', telefone: '+351933333333', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 550000, bairros: ['Sintra'], classificacao: 'comprador', classificacao_motivo: 'Procura moradia T4 em Sintra.' },
+    { nome: 'Inês Pereira', telefone: '+351944444444', finalidade: 'investir' as const, tipo: 'apartamento', quartos: 2, orcamento: 300000, bairros: ['Parque das Nações'], classificacao: 'investidor', classificacao_motivo: 'Investimento em T2 no Parque das Nações.' },
+    { nome: 'Tiago Oliveira', telefone: '+351955555555', finalidade: 'comprar' as const, tipo: null, quartos: null, orcamento: null, bairros: null, classificacao: 'indefinido', classificacao_motivo: null },
+    { nome: 'Beatriz Fernandes', telefone: '+351966666666', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 3, orcamento: 450000, bairros: ['Cascais'], classificacao: 'comprador', classificacao_motivo: 'Quer comprar T3 em Cascais.' },
   ];
 
   sampleLeads.forEach((sl, idx) => {
     const o = origins[idx];
-    createLead({
+    const leadObj = createLead({
       imobiliaria_id: iId,
       nome: sl.nome,
       telefone: sl.telefone,
@@ -450,7 +473,19 @@ function seedPT() {
       bairros_interesse: sl.bairros,
       corretor_id: idx < 3 ? c1.id : null,
       status: idx < 2 ? 'em_atendimento' : 'novo',
+      grupo_nome: (sl as any).grupo_nome || null,
+      grupo_jid: (sl as any).grupo_jid || null,
+      classificacao: (sl as any).classificacao || 'indefinido',
+      classificacao_motivo: (sl as any).classificacao_motivo || null,
     });
+
+    if (idx === 0) {
+      seedMessagesForLead(leadObj, [
+        { direction: 'inbound', text: 'Olá, estou interessado em um T2 no Chiado com vista para o rio.' },
+        { direction: 'outbound', text: 'Olá Miguel! Claro. Temos um excelente apartamento T2 no Chiado por 350.000€, com 65m² de área útil e 1 vaga de garagem. Deseja agendar uma visita?' },
+        { direction: 'inbound', text: 'Gostaria sim, mas gostava de levar a minha esposa no sábado à tarde.' }
+      ]);
+    }
   });
 
   // Seed Events (PT)
@@ -556,16 +591,16 @@ function seedBR() {
   ];
 
   const sampleLeads = [
-    { nome: 'Maria Oliveira', telefone: '+5511912345001', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 500000, bairros: ['Centro'], status: 'novo' as const, origem: 'whatsapp' as const, descricao_interesse: 'Gostaria de saber mais sobre o apartamento no Swiss Park que vi no anúncio.' },
-    { nome: 'João Santos', telefone: '+5511912345002', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 3, orcamento: 3500, bairros: ['Moema', 'Jardins'], status: 'em_atendimento' as const, origem: 'formulario' as const },
-    { nome: 'Ana Paula Costa', telefone: '+5511912345003', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 1600000, bairros: ['Swiss Park'], status: 'visita_agendada' as const, origem: 'whatsapp' as const },
-    { nome: 'Carlos Eduardo', telefone: '+5511912345004', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 5500000, bairros: ['Helvetia Park'], status: 'negociacao' as const, origem: 'manual' as const },
-    { nome: 'Fernanda Lima', telefone: '+5511912345005', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 3, orcamento: 1200000, bairros: ['Swiss Park'], status: 'contrato' as const, origem: 'manual' as const },
-    { nome: 'Ricardo Souza', telefone: '+5511912345006', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 2400000, bairros: ['Indaiatuba Park'], status: 'fechado' as const, origem: 'whatsapp' as const },
+    { nome: 'Maria Oliveira', telefone: '+5511912345001', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 2, orcamento: 500000, bairros: ['Centro'], status: 'novo' as const, origem: 'whatsapp' as const, descricao_interesse: 'Gostaria de saber mais sobre o apartamento no Swiss Park que vi no anúncio.', classificacao: 'comprador', classificacao_motivo: 'Demonstrou interesse em apartamento no Centro.' },
+    { nome: 'João Santos', telefone: '+5511912345002', finalidade: 'alugar' as const, tipo: 'apartamento', quartos: 3, orcamento: 3500, bairros: ['Moema', 'Jardins'], status: 'em_atendimento' as const, origem: 'formulario' as const, classificacao: 'locatario', classificacao_motivo: 'Busca locação residencial em Moema ou Jardins.' },
+    { nome: 'Ana Paula Costa', telefone: '+5511912345003', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 1600000, bairros: ['Swiss Park'], status: 'visita_agendada' as const, origem: 'whatsapp' as const, classificacao: 'comprador', classificacao_motivo: 'Quer comprar casa de 3 quartos no Swiss Park.', grupo_nome: 'Swiss Park - Leads', grupo_jid: '12036319@g.us' },
+    { nome: 'Carlos Eduardo', telefone: '+5511912345004', finalidade: 'comprar' as const, tipo: 'casa', quartos: 4, orcamento: 5500000, bairros: ['Helvetia Park'], status: 'negociacao' as const, origem: 'manual' as const, classificacao: 'investidor', classificacao_motivo: 'Investidor interessado em mansão de luxo no Helvetia Park.' },
+    { nome: 'Fernanda Lima', telefone: '+5511912345005', finalidade: 'comprar' as const, tipo: 'apartamento', quartos: 3, orcamento: 1200000, bairros: ['Swiss Park'], status: 'contrato' as const, origem: 'manual' as const, classificacao: 'comprador', classificacao_motivo: 'Em contrato para apartamento no Swiss Park.' },
+    { nome: 'Ricardo Souza', telefone: '+5511912345006', finalidade: 'comprar' as const, tipo: 'casa', quartos: 3, orcamento: 2400000, bairros: ['Indaiatuba Park'], status: 'fechado' as const, origem: 'whatsapp' as const, classificacao: 'corretor_parceiro', classificacao_motivo: 'Identificado como corretor de imobiliária parceira.' },
   ];
 
   sampleLeads.forEach((l, idx) => {
-    createLead({
+    const leadObj = createLead({
       imobiliaria_id: iId,
       nome: l.nome,
       telefone: l.telefone,
@@ -584,7 +619,20 @@ function seedBR() {
       bairros_interesse: l.bairros,
       corretor_id: idx % 2 === 0 ? c1.id : c2.id,
       status: l.status,
+      grupo_nome: (l as any).grupo_nome || null,
+      grupo_jid: (l as any).grupo_jid || null,
+      classificacao: (l as any).classificacao || 'indefinido',
+      classificacao_motivo: (l as any).classificacao_motivo || null,
     } as any);
+
+    if (idx === 0) {
+      seedMessagesForLead(leadObj, [
+        { direction: 'inbound', text: 'Olá, gostaria de saber mais sobre o apartamento no Centro que vi no anúncio.' },
+        { direction: 'outbound', text: 'Olá Maria! Com certeza. Esse apartamento tem 2 quartos, 65m² e fica em uma ótima localização no Centro. Deseja agendar uma visita?' },
+        { direction: 'inbound', text: 'Gostaria sim, mas só consigo no sábado à tarde. Vocês atendem nesse horário?', type: 'audio', transcription: 'Gostaria sim, mas só consigo no sábado à tarde. Vocês atendem nesse horário?', duration: 15 },
+        { direction: 'outbound', text: 'Olá Maria, sim! Nós atendemos aos sábados. Vou solicitar que o corretor responsável agende a visita e entre em contato com você por aqui.' }
+      ]);
+    }
   });
 
   // Seed Events (BR)
@@ -778,4 +826,27 @@ export function seedTestData() {
   console.log(`  ✅ ${leads.length} leads`);
   console.log(`  ✅ ${eventos.length} eventos (agenda)`);
   console.log('🌱 Seed completo!\n');
+}
+
+export function seedMessagesForLead(lead: Lead, messagesList: { direction: 'inbound' | 'outbound'; text: string; type?: string; media_url?: string; transcription?: string; duration?: number }[]) {
+  const cId = lead.corretor_id;
+  messagesList.forEach((m, idx) => {
+    const time = new Date(new Date(lead.criado_em).getTime() + (idx + 1) * 60000).toISOString();
+    mensagens.push({
+      id: crypto.randomUUID(),
+      imobiliaria_id: lead.imobiliaria_id,
+      lead_id: lead.id,
+      corretor_id: cId,
+      direction: m.direction,
+      message_text: m.text,
+      status: 'read',
+      provider_id: `msg-${idx}-${lead.id}`,
+      media_type: m.type || 'text',
+      media_url: m.media_url || null,
+      transcricao: m.transcription || null,
+      transcricao_confianca: m.transcription ? 0.95 : null,
+      duracao_segundos: m.duration || null,
+      criado_em: time,
+    });
+  });
 }

@@ -67,7 +67,21 @@ export async function POST(
     const resultId = await sendWhatsAppMessage(lead.telefone, message, lead.instanceName, lead.countryCode);
 
     // 3. Persist to history
-    if (!mock.isMockMode() && fullLeadData) {
+    if (mock.isMockMode()) {
+      const l = mock.getLeads().find(l => l.id === id);
+      if (l) {
+        mock.createMessage({
+          imobiliaria_id: l.imobiliaria_id,
+          lead_id: l.id,
+          corretor_id: l.corretor_id,
+          direction: 'outbound',
+          message_text: message,
+          status: 'sent',
+          provider_id: resultId,
+          media_type: 'text'
+        });
+      }
+    } else if (fullLeadData) {
       await saveMessageToHistory({
         imobiliaria_id: fullLeadData.imobiliaria_id,
         lead_id: fullLeadData.id,

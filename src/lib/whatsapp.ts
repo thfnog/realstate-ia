@@ -211,7 +211,12 @@ export async function saveMessageToHistory({
   message_text,
   status = 'sent',
   provider_id,
-  is_bot = false
+  is_bot = false,
+  media_type = 'text',
+  media_url = null,
+  transcricao = null,
+  transcricao_confianca = null,
+  duracao_segundos = null
 }: {
   imobiliaria_id: string;
   lead_id: string;
@@ -221,6 +226,11 @@ export async function saveMessageToHistory({
   status?: 'sent' | 'delivered' | 'read' | 'error';
   provider_id?: string | null;
   is_bot?: boolean;
+  media_type?: string;
+  media_url?: string | null;
+  transcricao?: string | null;
+  transcricao_confianca?: number | null;
+  duracao_segundos?: number | null;
 }) {
   if (mock.isMockMode()) return;
 
@@ -233,7 +243,12 @@ export async function saveMessageToHistory({
       message_text,
       status,
       provider_id: provider_id || null,
-      is_bot
+      is_bot,
+      media_type,
+      media_url,
+      transcricao,
+      transcricao_confianca,
+      duracao_segundos
     }]);
 
     if (error) {
@@ -241,6 +256,58 @@ export async function saveMessageToHistory({
     }
   } catch (err) {
     console.error('❌ Falha catastrófica ao salvar histórico:', err);
+  }
+}
+
+/**
+ * Downloads a media file from Evolution API as base64
+ */
+export async function downloadMedia(instanceName: string, messageObj: any): Promise<{ base64: string; mimeType: string } | null> {
+  if (PROVIDER !== 'evolution' || !EVOLUTION_URL || !EVOLUTION_API_KEY) {
+    return null;
+  }
+
+  try {
+    console.log(`[Evolution] Baixando mídia para a instância ${instanceName}...`);
+    const res = await fetch(getUrl(`/chat/getBase64FromMediaMessage/${instanceName}`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({
+        message: messageObj
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[Evolution] Erro ao baixar mídia (${res.status}): ${errText}`);
+      return null;
+    }
+
+    const data = await res.json();
+    if (!data.base64) {
+      console.error(`[Evolution] Resposta sem base64 ao baixar mídia`);
+      return null;
+    }
+
+    let base64Data = data.base64;
+    let mimeType = 'audio/ogg'; // Fallback comum para áudio do WhatsApp
+
+    if (base64Data.startsWith('data:')) {
+      const parts = base64Data.split(';base64,');
+      mimeType = parts[0].replace('data:', '');
+      base64Data = parts[1];
+    }
+
+    return {
+      base64: base64Data,
+      mimeType
+    };
+  } catch (error: any) {
+    console.error(`❌ Erro ao baixar mídia da Evolution API:`, error.message);
+    return null;
   }
 }
 /**

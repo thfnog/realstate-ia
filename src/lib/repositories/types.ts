@@ -1,4 +1,4 @@
-import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda, Contrato, ContratoComDetalhes, ContratoStatus, ContratoTipo, PagamentoContrato, ContratoTemplate } from '@/lib/database.types';
+import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda, Contrato, ContratoComDetalhes, ContratoStatus, ContratoTipo, PagamentoContrato, ContratoTemplate, Parceiro, Oportunidade, OportunidadeComDetalhes } from '@/lib/database.types';
 
 export interface PaginationParams {
   page?: number;
@@ -76,4 +76,35 @@ export interface IContratoRepository {
   // Templates
   getTemplates(imobiliaria_id: string): Promise<ContratoTemplate[]>;
   createTemplate(data: Omit<ContratoTemplate, 'id' | 'criado_em'>): Promise<ContratoTemplate>;
+}
+
+export interface ParceiroFilters extends PaginationParams {
+  imobiliaria_id: string;
+  ativo?: boolean;
+  search?: string;
+}
+
+export interface IParceiroRepository {
+  findAll(filters: ParceiroFilters): Promise<{ data: Parceiro[]; count: number }>;
+  findById(id: string, imobiliaria_id: string): Promise<Parceiro | null>;
+  findByTelefone(telefone: string, imobiliaria_id: string): Promise<Parceiro | null>;
+  create(data: Partial<Parceiro>): Promise<Parceiro>;
+  update(id: string, imobiliaria_id: string, data: Partial<Parceiro>): Promise<Parceiro>;
+  delete(id: string, imobiliaria_id: string): Promise<void>;
+}
+
+export interface OportunidadeFilters extends PaginationParams {
+  imobiliaria_id: string;
+  status?: string;
+  parceiro_id?: string;
+  corretor_id?: string;
+  search?: string;
+}
+
+export interface IOportunidadeRepository {
+  findAll(filters: OportunidadeFilters): Promise<{ data: OportunidadeComDetalhes[]; count: number }>;
+  findById(id: string, imobiliaria_id: string): Promise<OportunidadeComDetalhes | null>;
+  create(data: Partial<Oportunidade>): Promise<Oportunidade>;
+  update(id: string, imobiliaria_id: string, data: Partial<Oportunidade>): Promise<Oportunidade>;
+  delete(id: string, imobiliaria_id: string): Promise<void>;
 }

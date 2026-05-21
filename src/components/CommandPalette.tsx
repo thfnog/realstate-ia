@@ -91,7 +91,7 @@ export function CommandPalette() {
                 id: i.id,
                 type: 'imovel',
                 title: i.referencia,
-                subtitle: `${i.tipo} • ${i.bairro || ''}`,
+                subtitle: `${i.tipo} • ${i.freguesia || ''}`,
                 href: `/admin/imoveis`,
               });
             }

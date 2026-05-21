@@ -1,6 +1,6 @@
 import { isMockMode } from '@/lib/mockDb';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { ILeadRepository, IImovelRepository, ICorretorRepository, IEventoRepository, IVendaRepository, IContratoRepository } from './types';
+import { ILeadRepository, IImovelRepository, ICorretorRepository, IEventoRepository, IVendaRepository, IContratoRepository, IParceiroRepository, IOportunidadeRepository } from './types';
 import { MockLeadRepository } from './MockLeadRepository';
 import { SupabaseLeadRepository } from './SupabaseLeadRepository';
 import { MockImovelRepository } from './MockImovelRepository';
@@ -13,6 +13,10 @@ import { MockVendaRepository } from './MockVendaRepository';
 import { SupabaseVendaRepository } from './SupabaseVendaRepository';
 import { MockContratoRepository } from './MockContratoRepository';
 import { SupabaseContratoRepository } from './SupabaseContratoRepository';
+import { MockParceiroRepository } from './MockParceiroRepository';
+import { SupabaseParceiroRepository } from './SupabaseParceiroRepository';
+import { MockOportunidadeRepository } from './MockOportunidadeRepository';
+import { SupabaseOportunidadeRepository } from './SupabaseOportunidadeRepository';
 
 /**
  * Repository Factory
@@ -58,4 +62,18 @@ export function getContratoRepository(client: SupabaseClient): IContratoReposito
     return new MockContratoRepository();
   }
   return new SupabaseContratoRepository(client);
+}
+
+export function getParceiroRepository(client: SupabaseClient): IParceiroRepository {
+  if (isMockMode()) {
+    return new MockParceiroRepository();
+  }
+  return new SupabaseParceiroRepository(client);
+}
+
+export function getOportunidadeRepository(client: SupabaseClient): IOportunidadeRepository {
+  if (isMockMode()) {
+    return new MockOportunidadeRepository();
+  }
+  return new SupabaseOportunidadeRepository(client);
 }

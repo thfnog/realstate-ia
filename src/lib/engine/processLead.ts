@@ -45,6 +45,17 @@ export interface ProcessOptions {
 }
 
 export async function processLead(lead: Lead, options: ProcessOptions = {}): Promise<ProcessResult> {
+  if (lead.classificacao === 'corretor_parceiro') {
+    console.log(`🤝 Lead classificado como corretor parceiro. Ignorando processamento de bot tradicional.`);
+    return {
+      success: true,
+      corretor: null,
+      isExistingClient: false,
+      imoveisCount: 0,
+      whatsappResult: null
+    };
+  }
+
   console.log(`\n🚀 Processando lead: ${maskName(lead.nome)} (${maskPhone(lead.telefone)})`);
 
   try {

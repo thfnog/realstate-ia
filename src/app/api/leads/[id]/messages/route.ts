@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params;
 
     if (mock.isMockMode()) {
-      return NextResponse.json([]); // Mock doesn't have history yet
+      return NextResponse.json(mock.getMessagesByLead(id));
     }
 
     const { data, error } = await supabaseAdmin

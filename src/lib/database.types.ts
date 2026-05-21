@@ -180,6 +180,7 @@ export type Lead = {
   imobiliaria_id: string;
   nome: string;
   telefone: string;
+  email?: string | null;
   origem: LeadSource;
   portal_origem: string | null; // 'Idealista', 'ZAP', 'OLX', 'VivaReal', etc.
   moeda: Moeda;
@@ -198,6 +199,11 @@ export type Lead = {
   status: StatusLead;
   lembrete_1_enviado_em?: string | null;
   lembrete_2_enviado_em?: string | null;
+  grupo_nome?: string | null;
+  grupo_jid?: string | null;
+  classificacao?: 'comprador' | 'vendedor' | 'locatario' | 'investidor' | 'corretor_parceiro' | 'proprietario' | 'curioso' | 'indefinido';
+  classificacao_confianca?: number;
+  classificacao_motivo?: string | null;
   criado_em: string;
 };
 
@@ -245,6 +251,11 @@ export type MensagemHistorico = {
   message_text: string;
   status: 'sent' | 'delivered' | 'read' | 'error';
   provider_id: string | null;
+  media_type?: string; // 'text', 'audio', etc.
+  media_url?: string | null;
+  transcricao?: string | null;
+  transcricao_confianca?: number | null;
+  duracao_segundos?: number | null;
   criado_em: string;
 };
 
@@ -380,4 +391,51 @@ export type ContratoComDetalhes = Contrato & {
   lead: Lead | null;
   corretor: Corretor | null;
   pagamentos: PagamentoContrato[];
+};
+
+// =============================================
+// Parceiros e Oportunidades
+// =============================================
+
+export type Parceiro = {
+  id: string;
+  imobiliaria_id: string;
+  nome: string;
+  telefone: string;
+  email: string | null;
+  creci: string | null;
+  imobiliaria_nome: string | null;
+  notas: string | null;
+  ativo: boolean;
+  total_negocios: number;
+  criado_em: string;
+  atualizado_em: string;
+};
+
+export type OportunidadeStatus = 'nova' | 'em_negociacao' | 'aceita' | 'recusada' | 'concluida';
+export type OportunidadeTipo = 'parceria_venda' | 'parceria_locacao' | 'indicacao' | 'permuta' | 'captacao';
+
+export type Oportunidade = {
+  id: string;
+  imobiliaria_id: string;
+  parceiro_id: string;
+  corretor_id: string | null;
+  lead_id: string | null;
+  tipo: OportunidadeTipo;
+  titulo: string;
+  descricao: string | null;
+  status: OportunidadeStatus;
+  valor_estimado: number | null;
+  comissao_parceiro?: number | null;
+  imovel_id: string | null;
+  dados: any; // JSONB
+  criado_em: string;
+  atualizado_em: string;
+};
+
+export type OportunidadeComDetalhes = Oportunidade & {
+  parceiro: Parceiro | null;
+  corretor: Corretor | null;
+  imovel: Imovel | null;
+  lead: Lead | null;
 };

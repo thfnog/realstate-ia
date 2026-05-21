@@ -11,7 +11,7 @@
  * - Bairro match:         +3 points
  * - Vagas match:          +1 point
  * 
- * Returns top 3 properties with minimum 5 points.
+ * Returns top 5 properties with minimum 5 points.
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
@@ -24,9 +24,11 @@ export type ScoredImovel = Imovel & {
   score: number;
   scoreBreakdown: string[];
   publicUrl: string;
+  match_percentage: number;
+  match_reasons: string[];
 };
 
-export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: number = 3): Promise<ScoredImovel[]> {
+export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: number = 5): Promise<ScoredImovel[]> {
   const config = configIn || getConfig();
   // Fetch all available properties
   const { data: imoveis, error } = await supabaseAdmin
@@ -44,10 +46,22 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
     return [];
   }
 
+  // Calculate dynamic maximum possible score based on criteria defined by the lead
+  let maxPossibleScore = 0;
+  if (lead.tipo_interesse) maxPossibleScore += 5;
+  if (lead.quartos_interesse) maxPossibleScore += 4;
+  if (lead.orcamento) maxPossibleScore += 4;
+  if (lead.area_interesse) maxPossibleScore += 2;
+  if (lead.bairros_interesse && lead.bairros_interesse.length > 0) maxPossibleScore += 3;
+  if (lead.vagas_interesse) maxPossibleScore += 1;
+
+  if (maxPossibleScore === 0) maxPossibleScore = 15; // default fallback if no interest details are set yet
+
   // Score each property
   const scored: ScoredImovel[] = imoveis.map((imovel) => {
     let score = 0;
     const breakdown: string[] = [];
+    const reasons: string[] = [];
 
     // 0. Finalidade Match (Mandatory)
     if (lead.finalidade) {
@@ -65,6 +79,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
       if (imovel.tipo === lead.tipo_interesse) {
         score += 5;
         breakdown.push(`Tipo ${imovel.tipo}: +5`);
+        reasons.push(`Tipo de imóvel ideal (${imovel.tipo})`);
       } else {
         // Affinity matching (e.g., Chacara matches Sitio, Terreno matches Lote)
         const ruralTypes = ['chacara', 'sitio', 'fazenda'];
@@ -76,6 +91,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
         if (isRuralAffinity || isLandAffinity) {
           score += 3;
           breakdown.push(`Afinidade ${imovel.tipo} vs ${lead.tipo_interesse}: +3`);
+          reasons.push(`Estilo do imóvel (${imovel.tipo}) atende sua busca por ${lead.tipo_interesse}`);
         }
       }
     }
@@ -85,9 +101,11 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
       if (imovel.quartos === lead.quartos_interesse) {
         score += 4;
         breakdown.push(`Quartos ${imovel.quartos}: +4`);
+        reasons.push(`Possui exatamente ${imovel.quartos} quarto(s) como desejado`);
       } else if (Math.abs(imovel.quartos - lead.quartos_interesse) === 1) {
         score += 2;
         breakdown.push(`Quartos ${imovel.quartos} (±1): +2`);
+        reasons.push(`Possui ${imovel.quartos} quarto(s), bem próximo da sua busca`);
       }
     }
 
@@ -97,9 +115,11 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
       if (diff <= 0.15) {
         score += 4;
         breakdown.push(`Valor ${formatCurrency(imovel.valor, config)} (±15%): +4`);
+        reasons.push(`Preço dentro do orçamento (${formatCurrency(imovel.valor, config)})`);
       } else if (diff <= 0.25) {
         score += 2;
         breakdown.push(`Valor ${formatCurrency(imovel.valor, config)} (±25%): +2`);
+        reasons.push(`Preço de ${formatCurrency(imovel.valor, config)} está ligeiramente fora da estimativa`);
       }
     }
 
@@ -110,6 +130,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
       if (imovel.area_util >= minArea && imovel.area_util <= maxArea) {
         score += 2;
         breakdown.push(`Área ${imovel.area_util}m² (±20%): +2`);
+        reasons.push(`Tamanho do imóvel (${imovel.area_util}m²) adequado para seu perfil`);
       }
     }
 
@@ -127,6 +148,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
           score += 3;
           const ratingPercent = (bestMatch.rating * 100).toFixed(0);
           breakdown.push(`Bairro ${imovel.freguesia} (${isPartial ? '100' : ratingPercent}% match): +3`);
+          reasons.push(`Excelente localização no bairro/freguesia ${imovel.freguesia}`);
         }
       }
     }
@@ -135,13 +157,18 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
     if (lead.vagas_interesse && imovel.vagas_garagem === lead.vagas_interesse) {
       score += 1;
       breakdown.push(`Vagas ${imovel.vagas_garagem}: +1`);
+      reasons.push(`Possui ${imovel.vagas_garagem} vaga(s) de garagem`);
     }
+
+    const match_percentage = Math.round(Math.min((score / maxPossibleScore) * 100, 100));
 
     return {
       ...imovel,
       score,
       scoreBreakdown: breakdown,
       publicUrl: `${APP_URL}/imoveis/${imovel.id}`,
+      match_percentage,
+      match_reasons: reasons
     } as ScoredImovel;
   }).filter((i): i is ScoredImovel => i !== null);
 
@@ -153,7 +180,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
 
   console.log(`🏠 ${recommended.length} imóveis recomendados (de ${imoveis.length} disponíveis)`);
   recommended.forEach((r) => {
-    console.log(`  - ${r.tipo} em ${r.freguesia}: ${r.score} pts [${r.scoreBreakdown.join(', ')}]`);
+    console.log(`  - ${r.tipo} em ${r.freguesia}: ${r.score} pts (${r.match_percentage}%) [${r.match_reasons.join(', ')}]`);
   });
 
   return recommended;
