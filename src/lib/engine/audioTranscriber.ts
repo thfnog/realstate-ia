@@ -37,6 +37,7 @@ export async function transcribeAudio(
       name: 'groq',
       url: 'https://api.groq.com/openai/v1/audio/transcriptions',
       key: GROQ_API_KEY,
+      model: 'whisper-large-v3',
     });
   }
 
@@ -46,6 +47,7 @@ export async function transcribeAudio(
       name: 'openai',
       url: 'https://api.openai.com/v1/audio/transcriptions',
       key: OPENAI_API_KEY,
+      model: 'whisper-1',
     });
   }
 
@@ -65,7 +67,7 @@ export async function transcribeAudio(
       
       // Node fetch needs a filename for files in FormData
       formData.append('file', blob, `audio.${extension}`);
-      formData.append('model', 'whisper-1');
+      formData.append('model', provider.model);
       formData.append('language', 'pt');
 
       const response = await fetch(provider.url, {
@@ -92,7 +94,7 @@ export async function transcribeAudio(
           try {
             await supabaseAdmin.from('ai_usage_logs').insert([{
               imobiliaria_id,
-              model: 'whisper-1',
+              model: provider.model,
               feature: 'audio_transcription',
               status: 'success',
               provider: provider.name
@@ -118,7 +120,7 @@ export async function transcribeAudio(
     try {
       await supabaseAdmin.from('ai_usage_logs').insert([{
         imobiliaria_id,
-        model: 'whisper-1',
+        model: providers[0]?.model || 'whisper-large-v3',
         feature: 'audio_transcription',
         status: 'error',
         error_log: `All providers failed: ${lastError}`,
