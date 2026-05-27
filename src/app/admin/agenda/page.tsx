@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { IoCalendarOutline, IoChevronBackOutline, IoChevronForwardOutline, IoSyncOutline, IoTrashOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoCreateOutline, IoLocationOutline, IoPersonOutline, IoBriefcaseOutline } from 'react-icons/io5';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
-import WhatsAppConnector from '@/components/corretores/WhatsAppConnector';
+
 import { getConfig } from '@/lib/countryConfig';
 
 const eventConfig: Record<string, { label: string, color: string, bg: string, icon: string }> = {

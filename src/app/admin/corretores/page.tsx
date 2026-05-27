@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { IoAddOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline, IoLogoWhatsapp, IoMailOutline, IoCallOutline } from 'react-icons/io5';
 import { LoadingSkeleton, TableRowSkeleton } from '@/components/LoadingSkeleton';
-import WhatsAppConnector from '@/components/corretores/WhatsAppConnector';
+
 import { toast } from 'sonner';
 
 interface Corretor {
@@ -359,11 +359,23 @@ export default function CorretoresPage({ hideHeader = false }: { hideHeader?: bo
               {editingId && activeModules.includes('bot') && (
                 <div className="space-y-4 pt-4 border-t border-slate-50">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Integração do Bot (WhatsApp)</label>
-                  <WhatsAppConnector 
-                    instanceName={`realstate-iabroker-${editingId}`} 
-                    brokerId={editingId} 
-                    onStatusChange={() => fetchCorretores()}
-                  />
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
+                    <IoLogoWhatsapp size={20} className={
+                      corretores.find(c => c.id === editingId)?.whatsapp_status === 'open' 
+                        ? 'text-emerald-500' 
+                        : 'text-slate-300'
+                    } />
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">
+                        {corretores.find(c => c.id === editingId)?.whatsapp_status === 'open' 
+                          ? 'Bot Conectado' 
+                          : 'Bot Desconectado'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        A conexão do WhatsApp deve ser feita pelo próprio consultor na página <strong>Meu Perfil</strong>.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
