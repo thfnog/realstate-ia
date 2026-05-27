@@ -64,11 +64,13 @@ export async function POST(req: NextRequest) {
         console.log(`✅ Instância ${instanceName} criada com sucesso. Aguardando provisionamento...`);
         // Aguarda 1.5s para o servidor processar a nova instância
         await new Promise(resolve => setTimeout(resolve, 1500));
-      } else if (createRes.status === 400) {
-        console.log(`ℹ️ Instância ${instanceName} já existe. Seguindo para conexão.`);
+      } else if ([400, 403, 409].includes(createRes.status)) {
+        // Evolution API v2.3.7+ retorna 403 (Forbidden) quando a instância já existe
+        // Versões anteriores retornavam 400. 409 (Conflict) é outro código possível.
+        console.log(`ℹ️ Instância ${instanceName} já existe (status ${createRes.status}). Seguindo para conexão.`);
       } else {
         const err = await createRes.text();
-        console.error('❌ Erro ao criar instância:', err);
+        console.error(`❌ Erro ao criar instância (status ${createRes.status}):`, err);
         return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
       }
 
