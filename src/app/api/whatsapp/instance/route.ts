@@ -45,24 +45,18 @@ export async function POST(req: NextRequest) {
     if (action === 'connect') {
       console.log(`🚀 Iniciando conexão para instância: ${instanceName}`);
       
-      // 1. Limpar instância antiga para evitar acumular zumbis
+      // 1. Tentar desconectar sessão anterior (limpa estado sem deletar a instância)
       try {
-        console.log(`🧹 Removendo instância antiga ${instanceName} (se existir)...`);
         await fetch(getUrl(`/instance/logout/${instanceName}`), {
           method: 'POST',
           headers: { 'apikey': EVOLUTION_API_KEY! }
         });
-        await fetch(getUrl(`/instance/delete/${instanceName}`), {
-          method: 'DELETE',
-          headers: { 'apikey': EVOLUTION_API_KEY! }
-        });
-        // Aguarda a Evolution processar a remoção
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } catch (cleanupErr) {
-        console.warn('⚠️ Falha ao limpar instância antiga (pode não existir):', cleanupErr);
+        console.log(`🧹 Sessão anterior de ${instanceName} encerrada (se existia).`);
+      } catch (logoutErr) {
+        // Ignorar — pode não existir sessão ativa
       }
 
-      // 2. Criar instância limpa
+      // 2. Garantir que a instância existe (criar se necessário)
       const createRes = await fetch(getUrl('/instance/create'), {
         method: 'POST',
         headers: { 
@@ -80,6 +74,9 @@ export async function POST(req: NextRequest) {
       if (createRes.ok) {
         console.log(`✅ Instância ${instanceName} criada com sucesso. Aguardando provisionamento...`);
         await new Promise(resolve => setTimeout(resolve, 1500));
+      } else if ([400, 403, 409].includes(createRes.status)) {
+        // Evolution API v2.3.7+ retorna 403 quando a instância já existe
+        console.log(`ℹ️ Instância ${instanceName} já existe (status ${createRes.status}). Seguindo para conexão.`);
       } else {
         const err = await createRes.text();
         console.error(`❌ Erro ao criar instância (status ${createRes.status}):`, err);
