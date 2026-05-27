@@ -45,7 +45,24 @@ export async function POST(req: NextRequest) {
     if (action === 'connect') {
       console.log(`🚀 Iniciando conexão para instância: ${instanceName}`);
       
-      // 1. Garantir que a instância existe
+      // 1. Limpar instância antiga para evitar acumular zumbis
+      try {
+        console.log(`🧹 Removendo instância antiga ${instanceName} (se existir)...`);
+        await fetch(getUrl(`/instance/logout/${instanceName}`), {
+          method: 'POST',
+          headers: { 'apikey': EVOLUTION_API_KEY! }
+        });
+        await fetch(getUrl(`/instance/delete/${instanceName}`), {
+          method: 'DELETE',
+          headers: { 'apikey': EVOLUTION_API_KEY! }
+        });
+        // Aguarda a Evolution processar a remoção
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (cleanupErr) {
+        console.warn('⚠️ Falha ao limpar instância antiga (pode não existir):', cleanupErr);
+      }
+
+      // 2. Criar instância limpa
       const createRes = await fetch(getUrl('/instance/create'), {
         method: 'POST',
         headers: { 
@@ -62,19 +79,14 @@ export async function POST(req: NextRequest) {
 
       if (createRes.ok) {
         console.log(`✅ Instância ${instanceName} criada com sucesso. Aguardando provisionamento...`);
-        // Aguarda 1.5s para o servidor processar a nova instância
         await new Promise(resolve => setTimeout(resolve, 1500));
-      } else if ([400, 403, 409].includes(createRes.status)) {
-        // Evolution API v2.3.7+ retorna 403 (Forbidden) quando a instância já existe
-        // Versões anteriores retornavam 400. 409 (Conflict) é outro código possível.
-        console.log(`ℹ️ Instância ${instanceName} já existe (status ${createRes.status}). Seguindo para conexão.`);
       } else {
         const err = await createRes.text();
         console.error(`❌ Erro ao criar instância (status ${createRes.status}):`, err);
         return NextResponse.json({ error: 'Falha ao criar instância no servidor WhatsApp.' }, { status: 500 });
       }
 
-      // 1.1 Configurar Webhook para esta instância (Robust URL detection)
+      // 3. Configurar Webhook para esta instância
       const host = req.headers.get('host') || 'realstate-ia.vercel.app';
       const protocol = host.includes('localhost') ? 'http' : 'https';
       const webhookUrl = `${protocol}://${host}/api/webhooks/whatsapp`;
@@ -112,7 +124,7 @@ export async function POST(req: NextRequest) {
         console.error('⚠️ Falha crítica ao disparar configuração de Webhook:', webhookErr);
       }
 
-      // 2. Buscar o QR Code (com retry em caso de 404 temporário)
+      // 4. Buscar o QR Code (com retry em caso de 404 temporário)
       let qrRes = await fetch(getUrl(`/instance/connect/${instanceName}`), {
         headers: { 'apikey': EVOLUTION_API_KEY! }
       });
