@@ -185,6 +185,8 @@ async function findAvailableSlots(corretorId: string, imobId: string, preferredD
 
 // --------------- MAIN PROCESS ---------------
 
+import { AgenticEngine } from './agenticEngine';
+
 export async function processConversation(
   text: string,
   lead: Lead,
@@ -199,6 +201,34 @@ export async function processConversation(
   if (!guard.allowed) {
     console.log(`🚫 Bot bloqueado: ${guard.reason}`);
     return { reply: null, newState: stateRecord.state, actions: [], shouldRespond: false };
+  }
+
+  // 🚀 Step 1: Execute Native Agentic Engine (ReAct Loop + Tools)
+  try {
+    const agenticResult = await AgenticEngine.processMessage(
+      text,
+      lead,
+      imobiliariaId,
+      history,
+      brokerName,
+      lead.corretor_id || undefined
+    );
+
+    if (agenticResult.shouldRespond && agenticResult.reply) {
+      stateRecord.turn_count++;
+      stateRecord.state = agenticResult.newState as ConversationState;
+      stateRecord.last_bot_reply_at = new Date().toISOString();
+      await saveState(stateRecord);
+
+      return {
+        reply: agenticResult.reply,
+        newState: stateRecord.state,
+        actions: agenticResult.actions as any,
+        shouldRespond: true
+      };
+    }
+  } catch (err: any) {
+    console.warn(`⚠️ [conversationEngine] Fallback da AgenticEngine para motor clássico:`, err.message);
   }
 
   // Format history (truncate long bot messages like property lists to save tokens)

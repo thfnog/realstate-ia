@@ -32,6 +32,8 @@ interface AICallOptions {
   messages: any[];
   temperature?: number;
   response_format?: { type: 'json_object' };
+  tools?: Array<{ type: 'function'; function: { name: string; description: string; parameters: any } }>;
+  tool_choice?: 'auto' | 'none' | any;
   imobiliaria_id?: string;
   feature?: string;
 }
@@ -103,15 +105,23 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
         headers['X-Title'] = 'ImobIA Engine';
       }
 
+      const bodyPayload: any = {
+        model: target.model,
+        messages: options.messages,
+        temperature: options.temperature ?? 0,
+      };
+
+      if (options.tools && options.tools.length > 0) {
+        bodyPayload.tools = options.tools;
+        if (options.tool_choice) bodyPayload.tool_choice = options.tool_choice;
+      } else if (options.response_format && target.provider !== 'openrouter') {
+        bodyPayload.response_format = options.response_format;
+      }
+
       const response = await fetch(target.url, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          model: target.model,
-          messages: options.messages,
-          temperature: options.temperature ?? 0,
-          response_format: target.provider === 'openrouter' ? undefined : options.response_format, // OpenRouter lida com JSON via prompt no Llama
-        })
+        body: JSON.stringify(bodyPayload)
       });
 
       if (response.status === 429) {

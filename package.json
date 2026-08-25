@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "graph": "npx tsx scripts/generate-code-graph.ts",
+    "graph:watch": "npx tsx --watch scripts/generate-code-graph.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -47,6 +49,8 @@
     "eslint-config-next": "16.2.3",
     "supabase": "^2.92.1",
     "tailwindcss": "^4",
+    "ts-morph": "^25.0.1",
+    "tsx": "^4.23.12",
     "typescript": "^5",
     "xlsx": "^0.18.5"
   }

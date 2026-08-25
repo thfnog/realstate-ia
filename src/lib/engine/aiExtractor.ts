@@ -19,6 +19,7 @@ export interface AILeadProfile {
 }
 
 import { callAIWithFallback, parseSafeJSON } from './aiUtils';
+import { ModelRouter } from './modelRouter';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function extractLeadWithAI(
@@ -106,11 +107,13 @@ EXEMPLO DE SAÍDA (RUÍDO/STATUS):
   `;
 
   try {
+    const route = ModelRouter.getRoute('extraction');
     const data = await callAIWithFallback({
       imobiliaria_id,
       feature: 'extraction',
+      model: route.primaryModel,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0,
+      temperature: route.temperature,
       response_format: { type: 'json_object' }
     });
 

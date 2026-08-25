@@ -8,6 +8,7 @@ import { transcribeAudio } from '@/lib/engine/audioTranscriber';
 import { classifyLead } from '@/lib/engine/leadClassifier';
 import { getParceiroRepository, getOportunidadeRepository } from '@/lib/repositories/factory';
 import { assignCorretor } from '@/lib/engine/assignCorretor';
+import { HITLManager } from '@/lib/engine/hitlManager';
 import * as mock from '@/lib/mockDb';
 import { waitUntil } from '@vercel/functions';
 
@@ -297,6 +298,13 @@ export async function POST(request: Request) {
       }
 
       const phoneClean = sender.replace(/\D/g, '');
+
+      // --- HITL BROKER APPROVAL INTERCEPTOR ---
+      const hitlResult = await HITLManager.checkAndProcessBrokerReply(phoneClean, text, config_pais);
+      if (hitlResult.handled) {
+        console.log(`🛡️ [HITL] Comando do corretor processado para ${phoneClean}: ${hitlResult.message}`);
+        return;
+      }
 
       // --- CLASSIFICATION & AGENT DETECTION ---
       const classification = await classifyLead(text, imobiliaria_id);

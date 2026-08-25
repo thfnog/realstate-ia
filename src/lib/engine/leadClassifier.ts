@@ -1,4 +1,5 @@
 import { callAIWithFallback, parseSafeJSON } from './aiUtils';
+import { ModelRouter } from './modelRouter';
 
 export interface ClassificationResult {
   classificacao: 'comprador' | 'vendedor' | 'locatario' | 'investidor' | 'corretor_parceiro' | 'proprietario' | 'curioso' | 'indefinido';
@@ -13,6 +14,7 @@ export async function classifyLead(
   text: string,
   imobiliaria_id: string
 ): Promise<ClassificationResult> {
+  const route = ModelRouter.getRoute('classification');
   const prompt = `Você é um analista inteligente de imobiliária. Analise a seguinte mensagem enviada por um contato via WhatsApp e classifique o remetente em uma das seguintes categorias:
 - comprador: Alguém manifestando interesse em comprar um imóvel (ex: quer ver casa, pergunta preço de venda, pede simulação de financiamento).
 - locatario: Alguém manifestando interesse em alugar/arrendar um imóvel.
@@ -41,10 +43,11 @@ Responda ESTRITAMENTE em formato JSON com a seguinte estrutura:
         { role: 'system', content: 'Você é um assistente de classificação imobiliária que retorna estritamente JSON.' },
         { role: 'user', content: prompt }
       ],
+      model: route.primaryModel,
       response_format: { type: 'json_object' },
       imobiliaria_id,
       feature: 'lead_classification',
-      temperature: 0
+      temperature: route.temperature
     });
 
     const content = response.choices?.[0]?.message?.content || '';
