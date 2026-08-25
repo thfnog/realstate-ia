@@ -10,6 +10,7 @@ import { callAIWithFallback } from './aiUtils';
 import { ContextEngine } from './contextEngine';
 import { AgenticTools, ToolExecutionContext } from './agenticTools';
 import { ModelRouter } from './modelRouter';
+import { JITRetriever } from '@/lib/knowledge/jitRetriever';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Lead } from '@/lib/database.types';
 
@@ -38,11 +39,23 @@ export class AgenticEngine {
     const route = ModelRouter.getRoute('agentic_chat');
     const tools = AgenticTools.getToolDefinitions();
 
-    // 1. Build prioritized context
+    // 0. JIT Context Retrieval from Knowledge Graph
+    const jitResult = await JITRetriever.retrieveJITContext({
+      userText,
+      imobiliariaId,
+      targetPropertyId: lead.imovel_id
+    });
+
+    if (jitResult.entitiesDetected.length > 0) {
+      console.log(`🧠 [AgenticEngine] JIT Entidades detectadas:`, jitResult.entitiesDetected.join(', '));
+    }
+
+    // 1. Build prioritized context with JIT snippet
     const builtContext = ContextEngine.buildContext({
       lead,
       brokerName: brokerName || 'Corretor',
       history,
+      jitSnippet: jitResult.retrievedSnippet,
       maxHistoryTurns: 6
     });
 

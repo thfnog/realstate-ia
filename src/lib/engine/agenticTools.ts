@@ -10,6 +10,7 @@ import * as mock from '@/lib/mockDb';
 import type { Lead, Imovel } from '@/lib/database.types';
 import { recommendImoveis } from './recommendImoveis';
 import { buildPropertyMessage, buildTimeSlotsMessage, PropertyCard, TimeSlot } from '@/lib/whatsapp/interactiveMessages';
+import { RealEstateGraph } from '@/lib/knowledge/realEstateGraph';
 
 export interface ToolDefinition {
   type: 'function';
@@ -108,6 +109,20 @@ export class AgenticTools {
               finalidade: { type: 'string', enum: ['comprar', 'alugar', 'investir'], description: 'Finalidade de interesse' },
               bairros_interesse: { type: 'array', items: { type: 'string' }, description: 'Lista de bairros' }
             }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'query_imobiliaria_policies',
+          description: 'Consulta as regras e políticas operacionais da imobiliária (ex: garantias de locação aceitas como seguro fiança e caução, documentos exigidos, horários de visitas e regras gerais).',
+          parameters: {
+            type: 'object',
+            properties: {
+              topico: { type: 'string', description: 'Assunto da dúvida (ex: garantias, documentos, visitas, pets, fiador)' }
+            },
+            required: ['topico']
           }
         }
       },
@@ -379,6 +394,22 @@ export class AgenticTools {
           }
 
           return { success: true, result: { updated: updates } };
+        }
+
+        case 'query_imobiliaria_policies': {
+          const topico = (args.topico || '').toLowerCase();
+          const policies = RealEstateGraph.getPolicies();
+          const matched = policies.filter(p => p.palavras_chave.some(k => topico.includes(k)) || p.titulo.toLowerCase().includes(topico));
+          
+          return {
+            success: true,
+            result: {
+              policies: (matched.length > 0 ? matched : policies.slice(0, 2)).map(m => ({
+                titulo: m.titulo,
+                informacao: m.conteudo
+              }))
+            }
+          };
         }
 
         case 'request_human_handoff': {

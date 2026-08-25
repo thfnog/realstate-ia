@@ -19,6 +19,7 @@ export interface ContextBuildOptions {
   history?: Array<{ direction: 'inbound' | 'outbound'; message_text: string; criado_em?: string }>;
   targetProperty?: Imovel | null;
   recommendedProperties?: Imovel[];
+  jitSnippet?: string;
   maxHistoryTurns?: number;
 }
 
@@ -50,6 +51,7 @@ export class ContextEngine {
       history = [],
       targetProperty = null,
       recommendedProperties = [],
+      jitSnippet = '',
       maxHistoryTurns = 8
     } = options;
 
@@ -98,9 +100,11 @@ DADOS ATUAIS DO CLIENTE:
 - Classificação: ${lead.classificacao || 'lead comum'}
 `;
 
-    // --- Layer 3: Property Context ---
+    // --- Layer 3: Property & Knowledge Context (JIT) ---
     let layer3 = '';
-    if (targetProperty) {
+    if (jitSnippet) {
+      layer3 = `\n${jitSnippet}`;
+    } else if (targetProperty) {
       const enderecoCompleto = [
         targetProperty.rua,
         targetProperty.numero,
