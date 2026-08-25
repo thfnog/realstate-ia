@@ -20,6 +20,7 @@ export interface ContextBuildOptions {
   targetProperty?: Imovel | null;
   recommendedProperties?: Imovel[];
   jitSnippet?: string;
+  leadMemory?: string;
   maxHistoryTurns?: number;
 }
 
@@ -52,6 +53,7 @@ export class ContextEngine {
       targetProperty = null,
       recommendedProperties = [],
       jitSnippet = '',
+      leadMemory = '',
       maxHistoryTurns = 8
     } = options;
 
@@ -75,6 +77,7 @@ REGRAS DE OURO DE ATENDIMENTO:
 - Seja assertivo e tenha escuta ativa: NUNCA pergunte uma informação que o cliente já disse na conversa ou que já consta no perfil dele.
 - Se o cliente busca apartamento, NÃO pergunte se é condomínio fechado.
 - Se o cliente perguntar detalhes de um imóvel (ex: condomínio, aceita pet, vaga, andar), use a ferramenta 'get_property_details' para responder com precisão.
+- Se o cliente tiver dúvidas de financiamento ou parcelas, use 'simulate_financing'.
 - Se o cliente demonstrar interesse em visitar ou escolher um horário, consulte a agenda com 'check_available_slots' e confirme com 'book_visit'.
 - Ao confirmar visita, sempre mencione o endereço completo do imóvel.
 `;
@@ -97,7 +100,7 @@ DADOS ATUAIS DO CLIENTE:
 - Orçamento: ${orcamentoStr}
 - Quartos: ${lead.quartos_interesse ?? 'Não especificado'}
 - ${country.code === 'PT' ? 'Freguesias' : 'Bairros'} de Interesse: ${bairrosStr}
-- Classificação: ${lead.classificacao || 'lead comum'}
+- Classificação: ${lead.classificacao || 'lead comum'}${leadMemory ? `\n- Memória Contínua da Jornada: ${leadMemory}` : ''}
 `;
 
     // --- Layer 3: Property & Knowledge Context (JIT) ---

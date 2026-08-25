@@ -11,6 +11,7 @@ import type { Lead, Imovel } from '@/lib/database.types';
 import { recommendImoveis } from './recommendImoveis';
 import { buildPropertyMessage, buildTimeSlotsMessage, PropertyCard, TimeSlot } from '@/lib/whatsapp/interactiveMessages';
 import { RealEstateGraph } from '@/lib/knowledge/realEstateGraph';
+import { HITLManager } from './hitlManager';
 
 export interface ToolDefinition {
   type: 'function';
@@ -129,6 +130,22 @@ export class AgenticTools {
       {
         type: 'function',
         function: {
+          name: 'simulate_financing',
+          description: 'Calcula uma simulação financeira precisa de entrada mínima (20%), valor financiado, parcelas no sistema SAC e Price (Brasil) ou Euribor (Portugal).',
+          parameters: {
+            type: 'object',
+            properties: {
+              valor_imovel: { type: 'number', description: 'Valor total do imóvel a ser simulado' },
+              valor_entrada: { type: 'number', description: 'Valor de entrada que o cliente pretende dar (opcional)' },
+              prazo_meses: { type: 'number', description: 'Prazo do financiamento em meses (padrão 360 meses / 30 anos)' }
+            },
+            required: ['valor_imovel']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
           name: 'request_human_handoff',
           description: 'Transfere o atendimento para o corretor humano quando solicitado pelo cliente ou para negociações especiais.',
           parameters: {
@@ -182,7 +199,8 @@ export class AgenticTools {
             valor: im.valor,
             referencia: im.referencia,
             id: im.id,
-            area_util: im.area_util
+            area_util: im.area_util,
+            fotos: im.fotos || []
           }));
 
           const cardsFormatted = buildPropertyMessage(cards);
@@ -191,6 +209,7 @@ export class AgenticTools {
             success: true,
             result: {
               count: imoveis.length,
+              cards,
               imoveis: imoveis.slice(0, 3).map(im => ({
                 referencia: im.referencia,
                 titulo: im.titulo,
@@ -199,7 +218,8 @@ export class AgenticTools {
                 valor: im.valor,
                 quartos: im.quartos,
                 vagas: im.vagas_garagem,
-                comodidades: im.comodidades
+                comodidades: im.comodidades,
+                foto_destaque: (im.fotos && im.fotos.length > 0) ? im.fotos[0] : null
               }))
             },
             extraMessage: cardsFormatted
@@ -248,7 +268,8 @@ export class AgenticTools {
               vagas: imovel.vagas_garagem,
               area_util: imovel.area_util,
               comodidades: imovel.comodidades || [],
-              descricao: imovel.descricao
+              descricao: imovel.descricao,
+              fotos: imovel.fotos || []
             }
           };
         }
@@ -271,41 +292,40 @@ export class AgenticTools {
               .eq('corretor_id', corretorId)
               .gte('data_hora', now.toISOString())
               .lte('data_hora', nextWeek.toISOString())
-              .in('status', ['agendado']);
+              .neq('status', 'cancelado');
 
-            busyTimes = new Set((eventos || []).map(e => {
-              const d = new Date(e.data_hora);
-              return `${d.toISOString().split('T')[0]}_${d.getHours()}`;
-            }));
-          }
-
-          const slots: TimeSlot[] = [];
-          const weekdays = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-
-          for (let dayOffset = 1; dayOffset <= 7 && slots.length < 3; dayOffset++) {
-            const day = new Date();
-            day.setDate(day.getDate() + dayOffset);
-            const dayOfWeek = day.getDay();
-            if (dayOfWeek === 0) continue; // Skip Sunday
-
-            const dateStr = day.toISOString().split('T')[0];
-            const dayLabel = weekdays[dayOfWeek];
-            const dayNum = day.getDate().toString().padStart(2, '0');
-            const monthNum = (day.getMonth() + 1).toString().padStart(2, '0');
-
-            for (let hour = 10; hour < 17 && slots.length < 3; hour += 3) {
-              const key = `${dateStr}_${hour}`;
-              if (busyTimes.has(key)) continue;
-
-              slots.push({
-                label: `${dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1)} (${dayNum}/${monthNum}) às ${hour.toString().padStart(2, '0')}:00`,
-                isoDateTime: `${dateStr}T${hour.toString().padStart(2, '0')}:00:00-03:00`,
-                slotId: `slot_${slots.length + 1}`
-              });
+            if (eventos) {
+              eventos.forEach(e => busyTimes.add(new Date(e.data_hora).toISOString().substring(0, 13)));
             }
           }
 
-          const slotsFormatted = buildTimeSlotsMessage(slots);
+          const slots: TimeSlot[] = [];
+          const daysToCheck = [1, 2, 3];
+          const hours = args.preferencia_periodo === 'manha' ? [9, 10, 11] :
+                        args.preferencia_periodo === 'tarde' ? [14, 15, 16] : [10, 14, 16];
+
+          for (const d of daysToCheck) {
+            const slotDate = new Date();
+            slotDate.setDate(now.getDate() + d);
+            if (slotDate.getDay() === 0) continue; // Domingo fechado
+
+            for (const h of hours) {
+              slotDate.setHours(h, 0, 0, 0);
+              const isoKey = slotDate.toISOString().substring(0, 13);
+              if (!busyTimes.has(isoKey)) {
+                const dateStr = slotDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                slots.push({
+                  slotId: `slot-${d}-${h}`,
+                  isoDateTime: slotDate.toISOString(),
+                  label: `${dateStr} às ${h}:00`
+                });
+                if (slots.length >= 4) break;
+              }
+            }
+            if (slots.length >= 4) break;
+          }
+
+          const slotsFormatted = buildTimeSlotsMessage(slots, args.referencia_imovel);
 
           return {
             success: true,
@@ -317,6 +337,11 @@ export class AgenticTools {
         case 'book_visit': {
           const isoDate = args.data_hora_iso;
           const ref = args.referencia_imovel;
+
+          const visitDate = new Date(isoDate);
+          const dayOfWeek = visitDate.getDay(); // 0 = Domingo
+          const hour = visitDate.getHours();
+          const isOutOfHours = (dayOfWeek === 0) || (hour < 8 || hour >= 19);
 
           let targetImovel: any = null;
           if (ref) {
@@ -336,6 +361,29 @@ export class AgenticTools {
           const endereco = targetImovel
             ? [targetImovel.rua, targetImovel.numero, targetImovel.freguesia, targetImovel.concelho].filter(Boolean).join(', ')
             : 'Endereço a confirmar';
+
+          // Checagem de Horário Especial (Domingos ou fora do horário padrão) -> Governança HITL
+          if (isOutOfHours) {
+            const hitlReq = await HITLManager.requestApproval({
+              imobiliaria_id: ctx.imobiliariaId,
+              broker_id: ctx.brokerId || ctx.lead.corretor_id || 'corretor-default',
+              broker_phone: '11988887777',
+              lead_id: ctx.lead.id,
+              lead_phone: ctx.lead.telefone,
+              type: 'visit_special_time',
+              title: `Visita Fora de Horário (${visitDate.toLocaleDateString('pt-BR')} às ${hour}h)`,
+              description: `Cliente ${ctx.lead.nome || ctx.lead.telefone} solicitou visita em horário especial para o imóvel ${ref || 'em pauta'}.`
+            });
+
+            return {
+              success: true,
+              result: {
+                status: 'pending_broker_approval',
+                hitl_request_id: hitlReq.id,
+                mensagem: `O horário solicitado (${visitDate.toLocaleDateString('pt-BR')} às ${hour}h) é fora do nosso horário comercial padrão. Acabei de solicitar autorização especial diretamente ao corretor responsável (Ref: #${hitlReq.id}) e te confirmo assim que ele responder!`
+              }
+            };
+          }
 
           if (!mock.isMockMode()) {
             await supabaseAdmin.from('eventos').insert([{
@@ -372,6 +420,56 @@ export class AgenticTools {
               data_hora: isoDate,
               endereco_completo: endereco,
               referencia: ref
+            }
+          };
+        }
+
+        case 'simulate_financing': {
+          const valor = args.valor_imovel || 0;
+          if (valor <= 0) {
+            return { success: false, result: { error: 'Informe um valor de imóvel válido para simulação.' } };
+          }
+
+          const isPortugal = ctx.lead.moeda === 'EUR';
+          const pctEntradaMin = isPortugal ? 0.15 : 0.20; // 15% em PT, 20% no BR
+          const entrada = args.valor_entrada ? Math.max(args.valor_entrada, valor * pctEntradaMin) : (valor * pctEntradaMin);
+          const financiado = valor - entrada;
+          const prazoMeses = args.prazo_meses || 360; // 30 anos padrão
+          const taxaAnual = isPortugal ? 4.2 : 10.5; // 4.2% a.a. em PT (Euribor + spread), 10.5% a.a. no BR
+
+          const taxaMensal = Math.pow(1 + taxaAnual / 100, 1 / 12) - 1;
+
+          // Cálculo Sistema Price (Parcelas fixas)
+          const parcelaPrice = (financiado * taxaMensal) / (1 - Math.pow(1 + taxaMensal, -prazoMeses));
+
+          // Cálculo Sistema SAC (Amortização constante)
+          const amortizacaoSAC = financiado / prazoMeses;
+          const primeiraParcelaSAC = amortizacaoSAC + (financiado * taxaMensal);
+          const ultimaParcelaSAC = amortizacaoSAC + (amortizacaoSAC * taxaMensal);
+
+          const moeda = isPortugal ? '€' : 'R$';
+
+          return {
+            success: true,
+            result: {
+              moeda,
+              valor_imovel: valor,
+              valor_entrada_minima: entrada,
+              percentual_entrada: `${((entrada / valor) * 100).toFixed(0)}%`,
+              valor_financiado: financiado,
+              prazo_anos: prazoMeses / 12,
+              taxa_juros_anual: `${taxaAnual}% a.a.`,
+              sistema_sac: {
+                primeira_parcela: Math.round(primeiraParcelaSAC),
+                ultima_parcela: Math.round(ultimaParcelaSAC),
+                tipo: 'Parcelas decrescentes'
+              },
+              sistema_price: {
+                parcela_mensal_fixa: Math.round(parcelaPrice),
+                tipo: 'Parcelas fixas'
+              },
+              renda_minima_sugerida: Math.round(primeiraParcelaSAC * 3.33),
+              resumo: `Para um imóvel de ${moeda} ${valor.toLocaleString('pt-BR')}, a entrada mínima é de ${moeda} ${entrada.toLocaleString('pt-BR')} (20%). O saldo financiado de ${moeda} ${financiado.toLocaleString('pt-BR')} em 30 anos fica com 1ª parcela de aprox. ${moeda} ${Math.round(primeiraParcelaSAC).toLocaleString('pt-BR')} (SAC decrescente) ou ${moeda} ${Math.round(parcelaPrice).toLocaleString('pt-BR')} (Price fixa).`
             }
           };
         }

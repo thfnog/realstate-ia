@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-25T17:53:01.222Z",
+  "generated": "2026-08-25T19:00:24.070Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
-    "totalFiles": 204,
-    "totalEdges": 457,
-    "totalExports": 443,
-    "aiModules": 10,
+    "totalFiles": 206,
+    "totalEdges": 463,
+    "totalExports": 445,
+    "aiModules": 12,
     "layers": 11
   },
   "layers": {
@@ -40,9 +40,9 @@
         "src/components/LoadingSkeleton.tsx",
         "src/components/PlanGuard.tsx",
         "src/components/corretores/WhatsAppConnector.tsx",
+        "src/components/leads/KanbanBoard.tsx",
         "src/components/config/PreferencesCard.tsx",
         "src/components/imoveis/ImovelForm.tsx",
-        "src/components/leads/KanbanBoard.tsx",
         "src/components/imoveis/ImovelDetalhesView.tsx",
         "src/components/imoveis/MapPicker.tsx",
         "src/components/imoveis/MercadoIndicador.tsx",
@@ -92,14 +92,15 @@
       "files": [
         "src/lib/engine/aiUtils.ts",
         "src/lib/engine/recommendImoveis.ts",
+        "src/lib/engine/modelRouter.ts",
         "src/lib/engine/assignCorretor.ts",
         "src/lib/engine/dailyBriefing.ts",
-        "src/lib/engine/modelRouter.ts",
         "src/lib/engine/sync/index.ts",
         "src/lib/engine/sync/providers/widesys.ts",
         "src/lib/engine/recommendImovelsMock.ts",
         "src/lib/engine/webhookProcessor.ts",
         "src/lib/engine/aiExtractor.ts",
+        "src/lib/engine/hitlManager.ts",
         "src/lib/engine/sendBriefing.ts",
         "src/lib/engine/agenticEngine.ts",
         "src/lib/engine/agenticTools.ts",
@@ -107,8 +108,8 @@
         "src/lib/engine/checkCarteira.ts",
         "src/lib/engine/contextEngine.ts",
         "src/lib/engine/conversationEngine.ts",
-        "src/lib/engine/hitlManager.ts",
         "src/lib/engine/leadClassifier.ts",
+        "src/lib/engine/leadMemoryCompressor.ts",
         "src/lib/engine/processLead.ts",
         "src/lib/engine/sendAutoReply.ts",
         "src/lib/engine/aiScheduler.ts",
@@ -116,13 +117,6 @@
         "src/lib/engine/onboardingEngine.ts",
         "src/lib/engine/processLeadMock.ts",
         "src/lib/engine/reverseMatching.ts"
-      ]
-    },
-    "whatsapp": {
-      "description": "Formatação de mensagens interativas WhatsApp",
-      "files": [
-        "src/lib/whatsapp/interactiveMessages.ts",
-        "src/lib/whatsapp/messageDebouncer.ts"
       ]
     },
     "ingest": {
@@ -137,6 +131,14 @@
       "files": [
         "src/lib/utils/documentGenerator.ts",
         "src/lib/utils/format.ts"
+      ]
+    },
+    "whatsapp": {
+      "description": "Formatação de mensagens interativas WhatsApp",
+      "files": [
+        "src/lib/whatsapp/interactiveMessages.ts",
+        "src/lib/whatsapp/messageDebouncer.ts",
+        "src/lib/whatsapp/voiceGenerator.ts"
       ]
     },
     "pages": {
@@ -272,7 +274,7 @@
   "nodes": [
     {
       "path": "src/lib/database.types.ts",
-      "rank": 0.0552,
+      "rank": 0.0549,
       "layer": "infrastructure",
       "exports": [
         "Imobiliaria",
@@ -323,7 +325,7 @@
     },
     {
       "path": "src/lib/mockDb.ts",
-      "rank": 0.0442,
+      "rank": 0.0444,
       "layer": "infrastructure",
       "exports": [
         "isMockMode",
@@ -401,7 +403,7 @@
     },
     {
       "path": "src/lib/supabase.ts",
-      "rank": 0.0279,
+      "rank": 0.028,
       "layer": "infrastructure",
       "exports": [
         "getUserSupabaseClient",
@@ -418,7 +420,7 @@
     },
     {
       "path": "src/lib/countryConfig.ts",
-      "rank": 0.0239,
+      "rank": 0.0238,
       "layer": "infrastructure",
       "exports": [
         "getConfig",
@@ -452,7 +454,7 @@
     },
     {
       "path": "src/lib/auth.ts",
-      "rank": 0.0128,
+      "rank": 0.0126,
       "layer": "infrastructure",
       "exports": [
         "signIn",
@@ -470,7 +472,7 @@
     },
     {
       "path": "src/components/LoadingSkeleton.tsx",
-      "rank": 0.0076,
+      "rank": 0.0075,
       "layer": "components",
       "exports": [
         "LoadingSkeleton",
@@ -484,7 +486,7 @@
     },
     {
       "path": "src/lib/repositories/types.ts",
-      "rank": 0.0067,
+      "rank": 0.0066,
       "layer": "repositories",
       "exports": [
         "PaginationParams",
@@ -550,7 +552,7 @@
     },
     {
       "path": "src/lib/whatsapp.ts",
-      "rank": 0.0039,
+      "rank": 0.0038,
       "layer": "infrastructure",
       "exports": [
         "fetchInstanceStatus",
@@ -572,7 +574,7 @@
     },
     {
       "path": "src/lib/engine/aiUtils.ts",
-      "rank": 0.0035,
+      "rank": 0.0038,
       "layer": "engine",
       "exports": [
         "parseSafeJSON",
@@ -589,7 +591,7 @@
     },
     {
       "path": "src/components/PlanGuard.tsx",
-      "rank": 0.0032,
+      "rank": 0.0031,
       "layer": "components",
       "exports": [
         "PlanGuard"
@@ -602,7 +604,7 @@
     },
     {
       "path": "src/components/corretores/WhatsAppConnector.tsx",
-      "rank": 0.0022,
+      "rank": 0.0021,
       "layer": "components",
       "exports": [
         "default"
@@ -615,7 +617,7 @@
     },
     {
       "path": "src/lib/engine/recommendImoveis.ts",
-      "rank": 0.0018,
+      "rank": 0.0017,
       "layer": "engine",
       "exports": [
         "recommendImoveis",
@@ -630,6 +632,23 @@
       "type": "module",
       "linesOfCode": 188,
       "description": "Scoring ponderado: tipo(+5) quartos(+4) orçamento±15%(+4) bairro(+3) área(+2) vagas(+1)"
+    },
+    {
+      "path": "src/lib/engine/modelRouter.ts",
+      "rank": 0.0016,
+      "layer": "engine",
+      "exports": [
+        "TaskType",
+        "RouteConfig",
+        "ModelRouter"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 112,
+      "description": "Exports: TaskType, RouteConfig, ModelRouter"
     },
     {
       "path": "src/lib/slack.ts",
@@ -662,8 +681,25 @@
       "description": "Atribuição de corretor via escala de plantão ou round-robin fallback"
     },
     {
-      "path": "src/lib/billing.ts",
+      "path": "src/components/leads/KanbanBoard.tsx",
       "rank": 0.0014,
+      "layer": "components",
+      "exports": [
+        "KanbanBoard",
+        "statusConfig"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 350,
+      "description": "React Component | Exports: KanbanBoard, statusConfig"
+    },
+    {
+      "path": "src/lib/billing.ts",
+      "rank": 0.0013,
       "layer": "infrastructure",
       "exports": [
         "processSubscriptionUpdate",
@@ -680,7 +716,7 @@
     },
     {
       "path": "src/components/config/PreferencesCard.tsx",
-      "rank": 0.0014,
+      "rank": 0.0013,
       "layer": "components",
       "exports": [
         "PreferencesCard"
@@ -693,7 +729,7 @@
     },
     {
       "path": "src/components/imoveis/ImovelForm.tsx",
-      "rank": 0.0014,
+      "rank": 0.0013,
       "layer": "components",
       "exports": [
         "default"
@@ -712,25 +748,8 @@
       "description": "React Component | Exports: default"
     },
     {
-      "path": "src/components/leads/KanbanBoard.tsx",
-      "rank": 0.0014,
-      "layer": "components",
-      "exports": [
-        "KanbanBoard",
-        "statusConfig"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 350,
-      "description": "React Component | Exports: KanbanBoard, statusConfig"
-    },
-    {
       "path": "src/lib/engine/dailyBriefing.ts",
-      "rank": 0.0014,
+      "rank": 0.0013,
       "layer": "engine",
       "exports": [
         "runDailyBriefing"
@@ -747,25 +766,8 @@
       "description": "Cron diário regionalizado (BR/PT) com resumo matinal via WhatsApp para corretores"
     },
     {
-      "path": "src/lib/engine/modelRouter.ts",
-      "rank": 0.0014,
-      "layer": "engine",
-      "exports": [
-        "TaskType",
-        "RouteConfig",
-        "ModelRouter"
-      ],
-      "imports": [
-        "src/lib/engine/aiUtils.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 112,
-      "description": "Exports: TaskType, RouteConfig, ModelRouter"
-    },
-    {
       "path": "src/lib/engine/sync/index.ts",
-      "rank": 0.0014,
+      "rank": 0.0013,
       "layer": "engine",
       "exports": [
         "runSyncForImobiliaria",
@@ -1006,29 +1008,6 @@
       "description": "Exports: PropertyGraphNode, NeighborhoodGraphNode, AgencyPolicyNode"
     },
     {
-      "path": "src/lib/whatsapp/interactiveMessages.ts",
-      "rank": 0.001,
-      "layer": "whatsapp",
-      "exports": [
-        "buildPropertyMessage",
-        "buildTimeSlotsMessage",
-        "buildQuickReplyMessage",
-        "sendInteractiveButtons",
-        "sendPropertyRecommendations",
-        "sendSchedulingSlots",
-        "getPropertyUrl",
-        "PropertyCard",
-        "TimeSlot"
-      ],
-      "imports": [
-        "src/lib/whatsapp.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 153,
-      "description": "Exports: buildPropertyMessage, buildTimeSlotsMessage, buildQuickReplyMessage"
-    },
-    {
       "path": "src/components/corretores/BrokerOnboarding.tsx",
       "rank": 0.0009,
       "layer": "components",
@@ -1152,6 +1131,24 @@
       "type": "module",
       "linesOfCode": 133,
       "description": "Extrai perfil estruturado de mensagens WhatsApp com feedback loop da tabela ai_feedback"
+    },
+    {
+      "path": "src/lib/engine/hitlManager.ts",
+      "rank": 0.0009,
+      "layer": "engine",
+      "exports": [
+        "ApprovalRequest",
+        "HITLManager"
+      ],
+      "imports": [
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts",
+        "src/lib/whatsapp.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 137,
+      "description": "Exports: ApprovalRequest, HITLManager"
     },
     {
       "path": "src/lib/engine/sendBriefing.ts",
@@ -1451,6 +1448,29 @@
       "description": "Exports: formatCurrency, parseCurrency, maskCurrency"
     },
     {
+      "path": "src/lib/whatsapp/interactiveMessages.ts",
+      "rank": 0.0009,
+      "layer": "whatsapp",
+      "exports": [
+        "buildPropertyMessage",
+        "buildTimeSlotsMessage",
+        "buildQuickReplyMessage",
+        "sendInteractiveButtons",
+        "sendPropertyRecommendations",
+        "sendSchedulingSlots",
+        "getPropertyUrl",
+        "PropertyCard",
+        "TimeSlot"
+      ],
+      "imports": [
+        "src/lib/whatsapp.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 153,
+      "description": "Exports: buildPropertyMessage, buildTimeSlotsMessage, buildQuickReplyMessage"
+    },
+    {
       "path": "src/app/admin/corretores/page.tsx",
       "rank": 0.0009,
       "layer": "pages",
@@ -1604,12 +1624,13 @@
         "src/lib/engine/agenticTools.ts",
         "src/lib/engine/modelRouter.ts",
         "src/lib/knowledge/jitRetriever.ts",
+        "src/lib/engine/leadMemoryCompressor.ts",
         "src/lib/supabase.ts",
         "src/lib/database.types.ts"
       ],
       "usesAI": true,
       "type": "module",
-      "linesOfCode": 211,
+      "linesOfCode": 219,
       "description": "Usa LLM | Exports: AgenticResult, AgenticEngine"
     },
     {
@@ -1627,11 +1648,12 @@
         "src/lib/database.types.ts",
         "src/lib/engine/recommendImoveis.ts",
         "src/lib/whatsapp/interactiveMessages.ts",
-        "src/lib/knowledge/realEstateGraph.ts"
+        "src/lib/knowledge/realEstateGraph.ts",
+        "src/lib/engine/hitlManager.ts"
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 431,
+      "linesOfCode": 529,
       "description": "Exports: ToolDefinition, ToolExecutionContext, AgenticTools"
     },
     {
@@ -1679,7 +1701,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 156,
+      "linesOfCode": 159,
       "description": "Exports: ContextBuildOptions, BuiltContext, ContextEngine"
     },
     {
@@ -1709,24 +1731,6 @@
       "description": "FSM com 7 estados: greeting → qualifying → recommending → feedback → scheduling → visit_confirmed → human_handoff"
     },
     {
-      "path": "src/lib/engine/hitlManager.ts",
-      "rank": 0.0008,
-      "layer": "engine",
-      "exports": [
-        "ApprovalRequest",
-        "HITLManager"
-      ],
-      "imports": [
-        "src/lib/supabase.ts",
-        "src/lib/mockDb.ts",
-        "src/lib/whatsapp.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 137,
-      "description": "Exports: ApprovalRequest, HITLManager"
-    },
-    {
       "path": "src/lib/engine/leadClassifier.ts",
       "rank": 0.0008,
       "layer": "engine",
@@ -1742,6 +1746,24 @@
       "type": "module",
       "linesOfCode": 70,
       "description": "Classifica contato: comprador|vendedor|locatario|investidor|corretor_parceiro|proprietario|curioso"
+    },
+    {
+      "path": "src/lib/engine/leadMemoryCompressor.ts",
+      "rank": 0.0008,
+      "layer": "engine",
+      "exports": [
+        "LeadMemoryCompressor"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts",
+        "src/lib/engine/modelRouter.ts",
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 80,
+      "description": "Usa LLM | Exports: LeadMemoryCompressor"
     },
     {
       "path": "src/lib/engine/processLead.ts",
@@ -2054,6 +2076,19 @@
       "type": "module",
       "linesOfCode": 133,
       "description": "Exports: BufferedMessage, DebounceSession, MessageDebouncer"
+    },
+    {
+      "path": "src/lib/whatsapp/voiceGenerator.ts",
+      "rank": 0.0007,
+      "layer": "whatsapp",
+      "exports": [
+        "VoiceGenerator"
+      ],
+      "imports": [],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 63,
+      "description": "Usa LLM | Exports: VoiceGenerator"
     },
     {
       "path": "src/app/admin/agenda/page.tsx",
@@ -4089,6 +4124,11 @@
     },
     {
       "from": "src/lib/engine/agenticEngine.ts",
+      "to": "src/lib/engine/leadMemoryCompressor.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/agenticEngine.ts",
       "to": "src/lib/supabase.ts",
       "type": "import"
     },
@@ -4125,6 +4165,11 @@
     {
       "from": "src/lib/engine/agenticTools.ts",
       "to": "src/lib/knowledge/realEstateGraph.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/agenticTools.ts",
+      "to": "src/lib/engine/hitlManager.ts",
       "type": "import"
     },
     {
@@ -4260,6 +4305,26 @@
     {
       "from": "src/lib/engine/leadClassifier.ts",
       "to": "src/lib/engine/modelRouter.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/leadMemoryCompressor.ts",
+      "to": "src/lib/engine/aiUtils.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/leadMemoryCompressor.ts",
+      "to": "src/lib/engine/modelRouter.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/leadMemoryCompressor.ts",
+      "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/leadMemoryCompressor.ts",
+      "to": "src/lib/mockDb.ts",
       "type": "import"
     },
     {

@@ -11,6 +11,7 @@ import { ContextEngine } from './contextEngine';
 import { AgenticTools, ToolExecutionContext } from './agenticTools';
 import { ModelRouter } from './modelRouter';
 import { JITRetriever } from '@/lib/knowledge/jitRetriever';
+import { LeadMemoryCompressor } from './leadMemoryCompressor';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Lead } from '@/lib/database.types';
 
@@ -50,12 +51,19 @@ export class AgenticEngine {
       console.log(`🧠 [AgenticEngine] JIT Entidades detectadas:`, jitResult.entitiesDetected.join(', '));
     }
 
-    // 1. Build prioritized context with JIT snippet
+    // 1. Continuous Long-term Lead Memory
+    let leadMemory = '';
+    if (history.length >= 4) {
+      leadMemory = await LeadMemoryCompressor.compressLeadMemory(lead.id, history);
+    }
+
+    // 2. Build prioritized context with JIT snippet and Memory Hook
     const builtContext = ContextEngine.buildContext({
       lead,
       brokerName: brokerName || 'Corretor',
       history,
       jitSnippet: jitResult.retrievedSnippet,
+      leadMemory,
       maxHistoryTurns: 6
     });
 
