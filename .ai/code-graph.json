@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T17:08:03.122Z",
+  "generated": "2026-08-25T17:53:01.222Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
     "totalFiles": 204,
@@ -584,7 +584,7 @@
       ],
       "usesAI": true,
       "type": "module",
-      "linesOfCode": 350,
+      "linesOfCode": 355,
       "description": "Multi-provider: OpenRouter(Llama 70B) → Groq(Llama 70B) → OpenAI(GPT-4o-mini) com logging de tokens"
     },
     {
@@ -1802,7 +1802,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 99,
+      "linesOfCode": 100,
       "description": "Exports: JITRetrievalResult, JITRetriever"
     },
     {

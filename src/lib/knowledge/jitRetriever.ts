@@ -64,11 +64,12 @@ export class JITRetriever {
       if (imovel) {
         entitiesDetected.push(`imovel:${imovel.referencia}`);
         const node = RealEstateGraph.buildPropertyNode(imovel);
+        const currSym = imovel.moeda === 'EUR' ? '€' : 'R$';
 
         const propertySnippet = `
 📌 [JIT Imóvel Ref: ${node.referencia}]
-- Tipo: ${node.tipo} (${node.finalidade}) | Valor: R$ ${node.valor.toLocaleString('pt-BR')} ${node.valor_locacao ? `(Locação: R$ ${node.valor_locacao})` : ''}
-- Condomínio: ${node.condominio_mensal ? `R$ ${node.condominio_mensal}` : 'Isento'} | IPTU: ${node.iptu_anual ? `R$ ${node.iptu_anual}/ano` : 'Incluso/Isento'}
+- Tipo: ${node.tipo} (${node.finalidade}) | Valor: ${currSym} ${node.valor.toLocaleString('pt-BR')} ${node.valor_locacao ? `(Locação: ${currSym} ${node.valor_locacao})` : ''}
+- Condomínio: ${node.condominio_mensal ? `${currSym} ${node.condominio_mensal}` : 'Isento'} | IPTU/IMI: ${node.iptu_anual ? `${currSym} ${node.iptu_anual}/ano` : 'Incluso/Isento'}
 - Endereço: ${node.endereco}
 - Regras: Aceita Pet: ${node.regras.aceita_pet ? 'Sim' : 'Não'} | Portaria 24h: ${node.regras.portaria_24h ? 'Sim' : 'Não'} | Elevador: ${node.regras.elevador ? 'Sim' : 'Não'} | Vagas: ${node.vagas} (${node.regras.vaga_demarcada ? 'demarcada' : 'rotativa'})
 - Comodidades: ${node.comodidades.join(', ') || 'Padrão'}`.trim();

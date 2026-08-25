@@ -189,52 +189,57 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
   const baseModel = options.model || 'gemini-2.5-flash';
   const attempts: { model: string; provider: 'gemini' | 'openrouter' | 'groq' | 'openai'; url: string; key: string }[] = [];
 
+  const groqKey = process.env.GROQ_API_KEY || '';
+  const openaiKey = process.env.OPENAI_API_KEY || '';
+  const openrouterKey = process.env.OPENROUTER_API_KEY || '';
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+
   // 1. Google Gemini Native (Prioridade se configurado)
-  if (GEMINI_API_KEY && (baseModel.includes('gemini') || !OPENROUTER_API_KEY)) {
+  if (geminiKey && (baseModel.includes('gemini') || !openrouterKey)) {
     attempts.push({
       model: baseModel.includes('gemini') ? baseModel : 'gemini-2.5-flash',
       provider: 'gemini',
       url: '',
-      key: GEMINI_API_KEY
+      key: geminiKey
     });
   }
 
   // 2. OpenRouter (Multi-modelos: Gemini, DeepSeek, Qwen, Llama)
-  if (OPENROUTER_API_KEY) {
+  if (openrouterKey) {
      attempts.push({ 
        model: resolveOpenRouterModel(baseModel), 
        provider: 'openrouter', 
        url: OPENROUTER_URL, 
-       key: OPENROUTER_API_KEY 
+       key: openrouterKey 
      });
   }
 
   // 3. Groq (Rápido, fallback leve para Llama 70B / 8B)
-  if (GROQ_API_KEY) {
+  if (groqKey) {
      const groqModel = baseModel.includes('8b') ? 'llama-3.1-8b-instant' : 'llama-3.3-70b-versatile';
      attempts.push({ 
        model: groqModel, 
        provider: 'groq', 
        url: GROQ_URL, 
-       key: GROQ_API_KEY 
+       key: groqKey 
      });
      if (groqModel !== 'llama-3.1-8b-instant') {
         attempts.push({ 
           model: 'llama-3.1-8b-instant', 
           provider: 'groq', 
           url: GROQ_URL, 
-          key: GROQ_API_KEY 
+          key: groqKey 
         });
      }
   }
 
   // 4. OpenAI (O Estepe Infalível de Produção)
-  if (OPENAI_API_KEY) {
+  if (openaiKey) {
      attempts.push({ 
        model: 'gpt-4o-mini', 
        provider: 'openai', 
        url: OPENAI_URL, 
-       key: OPENAI_API_KEY 
+       key: openaiKey 
      });
   }
 
@@ -334,8 +339,8 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
 
 async function logAIUsage(log: any) {
   try {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) return;
     const provider = log.provider || 'groq';
-    // Removemos provider extra do spread se houver para evitar sobrescritas
     const { provider: _, ...cleanLog } = log;
     
     await supabaseAdmin.from('ai_usage_logs').insert([{
@@ -343,7 +348,7 @@ async function logAIUsage(log: any) {
       provider
     }]);
   } catch (e) {
-    console.error('Error logging AI usage:', e);
+    // Silently handle in offline/mock testing
   }
 }
 
