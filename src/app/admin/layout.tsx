@@ -19,6 +19,7 @@ const navGroups = [
     label: 'CRM',
     module: 'crm',
     items: [
+      { href: '/admin/simulador', label: 'Simulador WhatsApp (IA)', icon: '💬' },
       { href: '/admin/leads', label: 'Fila de Leads', icon: '📥' },
       { href: '/admin/crm', label: 'Clientes (CRM)', icon: '👤' },
       { href: '/admin/oportunidades', label: 'Oportunidades', icon: '🤝' },
