@@ -772,7 +772,7 @@ export function seedTestData() {
     } as any);
   }
 
-  // 2. Create Default Users (Admin & Corretor) if missing
+  // 2. Create Default Users (Admin, Corretor e Master) if missing
   if (!usuarios.some(u => u.email === 'admin@imobia.com')) {
     createUsuario({
       id: DEFAULT_USUARIO_ID,
@@ -785,14 +785,40 @@ export function seedTestData() {
     } as any);
   }
 
+  if (!corretores.some(c => c.id === 'corretor-0001-thiago')) {
+    createCorretor({
+      id: 'corretor-0001-thiago',
+      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
+      nome: 'Thiago Nogueira',
+      telefone: '+5511999990001',
+      email: 'thiago@imobia.com',
+      ativo: true,
+      pref_notif_whatsapp: true,
+      pref_notif_email: true,
+      pref_notif_push: true
+    } as any);
+  }
+
+  if (!usuarios.some(u => u.email === 'thiago@imobia.com')) {
+    createUsuario({
+      id: 'user-0001-thiago',
+      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
+      email: 'thiago@imobia.com',
+      hash_senha: 'admin123',
+      role: 'corretor',
+      corretor_id: 'corretor-0001-thiago',
+      auth_id: null,
+    } as any);
+  }
+
   // Master User for Testing
   if (!usuarios.some(u => u.email === 'thfnog@gmail.com')) {
     createUsuario({
       id: 'user-master-thfnog',
-      imobiliaria_id: 'c29bdff8-a01f-4406-8e0a-18536bd2dc88',
+      imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
       email: 'thfnog@gmail.com',
       hash_senha: 'admin123',
-      role: 'master', // Add to role type if needed, but the code checks for the string
+      role: 'master',
       corretor_id: null,
       auth_id: null,
     } as any);

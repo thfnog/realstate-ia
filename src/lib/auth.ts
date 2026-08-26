@@ -21,18 +21,19 @@ export async function signIn(email: string, password: string): Promise<string | 
   const isDev = process.env.NODE_ENV !== 'production';
   const isTestAdmin = (email === 'admin@imobia.com' || email === 'admin@imobiliaria.com') && (password === 'admin123' || password === 'senha_segura_aqui');
   const isTestBroker = (email === 'thiago@imobia.com' || email === 'corretor@imobia.com') && (password === 'admin123' || password === 'senha_segura_aqui');
+  const isTestMaster = (email === 'thfnog@gmail.com' || email === 'master@imobia.com') && (password === 'admin123' || password === 'senha_segura_aqui');
 
   if (isMockMode() || isDev) {
-    if (isTestAdmin || isTestBroker) {
+    if (isTestAdmin || isTestBroker || isTestMaster) {
       seedTestData();
       const { DEFAULT_IMOBILIARIA_ID } = await import('@/lib/mockDb');
       return await new SignJWT({
-        usuario_id: isTestAdmin ? 'user-0000-default-admin' : 'user-0001-thiago',
+        usuario_id: isTestAdmin ? 'user-0000-default-admin' : isTestBroker ? 'user-0001-thiago' : 'user-master-thfnog',
         imobiliaria_id: DEFAULT_IMOBILIARIA_ID,
         email: email,
-        app_role: isTestAdmin ? 'admin' : 'corretor',
+        app_role: isTestAdmin ? 'admin' : isTestBroker ? 'corretor' : 'master',
         role: 'authenticated',
-        corretor_id: isTestAdmin ? null : 'corretor-0001-thiago',
+        corretor_id: isTestBroker ? 'corretor-0001-thiago' : null,
       })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
