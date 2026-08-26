@@ -803,7 +803,7 @@ export function seedTestData() {
     createImobiliaria({
       id: 'c29bdff8-a01f-4406-8e0a-18536bd2dc88',
       nome_fantasia: 'Martinatti Imobiliária',
-      identificador_fiscal: '00000000000',
+      identificador_fiscal: '11111111000199',
       numero_registro: 'CRECI 00000-J',
       plano: 'premium',
       config_pais: 'BR',

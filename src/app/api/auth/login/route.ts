@@ -37,9 +37,10 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch {
+  } catch (err: any) {
+    console.error('❌ Login error:', err);
     return NextResponse.json(
-      { error: 'Erro interno' },
+      { error: err.message || 'Erro interno' },
       { status: 500 }
     );
   }
