@@ -64,6 +64,8 @@ export interface ProcessCaptacaoParams {
   corretor_nome?: string | null;
   imobiliaria_id: string;
   config_pais?: 'PT' | 'BR';
+  phoneToNotify?: string | null;
+  instanceName?: string;
 }
 
 export interface ProcessCaptacaoResult {
@@ -372,7 +374,36 @@ export async function processCaptacao(params: ProcessCaptacaoParams): Promise<Pr
     leadsSection = `\n\n🔍 _Nenhum lead com busca idêntica no momento. O imóvel já está disponível no catálogo e nos feeds de portais!_`;
   }
 
-  const replyMessage = `🎉 *Imóvel Cadastrado com Sucesso!*\n\n📋 *Ref:* ${imovelSalvo.referencia}\n🏠 *Título:* ${imovelSalvo.titulo}\n📍 *Localização:* ${imovelSalvo.freguesia}, ${imovelSalvo.concelho}\n💰 *Valor:* ${valorFormatado}\n📐 *Área:* ${imovelSalvo.area_util || '--'} m² | 🛏️ ${imovelSalvo.quartos || '--'} qtos (${imovelSalvo.suites || 0} suítes) | 🚗 ${imovelSalvo.vagas_garagem || 0} vagas\n👤 *Proprietário:* ${extracted.proprietario_nome || 'Não informado'} ${extracted.proprietario_telefone ? `(${extracted.proprietario_telefone})` : ''}${leadsSection}\n\n🔗 *Acesse a ficha completa no painel:* https://realstate-ia.vercel.app/admin/imoveis/${imovelSalvo.id}`;
+  const captacaoUrlId = captacaoId || imovelSalvo.id;
+  const replyMessage = `🎉 *Imóvel Cadastrado com Sucesso!*\n\n` +
+    `📋 *Ref:* ${imovelSalvo.referencia}\n` +
+    `🏠 *Título:* ${imovelSalvo.titulo}\n` +
+    `📍 *Localização:* ${imovelSalvo.freguesia}, ${imovelSalvo.concelho}\n` +
+    `💰 *Valor:* ${valorFormatado}\n` +
+    `📐 *Área:* ${imovelSalvo.area_util || '--'} m² | 🛏️ ${imovelSalvo.quartos || '--'} qtos (${imovelSalvo.suites || 0} suítes) | 🚗 ${imovelSalvo.vagas_garagem || 0} vagas\n` +
+    `👤 *Proprietário:* ${extracted.proprietario_nome || 'Não informado'} ${extracted.proprietario_telefone ? `(${extracted.proprietario_telefone})` : ''}` +
+    `${leadsSection}\n\n` +
+    `⚡ *Ações Rápidas no Celular:*\n` +
+    `• 📱 *Revisar / Editar Rápido:* https://realstate-ia.vercel.app/admin/captacoes/${captacaoUrlId}/editar-express\n` +
+    `• 📊 *Laudo CMA (PDF/WhatsApp):* https://realstate-ia.vercel.app/api/imoveis/${imovelSalvo.id}/laudo-avaliacao/pdf\n` +
+    `• ✍️ *Termo de Autorização CRECI:* https://realstate-ia.vercel.app/api/captacoes/${captacaoUrlId}/autorizacao\n` +
+    `• 🏢 *Ficha no Painel:* https://realstate-ia.vercel.app/admin/imoveis/${imovelSalvo.id}`;
+
+  // Se solicitado, disparar mensagem final no WhatsApp do corretor
+  if (params.phoneToNotify) {
+    try {
+      const { sendWhatsAppMessage } = await import('@/lib/whatsapp');
+      await sendWhatsAppMessage(
+        params.phoneToNotify,
+        replyMessage,
+        params.instanceName,
+        configPais
+      );
+      console.log(`📱 [CaptacaoEngine] Mensagem final de confirmação enviada para ${params.phoneToNotify}!`);
+    } catch (msgErr) {
+      console.error('❌ [CaptacaoEngine] Erro ao enviar mensagem de confirmação no WhatsApp:', msgErr);
+    }
+  }
 
   return {
     success: true,

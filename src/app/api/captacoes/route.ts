@@ -4,6 +4,9 @@ import { cookies } from 'next/headers';
 import { getCaptacaoRepository } from '@/lib/repositories/factory';
 import { getAuthFromCookies } from '@/lib/auth';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const session = await getAuthFromCookies();

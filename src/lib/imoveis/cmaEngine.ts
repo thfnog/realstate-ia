@@ -7,6 +7,7 @@
 
 import { Imovel, Imobiliaria, Corretor } from '@/lib/database.types';
 import { getMedianoRegiao } from './mercado';
+import { mercadoCache } from './mercadoCache';
 import { callAIWithFallback, parseSafeJSON } from '@/lib/engine/aiUtils';
 
 export interface ImovelComparavelItem {
@@ -123,7 +124,7 @@ export interface LaudoCMAResult {
     teto: FaixaPrecoCMA;
   };
   locacao: EstimativaLocacaoCMA;
-  parecerIA: ParecerConsultivoIA;
+  parecerIA?: ParecerConsultivoIA | null;
 }
 
 /**
@@ -616,14 +617,15 @@ function gerarParecerFallback(
 }
 
 /**
- * Função principal para gerar o laudo CMA completo de um imóvel
+ * Gera a estrutura estatística e de amostragem do laudo CMA instantaneamente (< 2ms)
+ * Sem aguardar a geração de texto por IA em segundo plano.
  */
-export async function gerarLaudoCMACompleto(params: {
+export function gerarLaudoCMAStats(params: {
   imovel: Imovel;
   todosImoveis: Imovel[];
   imobiliaria: Imobiliaria;
   corretor: Corretor | null;
-}): Promise<LaudoCMAResult> {
+}): LaudoCMAResult {
   const { imovel, todosImoveis, imobiliaria, corretor } = params;
 
   // 1. Amostragem de Imóveis Comparáveis
@@ -632,17 +634,7 @@ export async function gerarLaudoCMACompleto(params: {
   // 2. Métricas e Faixas de Preço
   const { estatisticas, faixasPreco, locacao } = calcularEstatisticasCMA(imovel, comparaveis);
 
-  // 3. Parecer Consultivo de IA
-  const parecerIA = await gerarParecerConsultivoIA(
-    imovel,
-    estatisticas,
-    comparaveis,
-    faixasPreco,
-    imobiliaria,
-    corretor
-  );
-
-  // 4. Monta datas de emissão e validade (30 dias)
+  // 3. Monta datas de emissão e validade (30 dias)
   const hoje = new Date();
   const validade = new Date(hoje);
   validade.setDate(hoje.getDate() + 30);
@@ -716,6 +708,33 @@ export async function gerarLaudoCMACompleto(params: {
     comparaveis,
     faixasPreco,
     locacao,
+    parecerIA: null,
+  };
+}
+
+/**
+ * Função principal para gerar o laudo CMA completo de um imóvel (com parecer de IA)
+ */
+export async function gerarLaudoCMACompleto(params: {
+  imovel: Imovel;
+  todosImoveis: Imovel[];
+  imobiliaria: Imobiliaria;
+  corretor: Corretor | null;
+}): Promise<LaudoCMAResult> {
+  const laudoStats = gerarLaudoCMAStats(params);
+
+  // 3. Parecer Consultivo de IA
+  const parecerIA = await gerarParecerConsultivoIA(
+    params.imovel,
+    laudoStats.estatisticas,
+    laudoStats.comparaveis,
+    laudoStats.faixasPreco,
+    params.imobiliaria,
+    params.corretor
+  );
+
+  return {
+    ...laudoStats,
     parecerIA,
   };
 }

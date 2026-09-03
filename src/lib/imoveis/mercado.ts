@@ -4,6 +4,8 @@
  * Data source: INE/Idealista (PT) and FipeZap (BR)
  */
 
+import { getCachedMedianoRegiao } from './mercadoCache';
+
 export interface PrecoMercado {
   mediano: number; // m2
   valorizacao: number; // % ao ano
@@ -62,23 +64,25 @@ const MERCADO_BR: Record<string, PrecoMercado | Record<string, PrecoMercado>> = 
 };
 
 export function getMedianoRegiao(pais: 'PT' | 'BR', concelho: string, tipo?: string, freguesia?: string): PrecoMercado {
-  const table = pais === 'PT' ? MERCADO_PT : MERCADO_BR;
-  const entry = table[concelho as keyof typeof table];
+  return getCachedMedianoRegiao(pais, concelho, tipo, freguesia, () => {
+    const table = pais === 'PT' ? MERCADO_PT : MERCADO_BR;
+    const entry = table[concelho as keyof typeof table];
 
-  if (!entry) {
-    return { mediano: pais === 'PT' ? 1200 : 5500, valorizacao: 5.0 };
-  }
+    if (!entry) {
+      return { mediano: pais === 'PT' ? 1200 : 5500, valorizacao: 5.0 };
+    }
 
-  // Handle specific sub-types like Indaiatuba neighborhoods
-  if (concelho === 'Indaiatuba' && freguesia && (entry as any)[freguesia]) {
+    // Handle specific sub-types like Indaiatuba neighborhoods
+    if (concelho === 'Indaiatuba' && freguesia && (entry as any)[freguesia]) {
       return (entry as any)[freguesia];
-  }
+    }
 
-  if (concelho === 'Indaiatuba' && tipo && entry[tipo as keyof typeof entry]) {
+    if (concelho === 'Indaiatuba' && tipo && (entry as any)[tipo]) {
       return (entry as any)[tipo];
-  }
+    }
 
-  return entry as PrecoMercado;
+    return entry as PrecoMercado;
+  });
 }
 
 export interface IndicadorMercado {

@@ -508,6 +508,24 @@ export default function CaptacoesPage() {
                             </div>
 
                             <div className="flex items-center gap-1">
+                              <Link
+                                href={`/admin/captacoes/${item.id}/editar-express`}
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Edição Expressa (Mobile/Desktop)"
+                              >
+                                <span className="text-xs">⚡</span>
+                              </Link>
+
+                              <a
+                                href={`/api/captacoes/${item.id}/autorizacao`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="Gerar Termo de Autorização CRECI"
+                              >
+                                <span className="text-xs">✍️</span>
+                              </a>
+
                               <button
                                 onClick={() => setSelectedCaptacao(item)}
                                 className="p-1.5 text-slate-500 hover:text-primary hover:bg-slate-50 rounded-lg transition-colors"
@@ -1035,13 +1053,29 @@ export default function CaptacoesPage() {
                 <IoTrashOutline className="w-4 h-4" /> Descartar Captação
               </button>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Link
+                  href={`/admin/captacoes/${selectedCaptacao.id}/editar-express`}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black uppercase tracking-widest transition-all"
+                >
+                  <span>⚡</span> Edição Expressa
+                </Link>
+
+                <a
+                  href={`/api/captacoes/${selectedCaptacao.id}/autorizacao`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black uppercase tracking-widest transition-all"
+                >
+                  <span>✍️</span> Termo CRECI
+                </a>
+
                 {selectedCaptacao.imovel_id ? (
                   <Link
                     href={`/admin/imoveis/${selectedCaptacao.imovel_id}`}
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20"
                   >
-                    <IoHomeOutline className="w-4 h-4" /> Ver Imóvel no Catálogo
+                    <IoHomeOutline className="w-4 h-4" /> Ver no Catálogo
                   </Link>
                 ) : (
                   <button
@@ -1050,7 +1084,7 @@ export default function CaptacoesPage() {
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-50"
                   >
                     <IoCheckmarkCircleOutline className="w-4 h-4" />
-                    {publishingId === selectedCaptacao.id ? 'Publicando...' : 'Publicar no Catálogo de Imóveis'}
+                    {publishingId === selectedCaptacao.id ? 'Publicando...' : 'Publicar no Catálogo'}
                   </button>
                 )}
               </div>

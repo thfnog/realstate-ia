@@ -9,6 +9,7 @@ import { isMockMode } from '@/lib/mockDb';
 import * as mockDb from '@/lib/mockDb';
 import type { CountryCode } from '@/lib/countryConfig';
 
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {

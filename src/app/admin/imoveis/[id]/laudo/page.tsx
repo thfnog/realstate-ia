@@ -27,16 +27,22 @@ export default function LaudoAvaliacaoPage() {
   const [laudo, setLaudo] = useState<LaudoCMAResult | null>(null);
   const [config, setConfig] = useState<CountryConfig>(getConfigByCode('BR'));
   const [loading, setLoading] = useState(true);
+  const [loadingParecer, setLoadingParecer] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function fetchLaudo(isRecalc = false) {
-    if (isRecalc) setRecalculating(true);
-    else setLoading(true);
+    if (isRecalc) {
+      setRecalculating(true);
+      setLoadingParecer(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
 
     try {
-      const res = await fetch(`/api/imoveis/${params.id}/laudo-avaliacao`);
+      // 1. Carregamento instantâneo de métricas, amostragem e faixas de preço (< 2ms)
+      const res = await fetch(`/api/imoveis/${params.id}/laudo-avaliacao?fast=1`);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || 'Falha ao carregar laudo de avaliação');
@@ -44,11 +50,29 @@ export default function LaudoAvaliacaoPage() {
       const data: LaudoCMAResult = await res.json();
       setLaudo(data);
       setConfig(getConfigByCode(data.imovel.pais || 'BR'));
+      setLoading(false);
+      setLoadingParecer(true);
+
+      // 2. Carregamento do Parecer Consultivo de IA em segundo plano
+      try {
+        const resParecer = await fetch(`/api/imoveis/${params.id}/laudo-avaliacao?step=parecer`);
+        if (resParecer.ok) {
+          const dataParecer = await resParecer.json();
+          if (dataParecer.parecerIA) {
+            setLaudo(prev => prev ? { ...prev, parecerIA: dataParecer.parecerIA } : null);
+          }
+        }
+      } catch (parecerErr) {
+        console.warn('⚠️ Falha ao buscar parecer de IA em segundo plano:', parecerErr);
+      } finally {
+        setLoadingParecer(false);
+        setRecalculating(false);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Erro inesperado ao gerar laudo.');
-    } finally {
       setLoading(false);
+      setLoadingParecer(false);
       setRecalculating(false);
     }
   }
@@ -70,6 +94,7 @@ export default function LaudoAvaliacaoPage() {
     const corretorNome = corretor?.nome || 'Consultor ImobIA';
     const moeda = imovel.pais === 'PT' ? '€' : 'R$';
 
+    const laudoUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/imoveis/${imovel.id}/laudo-avaliacao/pdf` : '';
     const texto = `${nomeProprietario}\n\n` +
       `Aqui é o *${corretorNome}* da *${imobiliaria.nome}*.\n` +
       `Concluí o *Laudo Técnico de Análise Comparativa de Mercado (CMA)* do seu imóvel localizado em *${imovel.freguesia}, ${imovel.concelho}*.\n\n` +
@@ -82,6 +107,7 @@ export default function LaudoAvaliacaoPage() {
       `⚡ *Venda Ágil (30 a 45 dias):* ${formatCurrency(faixasPreco.oportunidade.precoTotal, config)}\n` +
       `⚠️ *Teto de Mercado / Risco (>180 dias):* ${formatCurrency(faixasPreco.teto.precoTotal, config)}\n\n` +
       `💡 *Estratégia:* Trabalhar com precificação calibrada e captação exclusiva garante investimento integral da nossa equipe em marketing premium, tour 360° e rápida liquidação pelo maior valor líquido.\n\n` +
+      `📄 *Acesse o laudo completo em anexo/link:* ${laudoUrl}\n\n` +
       `Podemos conversar hoje para definirmos o plano de lançamento?`;
 
     const encoded = encodeURIComponent(texto);
@@ -216,6 +242,15 @@ export default function LaudoAvaliacaoPage() {
               <IoRefreshOutline className={recalculating ? 'animate-spin text-primary' : ''} size={15} />
               {recalculating ? 'Atualizando...' : 'Recalcular'}
             </button>
+
+            <Link
+              href={`/api/imoveis/${imovel.id}/laudo-avaliacao/pdf`}
+              target="_blank"
+              className="px-3.5 py-2 rounded-xl bg-surface-alt hover:bg-surface-hover text-text-primary text-xs font-bold transition-all border border-border-light flex items-center gap-1.5"
+              title="Abrir página standalone pronta para envio e impressão"
+            >
+              <span>🔗</span> Link Direto
+            </Link>
 
             <button
               onClick={handleShareWhatsApp}
@@ -679,7 +714,7 @@ export default function LaudoAvaliacaoPage() {
         {/* =========================================================
             5. PARECER CONSULTIVO DA IA (DIRECIONADO AO PROPRIETÁRIO)
            ========================================================= */}
-        <div className="bg-white rounded-3xl border border-border-light p-6 sm:p-8 shadow-sm card-border-print space-y-6 avoid-page-break">
+        <div className="bg-white rounded-3xl border border-border-light p-6 sm:p-8 shadow-sm card-border-print space-y-6 avoid-page-break transition-all">
           <div className="border-b border-border-light pb-4 flex items-center justify-between">
             <div>
               <h2 className="text-base font-black text-text-primary uppercase tracking-tight flex items-center gap-2">
@@ -689,68 +724,139 @@ export default function LaudoAvaliacaoPage() {
                 Diagnóstico executivo de posicionamento e estratégia para fechamento de captação exclusiva.
               </p>
             </div>
-            <span className="bg-primary/10 text-primary text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
-              <IoSparkles /> IA & Engenharia de Dados
-            </span>
+            {loadingParecer || !parecerIA ? (
+              <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                <IoSparkles className="animate-spin text-indigo-600" /> Gerando Parecer...
+              </span>
+            ) : (
+              <span className="bg-primary/10 text-primary text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                <IoSparkles /> IA & Engenharia de Dados
+              </span>
+            )}
           </div>
 
-          <div className="space-y-6 text-sm">
-            {/* Resumo Executivo */}
-            <div className="bg-surface-alt/40 p-5 rounded-2xl border border-border-light space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
-                <span>📌</span> Resumo Executivo & Diagnóstico
-              </h3>
-              <p className="text-slate-700 leading-relaxed">
-                {parecerIA.resumo_executivo}
-              </p>
-            </div>
+          {loadingParecer || !parecerIA ? (
+            /* Skeleton Loading animado e elegante */
+            <div className="space-y-6 animate-pulse">
+              {/* Banner informativo de geração em segundo plano */}
+              <div className="bg-gradient-to-r from-indigo-50/80 via-primary/5 to-slate-50 p-4 rounded-2xl border border-indigo-100/80 flex items-center gap-3 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-700 shrink-0 shadow-xs">
+                  <IoSparkles className="animate-spin" size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                    <span>🧠</span> Analisando métricas e gerando parecer comercial com IA...
+                  </p>
+                  <p className="text-[11px] text-indigo-700/80 mt-0.5">
+                    Cruzando dados de oferta concorrente e estruturando a recomendação estratégica de exclusividade.
+                  </p>
+                </div>
+              </div>
 
-            {/* Pontos Fortes do Imóvel */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
-                <span>✨</span> Principais Diferenciais e Pontos Fortes do Imóvel
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {parecerIA.pontos_fortes.map((ponto, i) => (
-                  <div key={i} className="flex items-start gap-2.5 bg-white p-3.5 rounded-xl border border-border-light">
-                    <IoCheckmarkCircle className="text-emerald-500 text-lg shrink-0 mt-0.5" />
-                    <p className="text-xs text-slate-700 leading-snug">{ponto}</p>
-                  </div>
-                ))}
+              {/* Skeleton Box 1: Resumo Executivo */}
+              <div className="bg-surface-alt/40 p-5 rounded-2xl border border-border-light space-y-3">
+                <div className="h-4 bg-slate-200 rounded-md w-1/4"></div>
+                <div className="space-y-2">
+                  <div className="h-3.5 bg-slate-200/80 rounded w-full"></div>
+                  <div className="h-3.5 bg-slate-200/80 rounded w-5/6"></div>
+                  <div className="h-3.5 bg-slate-200/80 rounded w-4/6"></div>
+                </div>
+              </div>
+
+              {/* Skeleton Box 2: Pontos Fortes */}
+              <div className="space-y-3">
+                <div className="h-4 bg-slate-200 rounded-md w-1/3"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="h-16 bg-slate-100 rounded-xl border border-border-light"></div>
+                  <div className="h-16 bg-slate-100 rounded-xl border border-border-light"></div>
+                  <div className="h-16 bg-slate-100 rounded-xl border border-border-light"></div>
+                  <div className="h-16 bg-slate-100 rounded-xl border border-border-light"></div>
+                </div>
+              </div>
+
+              {/* Skeleton Box 3: Alerta de Sobrepreço */}
+              <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl space-y-2.5">
+                <div className="h-4 bg-amber-200/70 rounded-md w-1/4"></div>
+                <div className="space-y-1.5">
+                  <div className="h-3.5 bg-amber-200/50 rounded w-full"></div>
+                  <div className="h-3.5 bg-amber-200/50 rounded w-4/5"></div>
+                </div>
+              </div>
+
+              {/* Skeleton Box 4: Estratégia & Exclusividade */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-surface-alt/30 p-5 rounded-2xl border border-border-light space-y-2.5">
+                  <div className="h-4 bg-slate-200 rounded-md w-1/2"></div>
+                  <div className="h-3.5 bg-slate-200/80 rounded w-full"></div>
+                  <div className="h-3.5 bg-slate-200/80 rounded w-3/4"></div>
+                </div>
+                <div className="bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100/60 space-y-2.5">
+                  <div className="h-4 bg-indigo-200/70 rounded-md w-1/2"></div>
+                  <div className="h-3.5 bg-indigo-200/50 rounded w-full"></div>
+                  <div className="h-3.5 bg-indigo-200/50 rounded w-3/4"></div>
+                </div>
               </div>
             </div>
-
-            {/* Alerta de Sobrepreço */}
-            <div className="bg-amber-50/70 border border-amber-200 p-5 rounded-2xl space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-2">
-                <span>⚠️</span> Alerta Técnico: Os Riscos da Sobreprecificação
-              </h3>
-              <p className="text-xs text-amber-950/80 leading-relaxed">
-                {parecerIA.alerta_sobrepreco}
-              </p>
-            </div>
-
-            {/* Estratégia Recomendada & Exclusividade */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-surface-alt/30 p-5 rounded-2xl border border-border-light space-y-2">
+          ) : (
+            /* Conteúdo Renderizado com IA */
+            <div className="space-y-6 text-sm">
+              {/* Resumo Executivo */}
+              <div className="bg-surface-alt/40 p-5 rounded-2xl border border-border-light space-y-2">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
-                  <span>🚀</span> Estratégia Comercial Recomendada
+                  <span>📌</span> Resumo Executivo & Diagnóstico
                 </h3>
-                <p className="text-xs text-slate-700 leading-relaxed">
-                  {parecerIA.estrategia_recomendada}
+                <p className="text-slate-700 leading-relaxed">
+                  {parecerIA.resumo_executivo}
                 </p>
               </div>
 
-              <div className="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100 space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-2">
-                  <span>🤝</span> Por Que Trabalhar com Contrato de Exclusividade?
+              {/* Pontos Fortes do Imóvel */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
+                  <span>✨</span> Principais Diferenciais e Pontos Fortes do Imóvel
                 </h3>
-                <p className="text-xs text-indigo-950/80 leading-relaxed">
-                  {parecerIA.argumento_exclusividade}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {parecerIA.pontos_fortes.map((ponto, i) => (
+                    <div key={i} className="flex items-start gap-2.5 bg-white p-3.5 rounded-xl border border-border-light">
+                      <IoCheckmarkCircle className="text-emerald-500 text-lg shrink-0 mt-0.5" />
+                      <p className="text-xs text-slate-700 leading-snug">{ponto}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Alerta de Sobrepreço */}
+              <div className="bg-amber-50/70 border border-amber-200 p-5 rounded-2xl space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-2">
+                  <span>⚠️</span> Alerta Técnico: Os Riscos da Sobreprecificação
+                </h3>
+                <p className="text-xs text-amber-950/80 leading-relaxed">
+                  {parecerIA.alerta_sobrepreco}
                 </p>
               </div>
+
+              {/* Estratégia Recomendada & Exclusividade */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-surface-alt/30 p-5 rounded-2xl border border-border-light space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
+                    <span>🚀</span> Estratégia Comercial Recomendada
+                  </h3>
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    {parecerIA.estrategia_recomendada}
+                  </p>
+                </div>
+
+                <div className="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100 space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-2">
+                    <span>🤝</span> Por Que Trabalhar com Contrato de Exclusividade?
+                  </h3>
+                  <p className="text-xs text-indigo-950/80 leading-relaxed">
+                    {parecerIA.argumento_exclusividade}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* =========================================================

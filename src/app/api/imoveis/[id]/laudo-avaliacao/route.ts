@@ -4,13 +4,14 @@ import { cookies } from 'next/headers';
 import { getAuthFromCookies } from '@/lib/auth';
 import { getImovelRepository, getCorretorRepository } from '@/lib/repositories/factory';
 import { isMockMode, getImobiliariaById, DEFAULT_IMOBILIARIA_ID } from '@/lib/mockDb';
-import { gerarLaudoCMACompleto } from '@/lib/imoveis/cmaEngine';
+import { gerarLaudoCMACompleto, gerarLaudoCMAStats, gerarParecerConsultivoIA } from '@/lib/imoveis/cmaEngine';
 import { Imobiliaria, Corretor } from '@/lib/database.types';
 
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -20,6 +21,11 @@ export async function GET(
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const step = searchParams.get('step');
+    const isFast = searchParams.get('fast') === '1' || searchParams.get('fast') === 'true' || step === 'stats';
+    const isParecerOnly = searchParams.get('parecerOnly') === '1' || searchParams.get('parecerOnly') === 'true' || step === 'parecer';
+
     const cookieStore = await cookies();
     const token = cookieStore.get('auth-token')?.value || '';
     const client = getUserSupabaseClient(token);
@@ -90,10 +96,43 @@ export async function GET(
       }
     }
 
-    // 5. Gerar o Laudo de Avaliação de Mercado (CMA) Completo com IA
+    // 5. Caso seja apenas o parecer de IA (segunda etapa do carregamento progressivo)
+    if (isParecerOnly) {
+      const laudoStats = gerarLaudoCMAStats({
+        imovel,
+        todosImoveis: todosImoveis || [],
+        imobiliaria,
+        corretor,
+      });
+
+      const parecerIA = await gerarParecerConsultivoIA(
+        imovel,
+        laudoStats.estatisticas,
+        laudoStats.comparaveis,
+        laudoStats.faixasPreco,
+        imobiliaria,
+        corretor
+      );
+
+      return NextResponse.json({ parecerIA });
+    }
+
+    // 6. Carregamento rápido (estatísticas puras em ~2ms)
+    if (isFast) {
+      const laudoStats = gerarLaudoCMAStats({
+        imovel,
+        todosImoveis: todosImoveis || [],
+        imobiliaria,
+        corretor,
+      });
+
+      return NextResponse.json(laudoStats);
+    }
+
+    // 7. Geração completa síncrona tradicional
     const laudo = await gerarLaudoCMACompleto({
       imovel,
-      todosImoveis,
+      todosImoveis: todosImoveis || [],
       imobiliaria,
       corretor,
     });

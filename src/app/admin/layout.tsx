@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import { CommandPalette } from '@/components/CommandPalette';
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { WhatsAppHealthBanner } from '@/components/layout/WhatsAppHealthBanner';
 
 const navGroups = [
   {
@@ -244,6 +245,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="opacity-60 font-medium">Dados não persistentes • Apenas para testes locais</span>
           </div>
         )}
+
+        {/* WhatsApp Real-time Health Alert Banner */}
+        <WhatsAppHealthBanner />
 
         {/* Unified Top Header */}
         <header className="flex items-center justify-between px-6 py-4 bg-white/70 backdrop-blur-md border-b border-slate-100 shrink-0 z-30">

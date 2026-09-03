@@ -488,7 +488,7 @@ async function runBenchmarkSuite() {
 
   // Cenário 3.3: Reverse Matching de Imóvel Novo
   console.log('🔹 [3.3] Executando Match Reverso para Novo Imóvel Cadastrado...');
-  const novoImovelSwiss: Imovel = {
+  const novoImovelSwiss = {
     id: 'imovel-novo-reverse',
     imobiliaria_id: IMOB_ID,
     referencia: 'CA-SW103',
@@ -513,7 +513,7 @@ async function runBenchmarkSuite() {
     comodidades: ['Piscina', 'Churrasqueira', 'Varanda Gourmet'],
     fotos: [],
     criado_em: new Date().toISOString()
-  } as Imovel;
+  } as unknown as Imovel;
 
   const t33Start = Date.now();
   const matchedLeads = await matchLeadsForProperty(novoImovelSwiss);

@@ -122,7 +122,7 @@ function setupBenchmarkData() {
   if (!existingImob) {
     mock.imobiliarias.push({
       id: IMOB_ID,
-      nome: 'Imobiliária Prime Pinheiros',
+      nome_fantasia: 'Imobiliária Prime Pinheiros',
       slug: 'prime-pinheiros',
       config_pais: 'BR',
       moeda_padrao: 'BRL',
@@ -133,7 +133,7 @@ function setupBenchmarkData() {
       horario_inicio: '08:00',
       horario_fim: '19:00',
       criado_em: new Date().toISOString()
-    });
+    } as any);
   }
 
   const existingCorretor = mock.corretores.find(c => c.id === 'corretor-benchmark-1');
@@ -146,8 +146,11 @@ function setupBenchmarkData() {
       telefone: '+5511988887777',
       whatsapp_instance: 'prime-instance-1',
       ativo: true,
+      pref_notif_whatsapp: true,
+      pref_notif_email: true,
+      pref_notif_push: true,
       criado_em: new Date().toISOString()
-    });
+    } as any);
   }
 
   // AP102 - Pinheiros 3 quartos R$ 750k (Aceita Pet)
@@ -215,7 +218,7 @@ function setupBenchmarkData() {
       status: 'disponivel',
       fotos: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800'],
       criado_em: new Date().toISOString()
-    });
+    } as any);
   }
 
   // AP204 - Pinheiros 3 quartos R$ 890k
@@ -283,7 +286,7 @@ function setupBenchmarkData() {
       status: 'disponivel',
       fotos: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800'],
       criado_em: new Date().toISOString()
-    });
+    } as any);
   }
 }
 

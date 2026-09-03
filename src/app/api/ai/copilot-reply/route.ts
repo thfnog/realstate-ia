@@ -17,6 +17,9 @@ export type CopilotActionType =
   | 'convidar_visita'
   | 'custom';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

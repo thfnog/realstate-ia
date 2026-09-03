@@ -16,9 +16,11 @@ const maskPhone = (p: string) => p ? p.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2"
 const maskName = (n: string) => {
   if (!n) return '***';
   const parts = n.split(' ');
-  if (parts.length === 1) return n;
   return `${parts[0]} ${parts[1][0]}.`;
 };
+
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -160,6 +162,26 @@ export async function POST(request: Request) {
           if (sender.includes(':')) sender = sender.split(':')[0];
         }
 
+        name = msgData.pushName || (msgData.messages && msgData.messages[0]?.pushName) || '';
+        const phoneClean = sender.replace(/\D/g, '');
+
+        // --- RESOLUÇÃO ANTECIPADA DE CORRETOR CADASTRADO ---
+        let corretorCadastrado = broker;
+        if (!corretorCadastrado && phoneClean) {
+          if (mock.isMockMode()) {
+            const corretores = mock.getCorretores(imobiliaria_id);
+            corretorCadastrado = corretores.find(c => c.telefone.replace(/\D/g, '') === phoneClean || (c.whatsapp_number && c.whatsapp_number.replace(/\D/g, '') === phoneClean));
+          } else {
+            const { data: cData } = await supabaseAdmin
+              .from('corretores')
+              .select('id, imobiliaria_id, nome, telefone, whatsapp_number')
+              .eq('imobiliaria_id', imobiliaria_id)
+              .or(`telefone.ilike.%${phoneClean}%,whatsapp_number.ilike.%${phoneClean}%`)
+              .maybeSingle();
+            corretorCadastrado = cData;
+          }
+        }
+
         // Outbound Message Detection: Ignore messages sent from our own instance (unless in test mode)
         if (fromMe && !isTestMode) {
           console.log(`📤 Mensagem de saída detectada (fromMe: true) para JID: ${remoteJid}. Ignorando processamento de lead.`);
@@ -206,8 +228,27 @@ export async function POST(request: Request) {
           return;
         }
 
-        // Text parsing or AUDIO transcription
+        // --- DETECÇÃO PRECOCE DE CAPTAÇÃO (FEEDBACK INSTANTÂNEO < 500ms) ---
         const audioMsg = messageObj?.audioMessage;
+        const isExplicitCaptarEarly = tempText.toLowerCase().trim().startsWith('#captar');
+        const isCaptarIntentEarly = /\b(captei\s+(um|uma|novo|nova)|cadastrar\s+im[oó]vel|cadastrar\s+imovel|novo\s+im[oó]vel|novo\s+imovel|capta[cç][aã]o\s+de\s+im[oó]vel|capta[cç][aã]o\s+de\s+imovel|cadastrar\s+(casa|apto|apartamento|cobertura|terreno|imovel|sala)|quero\s+cadastrar\s+um\s+im[oó]vel)\b/i.test(tempText);
+        const isCaptacaoFromBroker = (corretorCadastrado && (audioMsg || isCaptarIntentEarly || isExplicitCaptarEarly)) || isExplicitCaptarEarly;
+
+        if (isCaptacaoFromBroker && phoneClean) {
+          console.log(`⚡ [Captação Instantânea] Enviando confirmação rápida imediata (<500ms) para ${phoneClean}...`);
+          try {
+            await sendWhatsAppMessage(
+              phoneClean,
+              "🎙️ Áudio/mensagem recebida! Estou transcrevendo e estruturando a ficha do imóvel...",
+              instanceName,
+              config_pais
+            );
+          } catch (fastMsgErr) {
+            console.error('⚠️ Falha ao enviar ack instantâneo:', fastMsgErr);
+          }
+        }
+
+        // Text parsing or AUDIO transcription
         if (audioMsg) {
           const seconds = audioMsg.seconds || 0;
           if (seconds > 300) {
@@ -320,7 +361,6 @@ export async function POST(request: Request) {
       const isExplicitCaptar = text.toLowerCase().trim().startsWith('#captar');
       const isCaptarIntent = /\b(captei\s+(um|uma|novo|nova)|cadastrar\s+im[oó]vel|cadastrar\s+imovel|novo\s+im[oó]vel|novo\s+imovel|capta[cç][aã]o\s+de\s+im[oó]vel|capta[cç][aã]o\s+de\s+imovel|cadastrar\s+(casa|apto|apartamento|cobertura|terreno|imovel|sala)|quero\s+cadastrar\s+um\s+im[oó]vel)\b/i.test(text);
 
-      // Verificar se o remetente é um corretor cadastrado
       let corretorCadastrado = broker;
       if (!corretorCadastrado && phoneClean) {
         if (mock.isMockMode()) {
@@ -337,7 +377,7 @@ export async function POST(request: Request) {
         }
       }
 
-      if (isExplicitCaptar || (corretorCadastrado && isCaptarIntent) || (isCaptarIntent && text.length >= 30)) {
+      if (isExplicitCaptar || (corretorCadastrado && (isCaptarIntent || media_type === 'audio')) || (isCaptarIntent && text.length >= 30)) {
         console.log(`🏗️ [Captação] Detectada captação de imóvel por ${corretorCadastrado?.nome || name || phoneClean}`);
         
         const { processCaptacao } = await import('@/lib/engine/captacaoEngine');
@@ -352,12 +392,13 @@ export async function POST(request: Request) {
             corretor_id: corretorCadastrado?.id || fallback_corretor_id || null,
             corretor_nome: corretorCadastrado?.nome || name || null,
             imobiliaria_id,
-            config_pais
+            config_pais,
+            phoneToNotify: phoneClean,
+            instanceName
           });
 
           if (captacaoResult.success) {
-            console.log(`🚀 [Captação] Imóvel cadastrado com sucesso! Enviando retorno para ${phoneClean}...`);
-            await sendWhatsAppMessage(phoneClean, captacaoResult.replyMessage, instanceName, config_pais);
+            console.log(`🚀 [Captação] Imóvel cadastrado com sucesso! Retorno enviado para ${phoneClean}.`);
             return;
           }
         } catch (captErr: any) {

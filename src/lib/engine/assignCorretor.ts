@@ -12,8 +12,8 @@ import type { Corretor } from '@/lib/database.types';
 
 export async function assignCorretor(imobiliaria_id?: string): Promise<Corretor | null> {
   if (mock.isMockMode()) {
-    const list = imobiliaria_id ? mock.getCorretoresByImobiliaria(imobiliaria_id) : mock.getCorretores();
-    const active = list.filter(c => c.ativo);
+    const list = mock.getCorretores(imobiliaria_id);
+    const active = list.filter((c: Corretor) => c.ativo);
     if (active.length > 0) {
       console.log(`✅ [Mock] Corretor atribuído: ${active[0].nome}`);
       return active[0];

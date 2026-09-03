@@ -7,6 +7,9 @@ import { matchLeadsForProperty } from '@/lib/engine/reverseMatching';
 import { getConfig } from '@/lib/countryConfig';
 import type { Moeda, TipoImovel } from '@/lib/database.types';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

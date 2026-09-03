@@ -6,7 +6,7 @@ import * as mock from '@/lib/mockDb';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export const maxDuration = 300; // 5 minutes
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
