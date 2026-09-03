@@ -1,4 +1,4 @@
-import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda, Contrato, ContratoComDetalhes, ContratoStatus, ContratoTipo, PagamentoContrato, ContratoTemplate, Parceiro, Oportunidade, OportunidadeComDetalhes } from '@/lib/database.types';
+import { Lead, Imovel, Corretor, LeadComCorretor, Evento, EventoComDetalhes, Venda, Contrato, ContratoComDetalhes, ContratoStatus, ContratoTipo, PagamentoContrato, ContratoTemplate, Parceiro, Oportunidade, OportunidadeComDetalhes, Captacao, CaptacaoComDetalhes, StatusCaptacao } from '@/lib/database.types';
 
 export interface PaginationParams {
   page?: number;
@@ -106,5 +106,22 @@ export interface IOportunidadeRepository {
   findById(id: string, imobiliaria_id: string): Promise<OportunidadeComDetalhes | null>;
   create(data: Partial<Oportunidade>): Promise<Oportunidade>;
   update(id: string, imobiliaria_id: string, data: Partial<Oportunidade>): Promise<Oportunidade>;
+  delete(id: string, imobiliaria_id: string): Promise<void>;
+}
+
+export interface CaptacaoFilters extends PaginationParams {
+  imobiliaria_id: string;
+  status?: StatusCaptacao | string;
+  corretor_id?: string;
+  origem?: string;
+  tipo?: string;
+  search?: string;
+}
+
+export interface ICaptacaoRepository {
+  findAll(filters: CaptacaoFilters): Promise<{ data: CaptacaoComDetalhes[]; count: number }>;
+  findById(id: string, imobiliaria_id: string): Promise<CaptacaoComDetalhes | null>;
+  create(data: Partial<Captacao>): Promise<Captacao>;
+  update(id: string, imobiliaria_id: string, data: Partial<Captacao>): Promise<Captacao>;
   delete(id: string, imobiliaria_id: string): Promise<void>;
 }

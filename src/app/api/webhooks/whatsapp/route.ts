@@ -256,7 +256,17 @@ export async function POST(request: Request) {
           transcricao_confianca = result.confidence;
           duracao_segundos = seconds;
         } else {
-          text = messageObj?.conversation || 
+          const imageMsg = messageObj?.imageMessage;
+          if (imageMsg) {
+            media_type = 'image';
+            media_url = imageMsg.url || null;
+            if (imageMsg.caption && !text) {
+              text = imageMsg.caption;
+            }
+          }
+
+          text = text || 
+                 messageObj?.conversation || 
                  messageObj?.extendedTextMessage?.text || 
                  messageObj?.text ||
                  msgData.messageContent || tempText || '';
@@ -304,6 +314,204 @@ export async function POST(request: Request) {
       if (hitlResult.handled) {
         console.log(`🛡️ [HITL] Comando do corretor processado para ${phoneClean}: ${hitlResult.message}`);
         return;
+      }
+
+      // --- MOTOR DE CAPTAÇÃO DE IMÓVEIS (CORRETORES / WHATSAPP) ---
+      const isExplicitCaptar = text.toLowerCase().trim().startsWith('#captar');
+      const isCaptarIntent = /\b(captei\s+(um|uma|novo|nova)|cadastrar\s+im[oó]vel|cadastrar\s+imovel|novo\s+im[oó]vel|novo\s+imovel|capta[cç][aã]o\s+de\s+im[oó]vel|capta[cç][aã]o\s+de\s+imovel|cadastrar\s+(casa|apto|apartamento|cobertura|terreno|imovel|sala)|quero\s+cadastrar\s+um\s+im[oó]vel)\b/i.test(text);
+
+      // Verificar se o remetente é um corretor cadastrado
+      let corretorCadastrado = broker;
+      if (!corretorCadastrado && phoneClean) {
+        if (mock.isMockMode()) {
+          const corretores = mock.getCorretores(imobiliaria_id);
+          corretorCadastrado = corretores.find(c => c.telefone.replace(/\D/g, '') === phoneClean || (c.whatsapp_number && c.whatsapp_number.replace(/\D/g, '') === phoneClean));
+        } else {
+          const { data: cData } = await supabaseAdmin
+            .from('corretores')
+            .select('id, imobiliaria_id, nome, telefone, whatsapp_number')
+            .eq('imobiliaria_id', imobiliaria_id)
+            .or(`telefone.ilike.%${phoneClean}%,whatsapp_number.ilike.%${phoneClean}%`)
+            .maybeSingle();
+          corretorCadastrado = cData;
+        }
+      }
+
+      if (isExplicitCaptar || (corretorCadastrado && isCaptarIntent) || (isCaptarIntent && text.length >= 30)) {
+        console.log(`🏗️ [Captação] Detectada captação de imóvel por ${corretorCadastrado?.nome || name || phoneClean}`);
+        
+        const { processCaptacao } = await import('@/lib/engine/captacaoEngine');
+        const cleanText = text.replace(/^#captar\s*/i, '').trim();
+        const mediaUrls = media_url ? [media_url] : [];
+
+        try {
+          const captacaoResult = await processCaptacao({
+            text: cleanText || text,
+            audioTranscription: transcricao,
+            mediaUrls,
+            corretor_id: corretorCadastrado?.id || fallback_corretor_id || null,
+            corretor_nome: corretorCadastrado?.nome || name || null,
+            imobiliaria_id,
+            config_pais
+          });
+
+          if (captacaoResult.success) {
+            console.log(`🚀 [Captação] Imóvel cadastrado com sucesso! Enviando retorno para ${phoneClean}...`);
+            await sendWhatsAppMessage(phoneClean, captacaoResult.replyMessage, instanceName, config_pais);
+            return;
+          }
+        } catch (captErr: any) {
+          console.error('❌ Erro ao processar captação no webhook:', captErr);
+          await sendWhatsAppMessage(
+            phoneClean,
+            `⚠️ Ocorreu uma instabilidade ao processar a captação do imóvel. Nossa equipe foi notificada.`,
+            instanceName,
+            config_pais
+          );
+          return;
+        }
+      }
+
+      // --- INTERCEPTOR DE CONFIRMAÇÃO / REAGENDAMENTO DE VISITAS ---
+      const normalizedText = text.toLowerCase().trim().replace(/[.,!?:;]/g, '');
+      const isConfirmIntent = normalizedText === '1' || 
+                              normalizedText === '1 confirmar' || 
+                              normalizedText === 'confirmar' || 
+                              normalizedText === 'confirmado' || 
+                              normalizedText === 'confirmada' || 
+                              normalizedText === 'confirmo' || 
+                              /^(sim|vou|vou sim|estou a caminho|confirmad[oa]|com certeza|ok|confirmar visita|pode confirmar)$/i.test(normalizedText);
+
+      const isRescheduleIntent = normalizedText === '2' || 
+                                normalizedText === '2 reagendar' || 
+                                normalizedText === 'reagendar' || 
+                                normalizedText === 'reagendamento' || 
+                                /^(n[aã]o posso|desmarcar|remarcar|outro dia|cancelar|n[aã]o vou conseguir|nao vou|nao posso hoje|preciso remarcar)$/i.test(normalizedText);
+
+      if (isConfirmIntent || isRescheduleIntent) {
+        let currentLead = null;
+        if (mock.isMockMode()) {
+          currentLead = mock.getLeadByTelefone(phoneClean);
+        } else {
+          const { data: lData } = await supabaseAdmin
+            .from('leads')
+            .select('*, corretores(*)')
+            .eq('telefone', phoneClean)
+            .eq('imobiliaria_id', imobiliaria_id)
+            .maybeSingle();
+          currentLead = lData;
+        }
+
+        if (currentLead) {
+          let pendingVisit: any = null;
+          if (mock.isMockMode()) {
+            const evts = mock.getEventos(currentLead.id);
+            pendingVisit = evts.find(e => e.tipo === 'visita' && ['agendado', 'confirmado', 'reagendamento_solicitado'].includes(e.status));
+          } else {
+            const { data: vData } = await supabaseAdmin
+              .from('eventos')
+              .select('*, corretor:corretores(*)')
+              .eq('lead_id', currentLead.id)
+              .eq('tipo', 'visita')
+              .in('status', ['agendado', 'confirmado', 'reagendamento_solicitado'])
+              .order('data_hora', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            pendingVisit = vData;
+          }
+
+          if (pendingVisit) {
+            const corretorObj = pendingVisit.corretor || currentLead.corretores || broker;
+            const leadFirstName = currentLead.nome ? currentLead.nome.split(' ')[0] : 'Cliente';
+            const visitTime = new Date(pendingVisit.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            if (isConfirmIntent) {
+              console.log(`✅ [Visita] Visita confirmada pelo lead ${currentLead.nome} para ${pendingVisit.data_hora}`);
+              if (mock.isMockMode()) {
+                mock.updateEvento(pendingVisit.id, { status: 'confirmado' });
+              } else {
+                await supabaseAdmin
+                  .from('eventos')
+                  .update({ status: 'confirmado' })
+                  .eq('id', pendingVisit.id);
+              }
+
+              const replyLead = `✅ Perfeito, *${leadFirstName}*! Sua visita às *${visitTime}* está *CONFIRMADA*. Nos vemos lá! 🏠`;
+              await sendWhatsAppMessage(phoneClean, replyLead, instanceName, config_pais);
+
+              if (corretorObj?.telefone) {
+                const notifyCorretor = `✅ *Visita Confirmada!*\n\nO cliente *${currentLead.nome}* confirmou a visita de hoje às *${visitTime}* no imóvel *${pendingVisit.titulo}*.\nTelefone do cliente: ${phoneClean}`;
+                await sendWhatsAppMessage(corretorObj.telefone, notifyCorretor, corretorObj.whatsapp_instance || undefined, config_pais);
+              }
+
+              await saveMessageToHistory({
+                imobiliaria_id,
+                lead_id: currentLead.id,
+                corretor_id: corretorObj?.id || null,
+                direction: 'inbound',
+                message_text: text,
+                media_type,
+                media_url,
+                transcricao,
+                transcricao_confianca,
+                duracao_segundos
+              });
+
+              await saveMessageToHistory({
+                imobiliaria_id,
+                lead_id: currentLead.id,
+                corretor_id: corretorObj?.id || null,
+                direction: 'outbound',
+                message_text: replyLead,
+                is_bot: true
+              });
+
+              return;
+            } else if (isRescheduleIntent) {
+              console.log(`⚠️ [Visita] Reagendamento solicitado pelo lead ${currentLead.nome} para ${pendingVisit.data_hora}`);
+              if (mock.isMockMode()) {
+                mock.updateEvento(pendingVisit.id, { status: 'reagendamento_solicitado' });
+              } else {
+                await supabaseAdmin
+                  .from('eventos')
+                  .update({ status: 'reagendamento_solicitado' })
+                  .eq('id', pendingVisit.id);
+              }
+
+              const replyLead = `⚠️ Entendido, *${leadFirstName}*. Registramos sua solicitação de reagendamento. Nosso corretor entrará em contato em breve para propor novos horários!`;
+              await sendWhatsAppMessage(phoneClean, replyLead, instanceName, config_pais);
+
+              if (corretorObj?.telefone) {
+                const notifyCorretor = `⚠️ *Solicitação de Reagendamento!*\n\nO cliente *${currentLead.nome}* solicitou o reagendamento da visita das *${visitTime}* no imóvel *${pendingVisit.titulo}*.\nPor favor, entre em contato para alinhar uma nova data.\nTelefone do cliente: ${phoneClean}`;
+                await sendWhatsAppMessage(corretorObj.telefone, notifyCorretor, corretorObj.whatsapp_instance || undefined, config_pais);
+              }
+
+              await saveMessageToHistory({
+                imobiliaria_id,
+                lead_id: currentLead.id,
+                corretor_id: corretorObj?.id || null,
+                direction: 'inbound',
+                message_text: text,
+                media_type,
+                media_url,
+                transcricao,
+                transcricao_confianca,
+                duracao_segundos
+              });
+
+              await saveMessageToHistory({
+                imobiliaria_id,
+                lead_id: currentLead.id,
+                corretor_id: corretorObj?.id || null,
+                direction: 'outbound',
+                message_text: replyLead,
+                is_bot: true
+              });
+
+              return;
+            }
+          }
+        }
       }
 
       // --- CLASSIFICATION & AGENT DETECTION ---

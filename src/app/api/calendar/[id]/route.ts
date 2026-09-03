@@ -60,20 +60,30 @@ export async function GET(
       const end = new Date(start.getTime() + 60 * 60 * 1000); // 1h default
       
       const summary = `${event.tipo.toUpperCase()}: ${event.titulo}${event.lead ? ` - ${event.lead.nome}` : ''}`;
-      const description = [
-        event.descricao || '',
+      const descParts = [
+        event.descricao ? `Notas: ${event.descricao}` : '',
         event.lead ? `Lead: ${event.lead.nome} (${event.lead.telefone})` : '',
-        event.lead?.imoveis ? `Imóvel: ${event.lead.imoveis.referencia}` : ''
-      ].filter(Boolean).join('\\n');
+        event.lead?.imoveis ? `Imóvel: ${event.lead.imoveis.referencia} - ${event.lead.imoveis.titulo}` : '',
+        event.local ? `Waze: https://waze.com/ul?q=${encodeURIComponent(event.local)}&navigate=yes` : '',
+        event.local ? `Google Maps: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.local)}` : ''
+      ].filter(Boolean);
+
+      let icsStatus = 'CONFIRMED';
+      if (event.status === 'cancelado') icsStatus = 'CANCELLED';
+      else if (event.status === 'agendado' || event.status === 'reagendamento_solicitado') icsStatus = 'TENTATIVE';
 
       ics.push('BEGIN:VEVENT');
-      ics.push(`UID:${event.id}@imobia.com`);
+      ics.push(`UID:evt-${event.id}@imobia.com`);
       ics.push(`DTSTAMP:${formatDate(new Date())}`);
       ics.push(`DTSTART:${formatDate(start)}`);
       ics.push(`DTEND:${formatDate(end)}`);
       ics.push(`SUMMARY:${summary}`);
-      ics.push(`DESCRIPTION:${description}`);
+      ics.push(`DESCRIPTION:${descParts.join('\\n')}`);
+      ics.push(`STATUS:${icsStatus}`);
       if (event.local) ics.push(`LOCATION:${event.local}`);
+      if (event.lead?.imoveis?.latitude && event.lead?.imoveis?.longitude) {
+        ics.push(`GEO:${event.lead.imoveis.latitude};${event.lead.imoveis.longitude}`);
+      }
       ics.push('END:VEVENT');
     });
 

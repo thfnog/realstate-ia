@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IoCalendarOutline, IoChevronBackOutline, IoChevronForwardOutline, IoSyncOutline, IoTrashOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoCreateOutline, IoLocationOutline, IoPersonOutline, IoBriefcaseOutline } from 'react-icons/io5';
+import { 
+  IoCalendarOutline, IoChevronBackOutline, IoChevronForwardOutline, 
+  IoSyncOutline, IoTrashOutline, IoCheckmarkCircleOutline, 
+  IoCloseCircleOutline, IoCreateOutline, IoLocationOutline, 
+  IoPersonOutline, IoBriefcaseOutline, IoCopyOutline, 
+  IoCheckmarkOutline, IoOpenOutline, IoLogoGoogle 
+} from 'react-icons/io5';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
 import { getConfig } from '@/lib/countryConfig';
@@ -28,6 +34,10 @@ export default function AgendaPage() {
   const [selectedCorretorId, setSelectedCorretorId] = useState('');
   const [filterCorretorId, setFilterCorretorId] = useState('');
   
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+  const [syncBrokerId, setSyncBrokerId] = useState('all');
+  const [copied, setCopied] = useState(false);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -206,6 +216,13 @@ export default function AgendaPage() {
             <p className="text-slate-500 font-medium mt-1">Acompanhamento centralizado de visitas, vistorias e contratos.</p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSyncModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-primary/30 text-slate-700 hover:text-primary font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-lg transition-all"
+            >
+              <IoCalendarOutline size={16} className="text-primary" />
+              <span>Sincronizar Calendário</span>
+            </button>
             <div className="flex bg-white border border-slate-100 p-1 rounded-2xl shadow-sm mr-2">
               <button 
                 onClick={() => setViewMode('month')}
@@ -628,6 +645,17 @@ export default function AgendaPage() {
                     <IoCreateOutline size={18} /> Editar Dados
                   </button>
                 )}
+
+                {!editMode && (
+                  <a
+                    href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`${(selectedEvent.tipo || 'Evento').toUpperCase()}: ${selectedEvent.titulo}`)}&dates=${new Date(selectedEvent.data_hora).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}/${new Date(new Date(selectedEvent.data_hora).getTime() + 3600000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}&location=${encodeURIComponent(selectedEvent.local || '')}&details=${encodeURIComponent([selectedEvent.descricao || '', selectedEvent.lead ? `Lead: ${selectedEvent.lead.nome} (${selectedEvent.lead.telefone})` : '', selectedEvent.corretor ? `Corretor: ${selectedEvent.corretor.nome}` : ''].filter(Boolean).join('\n'))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:text-primary hover:border-primary transition-all shadow-sm"
+                  >
+                    <IoLogoGoogle size={16} className="text-primary" /> Google Agenda
+                  </a>
+                )}
                 
                 {editMode ? (
                   <button 
@@ -660,6 +688,160 @@ export default function AgendaPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Calendar Modal */}
+      {syncModalOpen && (
+        <div 
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-6"
+          onClick={() => setSyncModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col animate-scale-in border border-white/20"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-10 py-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div>
+                <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
+                  Integração Universal
+                </span>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight mt-2">
+                  📅 Sincronização de Calendário
+                </h2>
+                <p className="text-xs text-slate-500 font-bold mt-1">
+                  Mantenha suas visitas, vistorias e compromissos sincronizados em tempo real.
+                </p>
+              </div>
+              <button 
+                onClick={() => setSyncModalOpen(false)}
+                className="p-3 text-slate-400 hover:text-slate-900 hover:bg-white rounded-2xl transition-all shadow-sm border border-slate-100"
+              >
+                <IoCloseCircleOutline size={24} />
+              </button>
+            </div>
+
+            <div className="p-10 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
+              {/* Filter / Broker select */}
+              {corretores.length > 1 && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Selecionar Consultor para o Feed
+                  </label>
+                  <select
+                    value={syncBrokerId}
+                    onChange={e => setSyncBrokerId(e.target.value)}
+                    className="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/10"
+                  >
+                    <option value="all">Todos os Corretores (Geral da Imobiliária)</option>
+                    {corretores.map((c: any) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome} ({c.email || c.telefone})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Feed URL Box */}
+              {(() => {
+                const origin = typeof window !== 'undefined' ? window.location.origin : 'https://realstate-ia.vercel.app';
+                const feedUrl = `${origin}/api/calendar/ical${syncBrokerId && syncBrokerId !== 'all' ? `?corretor_id=${syncBrokerId}` : ''}`;
+                const webcalUrl = feedUrl.replace(/^https?:\/\//, 'webcal://');
+
+                return (
+                  <>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
+                          <span>🔗 Link do Feed iCalendar (.ics)</span>
+                        </label>
+                        <span className="text-[9px] font-black text-emerald-600 uppercase bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                          Auto-atualizado a cada 15 min
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                        <input 
+                          type="text"
+                          readOnly
+                          value={feedUrl}
+                          className="flex-1 bg-transparent px-3 text-xs font-bold text-slate-700 outline-none select-all font-mono"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(feedUrl);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2500);
+                          }}
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                            copied 
+                              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                              : 'bg-slate-900 text-white hover:bg-primary shadow-lg shadow-slate-900/10'
+                          }`}
+                        >
+                          {copied ? <IoCheckmarkOutline size={16} /> : <IoCopyOutline size={16} />}
+                          {copied ? 'Copiado!' : 'Copiar'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Action Google Calendar */}
+                    <div className="p-6 rounded-[2rem] bg-gradient-to-br from-primary/5 via-primary/[0.02] to-transparent border border-primary/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                          <IoLogoGoogle className="text-primary text-lg" /> Google Agenda (1-Clique)
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium mt-1">
+                          Adicione o feed de compromissos diretamente no seu Google Calendar.
+                        </p>
+                      </div>
+                      <a
+                        href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary-hover shadow-xl shadow-primary/20 transition-all shrink-0"
+                      >
+                        <IoOpenOutline size={16} /> Abrir no Google Agenda
+                      </a>
+                    </div>
+
+                    {/* Instructions */}
+                    <div className="space-y-4 border-t border-slate-100 pt-6">
+                      <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">
+                        Como assinar em outros dispositivos:
+                      </h4>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                          <p className="text-xs font-black text-slate-900">🍏 Apple Calendar (iPhone / Mac)</p>
+                          <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                            No Mac ou iPhone, abra o Calendário &gt; <b>Arquivo</b> &gt; <b>Nova Assinatura de Calendário</b> e cole o link copiado acima.
+                          </p>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                          <p className="text-xs font-black text-slate-900">📫 Microsoft Outlook</p>
+                          <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                            No Outlook Web ou Desktop, vá em <b>Adicionar Calendário</b> &gt; <b>Assinar da Web</b> e cole a URL do feed.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setSyncModalOpen(false)}
+                className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-sm"
+              >
+                Concluir
+              </button>
             </div>
           </div>
         </div>

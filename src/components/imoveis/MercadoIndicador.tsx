@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { getMedianoRegiao, calcularIndicador } from '@/lib/imoveis/mercado';
 import { CountryConfig, formatCurrency } from '@/lib/countryConfig';
 
@@ -11,9 +12,19 @@ interface MercadoIndicadorProps {
   pais: 'PT' | 'BR';
   tipo: string;
   config: CountryConfig;
+  imovelId?: string;
 }
 
-export default function MercadoIndicador({ valor, areaUtil, concelho, freguesia, pais, tipo, config }: MercadoIndicadorProps) {
+export default function MercadoIndicador({ 
+  valor, 
+  areaUtil, 
+  concelho, 
+  freguesia, 
+  pais, 
+  tipo, 
+  config,
+  imovelId 
+}: MercadoIndicadorProps) {
   if (!valor || !areaUtil || !concelho) return null;
 
   const mercado = getMedianoRegiao(pais, concelho, tipo, freguesia);
@@ -78,6 +89,17 @@ export default function MercadoIndicador({ valor, areaUtil, concelho, freguesia,
             </p>
          </div>
       </div>
+
+      {imovelId && (
+        <div className="pt-1">
+          <Link
+            href={`/admin/imoveis/${imovelId}/laudo`}
+            className="w-full py-2.5 px-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover transition-all flex items-center justify-center gap-1.5 shadow-md shadow-primary/20 group"
+          >
+            <span>📄</span> Gerar Laudo de Avaliação (CMA)
+          </Link>
+        </div>
+      )}
 
       <p className="text-[9px] text-text-tertiary italic text-center">
         Valores de referência Q3 2025. Para fins informativos.

@@ -10,6 +10,7 @@ import {
 } from 'react-icons/io5';
 import type { LeadComCorretor, StatusLead, Corretor, Evento } from '@/lib/database.types';
 import { ImoveisMatchPanel } from '@/components/leads/ImoveisMatchPanel';
+import { LiveChatInbox } from '@/components/crm/LiveChatInbox';
 
 interface ClienteDetailDrawerProps {
   leadId: string;
@@ -814,104 +815,13 @@ export function ClienteDetailDrawer({ leadId, corretores, onClose, onUpdate }: C
                 </div>
               )}
 
-              {/* TAB 3: WHATSAPP CHAT */}
-              {activeTab === 'chat' && (
-                <div className="border border-slate-100 rounded-[2rem] shadow-sm flex flex-col h-[550px] overflow-hidden bg-slate-50/50">
-                  {/* Chat Header */}
-                  <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
-                      {lead?.nome.charAt(0)}
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-900 text-xs uppercase tracking-wider">{lead?.nome}</h4>
-                      <p className="text-[9px] text-emerald-500 font-black uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> WhatsApp Ativo
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Messages Scroll Area */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-100/30 flex flex-col">
-                    {loadingMessages && messages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full space-y-2">
-                        <div className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Carregando conversa...</span>
-                      </div>
-                    ) : messages.length === 0 ? (
-                      <div className="my-auto text-center p-8 text-slate-400">
-                        <p className="text-4xl mb-2 opacity-30">💬</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Nenhuma mensagem registrada.<br/>Envie uma mensagem abaixo para iniciar.</p>
-                      </div>
-                    ) : (
-                      messages.map((msg) => {
-                        const isInbound = msg.direction === 'inbound';
-                        const isAudio = msg.media_type === 'audio';
-                        return (
-                          <div 
-                            key={msg.id} 
-                            className={`flex flex-col max-w-[70%] ${isInbound ? 'self-start' : 'self-end items-end'}`}
-                          >
-                            <div className={`p-4 rounded-3xl shadow-sm text-xs leading-relaxed font-bold ${
-                              isInbound 
-                                ? 'bg-white text-slate-800 rounded-tl-none border border-slate-100' 
-                                : 'bg-emerald-500 text-white rounded-tr-none'
-                            }`}>
-                              {/* Audio Message */}
-                              {isAudio ? (
-                                <div className="space-y-2 min-w-[200px]">
-                                  <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest opacity-80">
-                                    <IoMicOutline size={14} />
-                                    <span>Mensagem de Voz ({msg.duracao_segundos || 0}s)</span>
-                                  </div>
-                                  
-                                  {msg.media_url ? (
-                                    <audio src={msg.media_url} controls className="w-full max-w-[220px] h-8 accent-emerald-600" />
-                                  ) : (
-                                    <div className="w-full h-8 bg-slate-50/50 rounded flex items-center px-2 text-[9px] text-slate-400 select-none">
-                                      🎙️ Áudio recebido no WhatsApp
-                                    </div>
-                                  )}
-
-                                  {msg.transcricao && (
-                                    <div className={`p-2.5 rounded-xl text-[11px] leading-snug italic font-medium ${
-                                      isInbound ? 'bg-slate-50 border border-slate-100 text-slate-600' : 'bg-emerald-600 text-emerald-50'
-                                    }`}>
-                                      &ldquo;{msg.transcricao}&rdquo;
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                /* Text Message */
-                                <p className="whitespace-pre-line">{msg.message_text}</p>
-                              )}
-                            </div>
-
-                            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1.5">
-                              {new Date(msg.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  {/* Input Form */}
-                  <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-slate-100 flex gap-2 shrink-0 items-center">
-                    <input 
-                      type="text" 
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      placeholder="Digite uma mensagem..."
-                      className="flex-1 px-5 py-3 border border-slate-100 bg-slate-50 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-emerald-300"
-                    />
-                    <button 
-                      type="submit"
-                      disabled={sendingMessage || !chatInput.trim()}
-                      className="p-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white rounded-2xl shadow-md transition-all shrink-0 flex items-center justify-center"
-                    >
-                      <IoSendOutline size={16} />
-                    </button>
-                  </form>
+              {/* TAB 3: WHATSAPP CHAT AO VIVO & COPILOT */}
+              {activeTab === 'chat' && lead && (
+                <div className="space-y-4">
+                  <LiveChatInbox 
+                    isDrawerMode={true} 
+                    leadOverride={lead} 
+                  />
                 </div>
               )}
 

@@ -371,6 +371,7 @@ export function getEventos(leadId?: string, start?: string, end?: string, corret
       ...e,
       lead: getLeads().find(l => l.id === e.lead_id) || null,
       corretor: e.corretor_id ? getCorretorById(e.corretor_id) || null : null,
+      imovel: e.imovel_id ? getImovelById(e.imovel_id) || null : null,
     })) as EventoComDetalhes[];
 }
 

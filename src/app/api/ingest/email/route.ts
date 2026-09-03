@@ -1,17 +1,20 @@
 /**
- * POST /api/ingest/email — Trigger email ingestion (Portugal / eGO)
+ * POST /api/ingest/email — Trigger email ingestion (Brasil e Portugal)
  *
- * Called manually or via cron. Reads unread emails, parses leads, and
- * triggers the processing pipeline for each one.
+ * Suporta portais brasileiros (Imovelweb, Chaves na Mão, Loft, Casa Mineira, QuintoAndar, OLX)
+ * e portugueses (Idealista, Imovirtual, Casa SAPO, eGO).
  *
- * Query params:
+ * Query params / JSON payload:
  *   ?test=true — run in mock/test mode
  *   ?imob_id=ID — specific tenant
+ * Body JSON:
+ *   { body: string, subject?: string, from?: string, imobiliaria_id?: string }
  */
 
 import { NextResponse } from 'next/server';
 import { parseIncomingEmails, emailLeadToCreateData } from '@/lib/ingest/emailParser';
-import { parseEmailBody } from '@/lib/ingest/email/parser';
+import { parseEmailBody as parsePTEmailBody, detectPortal as detectPTPortal } from '@/lib/ingest/email/parser';
+import { parsePortalEmail, detectBRPortal, portalLeadToLeadData } from '@/lib/engine/portalEmailParser';
 import * as mock from '@/lib/mockDb';
 import type { Lead } from '@/lib/database.types';
 
@@ -19,37 +22,74 @@ export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const isTest = searchParams.get('test') === 'true';
-    const imobId = searchParams.get('imob_id');
+    const queryImobId = searchParams.get('imob_id');
 
-    // In PT, we expect imob_id if it's a specific tenant trigger
-    const activeImobId = imobId || (mock.isMockMode() ? mock.DEFAULT_IMOBILIARIA_ID : null);
-
-    if (!activeImobId) {
-      return NextResponse.json({ error: 'Faltando imob_id na URL' }, { status: 400 });
-    }
-
-    // Attempt to read body for direct parsing test
+    // Attempt to read body for direct parsing
     let rawEmailBody = '';
+    let emailSubject = '';
+    let emailFrom = '';
+    let bodyImobId = '';
+
     try {
       const cloned = request.clone();
       const json = await cloned.json();
-      rawEmailBody = json.body || '';
+      rawEmailBody = json.body || json.text || json.html || '';
+      emailSubject = json.subject || '';
+      emailFrom = json.from || '';
+      bodyImobId = json.imobiliaria_id || json.imob_id || '';
     } catch {
       // No JSON body
     }
 
-    console.log(`\n📧 Ingest Email — ${isTest ? 'TESTE' : 'PRODUÇÃO'} — Tenant: ${activeImobId}`);
+    const activeImobId = queryImobId || bodyImobId || (mock.isMockMode() ? mock.DEFAULT_IMOBILIARIA_ID : null);
+
+    if (!activeImobId) {
+      return NextResponse.json({ error: 'Faltando imob_id na requisição' }, { status: 400 });
+    }
+
+    // Determine country config if possible
+    let configPais: 'BR' | 'PT' = 'BR';
+    if (!mock.isMockMode()) {
+      try {
+        const { supabaseAdmin } = await import('@/lib/supabase');
+        const { data: imob } = await supabaseAdmin
+          .from('imobiliarias')
+          .select('config_pais')
+          .eq('id', activeImobId)
+          .maybeSingle();
+        if (imob?.config_pais) configPais = imob.config_pais as 'BR' | 'PT';
+      } catch (e) {
+        console.warn('Não foi possível carregar config_pais da imobiliária:', e);
+      }
+    }
+
+    console.log(`\n📧 Ingest Email — ${isTest ? 'TESTE' : 'PRODUÇÃO'} — Tenant: ${activeImobId} (${configPais})`);
 
     let leadsToProcess: any[] = [];
     const errors: string[] = [];
 
     if (rawEmailBody) {
-      // Manual/Test direct parse
-      console.log('  → Parsing direto do corpo enviado...');
-      const parsed = parseEmailBody(rawEmailBody);
-      leadsToProcess.push(parsed);
+      console.log('  → Parsing direto do e-mail recebido...');
+      const brPortal = detectBRPortal(rawEmailBody, emailSubject, emailFrom);
+      const ptPortal = detectPTPortal(rawEmailBody);
+
+      if (brPortal !== 'generico_br' || configPais === 'BR') {
+        // Portal Brasileiro
+        const parsedBR = parsePortalEmail(rawEmailBody, emailSubject, emailFrom);
+        const leadData = portalLeadToLeadData(parsedBR, activeImobId);
+        leadsToProcess.push(leadData);
+      } else if (ptPortal !== 'desconhecido' || configPais === 'PT') {
+        // Portal Portugal
+        const parsedPT = parsePTEmailBody(rawEmailBody);
+        leadsToProcess.push(parsedPT);
+      } else {
+        // Fallback para parser BR
+        const parsedBR = parsePortalEmail(rawEmailBody, emailSubject, emailFrom);
+        const leadData = portalLeadToLeadData(parsedBR, activeImobId);
+        leadsToProcess.push(leadData);
+      }
     } else {
-      // Standard IMAP fetch (currently mocked)
+      // Standard IMAP fetch
       const result = await parseIncomingEmails({ test: isTest });
       leadsToProcess = result.leads.map(l => emailLeadToCreateData(l, activeImobId!));
       errors.push(...result.errors);
@@ -60,21 +100,24 @@ export async function POST(request: Request) {
     }
 
     const processed: string[] = [];
+    const savedLeads: any[] = [];
 
     for (const data of leadsToProcess) {
       try {
+        const moeda = data.moeda || (configPais === 'BR' ? 'BRL' : 'EUR');
         const leadData: Omit<Lead, 'id' | 'criado_em'> = {
           ...data,
           imobiliaria_id: activeImobId,
-          status: 'novo',
-          origem: 'email_ego',
-          moeda: 'EUR',
+          status: data.status || 'novo',
+          origem: data.origem || (configPais === 'BR' ? 'portal_email' : 'email_ego'),
+          moeda,
           finalidade: data.finalidade || 'comprar',
         } as any;
 
         if (mock.isMockMode()) {
           mock.seedTestData();
           const lead = mock.createLead(leadData);
+          savedLeads.push(lead);
           
           const { processLeadMockMode } = await import('@/lib/engine/processLeadMock');
           processLeadMockMode(lead).catch((err) => {
@@ -86,7 +129,7 @@ export async function POST(request: Request) {
           // Production: insert into Supabase
           const { supabaseAdmin } = await import('@/lib/supabase');
 
-          // De-duplication check
+          // De-duplication check by phone within tenant
           const { data: existing } = await supabaseAdmin
             .from('leads')
             .select('*')
@@ -97,10 +140,14 @@ export async function POST(request: Request) {
           if (existing && !['vendido', 'descartado', 'finalizado'].includes(existing.status)) {
             console.log(`♻️ Ingest E-mail: Lead duplicado detectado (${leadData.telefone}). Atualizando lead ${existing.id}.`);
             
+            const updatedDescricao = existing.descricao_interesse 
+              ? `${existing.descricao_interesse}\n--- Novo Interesse E-mail (${data.portal_origem || 'Portal'}) ---\n${leadData.descricao_interesse || ''}`
+              : leadData.descricao_interesse;
+
             const { data: updated } = await supabaseAdmin
               .from('leads')
               .update({
-                descricao_interesse: `${existing.descricao_interesse || ''}\n--- Novo Interesse E-mail ---\n${leadData.descricao_interesse || ''}`,
+                descricao_interesse: updatedDescricao,
                 finalidade: leadData.finalidade || existing.finalidade,
               })
               .eq('id', existing.id)
@@ -112,13 +159,21 @@ export async function POST(request: Request) {
               imobiliaria_id: activeImobId,
               lead_id: existing.id,
               tipo: 'outro',
-              titulo: `📧 Novo interesse via E-mail`,
-              descricao: `O lead demonstrou interesse em um imóvel via notificação de e-mail do portal.`,
+              titulo: `📧 Novo interesse via E-mail (${data.portal_origem || 'Portal'})`,
+              descricao: `O lead demonstrou interesse em um imóvel via notificação de e-mail do portal: ${leadData.descricao_interesse || ''}`,
               data_hora: new Date().toISOString(),
               status: 'realizado'
             });
 
-            processed.push(`${existing.nome} (Atualizado)`);
+            if (updated) {
+              savedLeads.push(updated);
+              const { processLead } = await import('@/lib/engine/processLead');
+              processLead(updated as Lead).catch((err) => {
+                console.error(`Erro ao re-processar lead atualizado ${updated.nome}:`, err);
+              });
+            }
+
+            processed.push(`${existing.nome} (Atualizado - ${data.portal_origem || 'Portal'})`);
             continue;
           }
 
@@ -132,6 +187,8 @@ export async function POST(request: Request) {
             errors.push(`Erro ao inserir ${data.nome}: ${error.message}`);
             continue;
           }
+
+          savedLeads.push(lead);
 
           const { processLead } = await import('@/lib/engine/processLead');
           processLead(lead as Lead).catch((err) => {
@@ -149,6 +206,7 @@ export async function POST(request: Request) {
       success: true,
       processedCount: processed.length,
       leads: processed,
+      data: savedLeads,
       errors: errors.filter(e => !e.includes('not yet implemented')),
     });
   } catch (err) {

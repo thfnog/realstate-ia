@@ -83,6 +83,13 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
         {isAdmin && (
           <div className="flex gap-3">
             <Link 
+              href={`/admin/imoveis/${imovel.id}/laudo`}
+              className="px-5 py-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold transition-all border border-indigo-200 flex items-center gap-2 shadow-sm"
+              title="Gerar Laudo de Avaliação de Mercado (CMA)"
+            >
+              <span>📄</span> Laudo CMA
+            </Link>
+            <Link 
               href={`/admin/imoveis/${imovel.id}/editar`}
               className="px-6 py-3 rounded-2xl bg-surface-alt hover:bg-surface-hover text-text-primary font-bold transition-all border border-border-light flex items-center gap-2"
             >
@@ -295,6 +302,7 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                    pais={imovel.pais as any}
                    tipo={imovel.tipo}
                    config={config}
+                   imovelId={imovel.id}
                  />
               </div>
 
@@ -309,6 +317,13 @@ export default function ImovelDetalhesView({ imovel, config, onDelete, isAdmin =
                      </button>
                    )}
                    
+                   <Link 
+                     href={`/admin/imoveis/${imovel.id}/laudo`}
+                     className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                   >
+                      <span>📄</span> Laudo de Avaliação (CMA)
+                   </Link>
+
                    <button 
                      onClick={handleGeneratePDF}
                      className="w-full py-4 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"

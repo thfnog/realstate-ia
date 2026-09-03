@@ -173,7 +173,7 @@ export type EscalaComCorretor = Escala & {
 
 export type Finalidade = 'comprar' | 'alugar' | 'investir';
 export type StatusLead = 'novo' | 'em_atendimento' | 'visita_agendada' | 'negociacao' | 'contrato' | 'fechado' | 'sem_interesse' | 'descartado';
-export type LeadSource = 'formulario' | 'email_ego' | 'webhook_grupozap' | 'whatsapp' | 'manual';
+export type LeadSource = 'formulario' | 'email_ego' | 'portal_email' | 'webhook_grupozap' | 'whatsapp' | 'manual';
 
 export type Lead = {
   id: string;
@@ -217,25 +217,29 @@ export type LeadComCorretor = Lead & {
 // =============================================
 
 export type TipoEvento = 'visita' | 'assinatura' | 'cartorio' | 'reuniao' | 'vistoria' | 'outro';
-export type StatusEvento = 'agendado' | 'realizado' | 'cancelado';
+export type StatusEvento = 'agendado' | 'confirmado' | 'reagendamento_solicitado' | 'realizado' | 'cancelado';
 
 export type Evento = {
   id: string;
   imobiliaria_id: string;
   lead_id: string; // Foreign key para Lead
   corretor_id: string | null; // Foreign key para Corretor (opcional, pode ser o mesmo do lead)
+  imovel_id?: string | null; // Foreign key para Imovel (opcional)
   tipo: TipoEvento;
   titulo: string;
   descricao: string | null;
   data_hora: string; // ISO DateTime
   local: string | null;
   status: StatusEvento;
+  reminder_24h_sent?: boolean | null;
+  reminder_2h_sent?: boolean | null;
   criado_em: string;
 };
 
 export type EventoComDetalhes = Evento & {
   lead: LeadComCorretor | null;
   corretor: Corretor | null;
+  imovel?: Imovel | null;
 };
 
 // =============================================
@@ -263,6 +267,7 @@ export type MensagemHistorico = {
 export type LeadFormData = {
   nome: string;
   telefone: string;
+  email?: string;
   finalidade: Finalidade;
   origem?: LeadSource;
   portal_origem?: string;
@@ -438,4 +443,70 @@ export type OportunidadeComDetalhes = Oportunidade & {
   corretor: Corretor | null;
   imovel: Imovel | null;
   lead: Lead | null;
+};
+
+// =============================================
+// Captações de Imóveis (Pipeline / WhatsApp)
+// =============================================
+
+export type StatusCaptacao = 
+  | 'prospeccao' 
+  | 'avaliacao_realizada' 
+  | 'autorizacao_assinada' 
+  | 'fotos_agendadas' 
+  | 'publicado' 
+  | 'descartado';
+
+export type Captacao = {
+  id: string;
+  imobiliaria_id: string;
+  corretor_id: string | null;
+  imovel_id: string | null;
+  titulo: string;
+  tipo: TipoImovel;
+  finalidade: 'venda' | 'aluguel' | 'ambos';
+  status: StatusCaptacao;
+  origem: 'whatsapp' | 'manual' | 'site' | 'indicacao';
+  
+  // Proprietário
+  proprietario_nome: string | null;
+  proprietario_telefone: string | null;
+  proprietario_email: string | null;
+
+  // Localização
+  distrito: string | null; // Estado
+  concelho: string | null; // Cidade
+  freguesia: string | null; // Bairro
+  rua: string | null;
+  numero: string | null;
+  complemento: string | null;
+  codigo_postal: string | null;
+
+  // Características
+  area_util: number | null;
+  area_total: number | null;
+  quartos: number | null;
+  suites: number | null;
+  banheiros: number | null;
+  vagas: number | null;
+
+  // Financeiro
+  valor_estimado: number | null;
+  valor_locacao_estimado: number | null;
+  condominio_estimado: number | null;
+  iptu_estimado: number | null;
+
+  // Detalhes / IA
+  descricao: string | null;
+  observacoes: string | null;
+  fotos: string[];
+  dados_ia?: any;
+  
+  criado_em: string;
+  atualizado_em: string;
+};
+
+export type CaptacaoComDetalhes = Captacao & {
+  corretor: Corretor | null;
+  imovel: Imovel | null;
 };

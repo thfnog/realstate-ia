@@ -32,6 +32,7 @@ const navGroups = [
     module: 'inventario',
     items: [
       { href: '/admin/imoveis', label: 'Imóveis', icon: '🏠' },
+      { href: '/admin/captacoes', label: 'Captações', icon: '🏗️' },
     ]
   },
   {

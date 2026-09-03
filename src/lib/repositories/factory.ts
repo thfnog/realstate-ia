@@ -1,6 +1,6 @@
 import { isMockMode } from '@/lib/mockDb';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { ILeadRepository, IImovelRepository, ICorretorRepository, IEventoRepository, IVendaRepository, IContratoRepository, IParceiroRepository, IOportunidadeRepository } from './types';
+import { ILeadRepository, IImovelRepository, ICorretorRepository, IEventoRepository, IVendaRepository, IContratoRepository, IParceiroRepository, IOportunidadeRepository, ICaptacaoRepository } from './types';
 import { MockLeadRepository } from './MockLeadRepository';
 import { SupabaseLeadRepository } from './SupabaseLeadRepository';
 import { MockImovelRepository } from './MockImovelRepository';
@@ -17,6 +17,8 @@ import { MockParceiroRepository } from './MockParceiroRepository';
 import { SupabaseParceiroRepository } from './SupabaseParceiroRepository';
 import { MockOportunidadeRepository } from './MockOportunidadeRepository';
 import { SupabaseOportunidadeRepository } from './SupabaseOportunidadeRepository';
+import { MockCaptacaoRepository } from './MockCaptacaoRepository';
+import { SupabaseCaptacaoRepository } from './SupabaseCaptacaoRepository';
 
 /**
  * Repository Factory
@@ -76,4 +78,11 @@ export function getOportunidadeRepository(client: SupabaseClient): IOportunidade
     return new MockOportunidadeRepository();
   }
   return new SupabaseOportunidadeRepository(client);
+}
+
+export function getCaptacaoRepository(client: SupabaseClient): ICaptacaoRepository {
+  if (isMockMode()) {
+    return new MockCaptacaoRepository();
+  }
+  return new SupabaseCaptacaoRepository(client);
 }
