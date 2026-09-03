@@ -1,10 +1,10 @@
 {
-  "generated": "2026-09-03T13:28:34.175Z",
+  "generated": "2026-09-03T14:05:29.029Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
-    "totalFiles": 227,
-    "totalEdges": 551,
-    "totalExports": 509,
+    "totalFiles": 233,
+    "totalEdges": 571,
+    "totalExports": 536,
     "aiModules": 16,
     "layers": 11
   },
@@ -18,13 +18,13 @@
         "src/lib/countryConfig.ts",
         "src/lib/auth.ts",
         "src/lib/whatsapp.ts",
-        "src/lib/slack.ts",
         "src/lib/billing.ts",
+        "src/lib/slack.ts",
         "src/lib/messageFilter.ts",
         "src/lib/knowledge/realEstateGraph.ts",
         "src/lib/knowledge/jitRetriever.ts",
-        "src/lib/api-utils.ts",
-        "src/lib/rateLimit.ts"
+        "src/lib/rateLimit.ts",
+        "src/lib/api-utils.ts"
       ]
     },
     "imoveis-utils": {
@@ -32,7 +32,9 @@
       "files": [
         "src/lib/imoveis/referencia.ts",
         "src/lib/imoveis/mercado.ts",
-        "src/lib/imoveis/cmaEngine.ts"
+        "src/lib/imoveis/mercadoCache.ts",
+        "src/lib/imoveis/cmaEngine.ts",
+        "src/lib/imoveis/autorizacaoCaptacao.ts"
       ]
     },
     "components": {
@@ -41,16 +43,15 @@
         "src/components/LoadingSkeleton.tsx",
         "src/components/PlanGuard.tsx",
         "src/components/corretores/WhatsAppConnector.tsx",
-        "src/components/leads/KanbanBoard.tsx",
         "src/components/config/PreferencesCard.tsx",
         "src/components/imoveis/ImovelForm.tsx",
+        "src/components/leads/KanbanBoard.tsx",
         "src/components/crm/LiveChatInbox.tsx",
         "src/components/imoveis/ImovelDetalhesView.tsx",
         "src/components/imoveis/MapPicker.tsx",
         "src/components/imoveis/MercadoIndicador.tsx",
-        "src/components/CommandPalette.tsx",
-        "src/components/layout/NotificationBell.tsx",
         "src/components/leads/ImoveisMatchPanel.tsx",
+        "src/components/CommandPalette.tsx",
         "src/components/corretores/BrokerOnboarding.tsx",
         "src/components/crm/ClienteDetailDrawer.tsx",
         "src/components/imoveis/ImovelGaleria.tsx",
@@ -58,12 +59,14 @@
         "src/components/imoveis/PhotoUploadZone.tsx",
         "src/components/imoveis/PropostaModal.tsx",
         "src/components/imoveis/SaleModal.tsx",
+        "src/components/layout/NotificationBell.tsx",
+        "src/components/layout/WhatsAppHealthBanner.tsx",
         "src/components/admin/alugueis/PropostaDetalhesModal.tsx",
-        "src/components/imoveis/MapImplementation.tsx",
         "src/components/leads/AgendaModal.tsx",
         "src/components/leads/LeadsHeader.tsx",
         "src/components/leads/ManualLeadModal.tsx",
-        "src/components/leads/TableView.tsx"
+        "src/components/leads/TableView.tsx",
+        "src/components/imoveis/MapImplementation.tsx"
       ]
     },
     "repositories": {
@@ -105,33 +108,25 @@
         "src/lib/engine/recommendImovelsMock.ts",
         "src/lib/engine/webhookProcessor.ts",
         "src/lib/engine/agenticEngine.ts",
-        "src/lib/engine/agenticTools.ts",
         "src/lib/engine/aiExtractor.ts",
-        "src/lib/engine/contextEngine.ts",
         "src/lib/engine/leadMemoryCompressor.ts",
         "src/lib/engine/leadReactivationEngine.ts",
         "src/lib/engine/portalEmailParser.ts",
         "src/lib/engine/reverseMatching.ts",
         "src/lib/engine/sendBriefing.ts",
-        "src/lib/engine/aiScheduler.ts",
+        "src/lib/engine/agenticTools.ts",
         "src/lib/engine/audioTranscriber.ts",
-        "src/lib/engine/captacaoEngine.ts",
         "src/lib/engine/checkCarteira.ts",
+        "src/lib/engine/contextEngine.ts",
         "src/lib/engine/conversationEngine.ts",
-        "src/lib/engine/extractLeadFromText.ts",
         "src/lib/engine/leadClassifier.ts",
-        "src/lib/engine/onboardingEngine.ts",
         "src/lib/engine/processLead.ts",
-        "src/lib/engine/processLeadMock.ts",
-        "src/lib/engine/sendAutoReply.ts"
-      ]
-    },
-    "whatsapp": {
-      "description": "Formatação de mensagens interativas WhatsApp",
-      "files": [
-        "src/lib/whatsapp/interactiveMessages.ts",
-        "src/lib/whatsapp/messageDebouncer.ts",
-        "src/lib/whatsapp/voiceGenerator.ts"
+        "src/lib/engine/sendAutoReply.ts",
+        "src/lib/engine/aiScheduler.ts",
+        "src/lib/engine/captacaoEngine.ts",
+        "src/lib/engine/extractLeadFromText.ts",
+        "src/lib/engine/onboardingEngine.ts",
+        "src/lib/engine/processLeadMock.ts"
       ]
     },
     "ingest": {
@@ -146,6 +141,14 @@
       "files": [
         "src/lib/utils/documentGenerator.ts",
         "src/lib/utils/format.ts"
+      ]
+    },
+    "whatsapp": {
+      "description": "Formatação de mensagens interativas WhatsApp",
+      "files": [
+        "src/lib/whatsapp/interactiveMessages.ts",
+        "src/lib/whatsapp/messageDebouncer.ts",
+        "src/lib/whatsapp/voiceGenerator.ts"
       ]
     },
     "pages": {
@@ -192,6 +195,7 @@
         "src/app/admin/master/planos/page.tsx",
         "src/app/admin/master/status/page.tsx",
         "src/app/proposta/[id]/documentos/page.tsx",
+        "src/app/admin/captacoes/[id]/editar-express/page.tsx",
         "src/app/admin/imoveis/[id]/editar/page.tsx",
         "src/app/admin/imoveis/[id]/laudo/page.tsx"
       ]
@@ -272,6 +276,7 @@
         "src/app/api/admin/financeiro/cobrancas/route.ts",
         "src/app/api/admin/propostas/[id]/route.ts",
         "src/app/api/admin/users/invite/route.ts",
+        "src/app/api/captacoes/[id]/autorizacao/route.ts",
         "src/app/api/contratos/[id]/gerar/route.ts",
         "src/app/api/corretores/me/preferences/route.ts",
         "src/app/api/crm/reativacao/enviar/route.ts",
@@ -288,14 +293,15 @@
         "src/app/api/public/propostas/[id]/route.ts",
         "src/app/api/public/xml/portais/route.ts",
         "src/app/api/admin/propostas/[id]/analise/route.ts",
-        "src/app/api/admin/propostas/[id]/converter/route.ts"
+        "src/app/api/admin/propostas/[id]/converter/route.ts",
+        "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts"
       ]
     }
   },
   "nodes": [
     {
       "path": "src/lib/database.types.ts",
-      "rank": 0.0563,
+      "rank": 0.0561,
       "layer": "infrastructure",
       "exports": [
         "Imobiliaria",
@@ -349,7 +355,7 @@
     },
     {
       "path": "src/lib/mockDb.ts",
-      "rank": 0.0458,
+      "rank": 0.0451,
       "layer": "infrastructure",
       "exports": [
         "isMockMode",
@@ -427,7 +433,7 @@
     },
     {
       "path": "src/lib/supabase.ts",
-      "rank": 0.0272,
+      "rank": 0.0266,
       "layer": "infrastructure",
       "exports": [
         "getUserSupabaseClient",
@@ -444,7 +450,7 @@
     },
     {
       "path": "src/lib/countryConfig.ts",
-      "rank": 0.0239,
+      "rank": 0.0238,
       "layer": "infrastructure",
       "exports": [
         "getConfig",
@@ -463,7 +469,7 @@
     },
     {
       "path": "src/lib/imoveis/referencia.ts",
-      "rank": 0.0136,
+      "rank": 0.0134,
       "layer": "imoveis-utils",
       "exports": [
         "gerarReferencia"
@@ -478,7 +484,7 @@
     },
     {
       "path": "src/lib/auth.ts",
-      "rank": 0.012,
+      "rank": 0.0119,
       "layer": "infrastructure",
       "exports": [
         "signIn",
@@ -495,8 +501,43 @@
       "description": "JWT stateless via jose com RBAC: master|admin|corretor"
     },
     {
+      "path": "src/lib/imoveis/mercado.ts",
+      "rank": 0.0072,
+      "layer": "imoveis-utils",
+      "exports": [
+        "getMedianoRegiao",
+        "calcularIndicador",
+        "PrecoMercado",
+        "IndicadorMercado"
+      ],
+      "imports": [
+        "src/lib/imoveis/mercadoCache.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 106,
+      "description": "Exports: getMedianoRegiao, calcularIndicador, PrecoMercado"
+    },
+    {
+      "path": "src/lib/imoveis/mercadoCache.ts",
+      "rank": 0.0071,
+      "layer": "imoveis-utils",
+      "exports": [
+        "buildMedianoCacheKey",
+        "getCachedMedianoRegiao",
+        "mercadoCache"
+      ],
+      "imports": [
+        "src/lib/imoveis/mercado.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 166,
+      "description": "Exports: buildMedianoCacheKey, getCachedMedianoRegiao, mercadoCache"
+    },
+    {
       "path": "src/components/LoadingSkeleton.tsx",
-      "rank": 0.007,
+      "rank": 0.0068,
       "layer": "components",
       "exports": [
         "LoadingSkeleton",
@@ -510,7 +551,7 @@
     },
     {
       "path": "src/lib/repositories/types.ts",
-      "rank": 0.0068,
+      "rank": 0.0067,
       "layer": "repositories",
       "exports": [
         "PaginationParams",
@@ -539,7 +580,7 @@
     },
     {
       "path": "src/lib/repositories/factory.ts",
-      "rank": 0.0046,
+      "rank": 0.0047,
       "layer": "repositories",
       "exports": [
         "getLeadRepository",
@@ -581,7 +622,7 @@
     },
     {
       "path": "src/lib/engine/aiUtils.ts",
-      "rank": 0.004,
+      "rank": 0.0039,
       "layer": "engine",
       "exports": [
         "parseSafeJSON",
@@ -598,7 +639,7 @@
     },
     {
       "path": "src/lib/whatsapp.ts",
-      "rank": 0.0036,
+      "rank": 0.0035,
       "layer": "infrastructure",
       "exports": [
         "fetchInstanceStatus",
@@ -681,53 +722,6 @@
       "description": "Exports: TaskType, RouteConfig, ModelRouter"
     },
     {
-      "path": "src/lib/imoveis/mercado.ts",
-      "rank": 0.0014,
-      "layer": "imoveis-utils",
-      "exports": [
-        "getMedianoRegiao",
-        "calcularIndicador",
-        "PrecoMercado",
-        "IndicadorMercado"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 102,
-      "description": "Exports: getMedianoRegiao, calcularIndicador, PrecoMercado"
-    },
-    {
-      "path": "src/lib/slack.ts",
-      "rank": 0.0013,
-      "layer": "infrastructure",
-      "exports": [
-        "sendSlackNotification",
-        "SlackNotificationType"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 76,
-      "description": "Exports: sendSlackNotification, SlackNotificationType"
-    },
-    {
-      "path": "src/components/leads/KanbanBoard.tsx",
-      "rank": 0.0013,
-      "layer": "components",
-      "exports": [
-        "KanbanBoard",
-        "statusConfig"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 350,
-      "description": "React Component | Exports: KanbanBoard, statusConfig"
-    },
-    {
       "path": "src/lib/engine/assignCorretor.ts",
       "rank": 0.0013,
       "layer": "engine",
@@ -762,6 +756,20 @@
       "description": "Cálculo de limites de plano, features e verificação de assinaturas"
     },
     {
+      "path": "src/lib/slack.ts",
+      "rank": 0.0012,
+      "layer": "infrastructure",
+      "exports": [
+        "sendSlackNotification",
+        "SlackNotificationType"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 76,
+      "description": "Exports: sendSlackNotification, SlackNotificationType"
+    },
+    {
       "path": "src/components/config/PreferencesCard.tsx",
       "rank": 0.0012,
       "layer": "components",
@@ -793,6 +801,23 @@
       "type": "component",
       "linesOfCode": 786,
       "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/components/leads/KanbanBoard.tsx",
+      "rank": 0.0012,
+      "layer": "components",
+      "exports": [
+        "KanbanBoard",
+        "statusConfig"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 350,
+      "description": "React Component | Exports: KanbanBoard, statusConfig"
     },
     {
       "path": "src/lib/engine/dailyBriefing.ts",
@@ -829,6 +854,34 @@
       "type": "module",
       "linesOfCode": 80,
       "description": "Exports: runSyncForImobiliaria, SyncResult"
+    },
+    {
+      "path": "src/lib/imoveis/cmaEngine.ts",
+      "rank": 0.0011,
+      "layer": "imoveis-utils",
+      "exports": [
+        "buscarImoveisComparaveis",
+        "calcularEstatisticasCMA",
+        "gerarParecerConsultivoIA",
+        "gerarLaudoCMAStats",
+        "gerarLaudoCMACompleto",
+        "ImovelComparavelItem",
+        "FaixaPrecoCMA",
+        "EstimativaLocacaoCMA",
+        "ParecerConsultivoIA",
+        "EstatisticasMercadoCMA",
+        "LaudoCMAResult"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/imoveis/mercado.ts",
+        "src/lib/imoveis/mercadoCache.ts",
+        "src/lib/engine/aiUtils.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 741,
+      "description": "Usa LLM | Exports: buscarImoveisComparaveis, calcularEstatisticasCMA, gerarParecerConsultivoIA"
     },
     {
       "path": "src/lib/repositories/MockEventoRepository.ts",
@@ -902,61 +955,6 @@
       "description": "React Component | Exports: default"
     },
     {
-      "path": "src/components/imoveis/MapPicker.tsx",
-      "rank": 0.001,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 33,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/components/imoveis/MercadoIndicador.tsx",
-      "rank": 0.001,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/imoveis/mercado.ts",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 110,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/lib/imoveis/cmaEngine.ts",
-      "rank": 0.001,
-      "layer": "imoveis-utils",
-      "exports": [
-        "buscarImoveisComparaveis",
-        "calcularEstatisticasCMA",
-        "gerarParecerConsultivoIA",
-        "gerarLaudoCMACompleto",
-        "ImovelComparavelItem",
-        "FaixaPrecoCMA",
-        "EstimativaLocacaoCMA",
-        "ParecerConsultivoIA",
-        "EstatisticasMercadoCMA",
-        "LaudoCMAResult"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/imoveis/mercado.ts",
-        "src/lib/engine/aiUtils.ts"
-      ],
-      "usesAI": true,
-      "type": "module",
-      "linesOfCode": 722,
-      "description": "Usa LLM | Exports: buscarImoveisComparaveis, calcularEstatisticasCMA, gerarParecerConsultivoIA"
-    },
-    {
       "path": "src/lib/engine/sync/providers/widesys.ts",
       "rank": 0.001,
       "layer": "engine",
@@ -973,19 +971,6 @@
       "description": "Exports: syncWidesys"
     },
     {
-      "path": "src/components/CommandPalette.tsx",
-      "rank": 0.0009,
-      "layer": "components",
-      "exports": [
-        "CommandPalette"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 259,
-      "description": "React Component | Exports: CommandPalette"
-    },
-    {
       "path": "src/lib/messageFilter.ts",
       "rank": 0.0009,
       "layer": "infrastructure",
@@ -999,17 +984,33 @@
       "description": "Filtro anti-ruído via regex para ignorar mensagens sociais no WhatsApp"
     },
     {
-      "path": "src/components/layout/NotificationBell.tsx",
+      "path": "src/components/imoveis/MapPicker.tsx",
       "rank": 0.0009,
       "layer": "components",
       "exports": [
-        "NotificationBell"
+        "default"
       ],
       "imports": [],
       "usesAI": false,
       "type": "component",
-      "linesOfCode": 158,
-      "description": "React Component | Exports: NotificationBell"
+      "linesOfCode": 33,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/components/imoveis/MercadoIndicador.tsx",
+      "rank": 0.0009,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/imoveis/mercado.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 110,
+      "description": "React Component | Exports: default"
     },
     {
       "path": "src/components/leads/ImoveisMatchPanel.tsx",
@@ -1100,289 +1101,17 @@
       "description": "Exports: PropertyGraphNode, NeighborhoodGraphNode, AgencyPolicyNode"
     },
     {
-      "path": "src/lib/repositories/MockCaptacaoRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
+      "path": "src/components/CommandPalette.tsx",
+      "rank": 0.0008,
+      "layer": "components",
       "exports": [
-        "MockCaptacaoRepository"
+        "CommandPalette"
       ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts",
-        "src/lib/mockDb.ts"
-      ],
+      "imports": [],
       "usesAI": false,
-      "type": "module",
-      "linesOfCode": 284,
-      "description": "Exports: MockCaptacaoRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockContratoRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockContratoRepository"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/repositories/types.ts",
-        "src/lib/mockDb.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 72,
-      "description": "Exports: MockContratoRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockCorretorRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockCorretorRepository"
-      ],
-      "imports": [
-        "src/lib/mockDb.ts",
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 32,
-      "description": "Exports: MockCorretorRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockImovelRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockImovelRepository"
-      ],
-      "imports": [
-        "src/lib/mockDb.ts",
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 54,
-      "description": "Exports: MockImovelRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockLeadRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockLeadRepository"
-      ],
-      "imports": [
-        "src/lib/mockDb.ts",
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 79,
-      "description": "Exports: MockLeadRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockOportunidadeRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockOportunidadeRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 100,
-      "description": "Exports: MockOportunidadeRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockParceiroRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockParceiroRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 86,
-      "description": "Exports: MockParceiroRepository"
-    },
-    {
-      "path": "src/lib/repositories/MockVendaRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "MockVendaRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts",
-        "src/lib/mockDb.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 28,
-      "description": "Exports: MockVendaRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseCaptacaoRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseCaptacaoRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 102,
-      "description": "Exports: SupabaseCaptacaoRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseContratoRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseContratoRepository"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/repositories/types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 114,
-      "description": "Exports: SupabaseContratoRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseCorretorRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseCorretorRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 65,
-      "description": "Exports: SupabaseCorretorRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseImovelRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseImovelRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 90,
-      "description": "Exports: SupabaseImovelRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseLeadRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseLeadRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 100,
-      "description": "Exports: SupabaseLeadRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseOportunidadeRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseOportunidadeRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 93,
-      "description": "Exports: SupabaseOportunidadeRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseParceiroRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseParceiroRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 99,
-      "description": "Exports: SupabaseParceiroRepository"
-    },
-    {
-      "path": "src/lib/repositories/SupabaseVendaRepository.ts",
-      "rank": 0.0009,
-      "layer": "repositories",
-      "exports": [
-        "SupabaseVendaRepository"
-      ],
-      "imports": [
-        "src/lib/repositories/types.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 43,
-      "description": "Exports: SupabaseVendaRepository"
-    },
-    {
-      "path": "src/lib/whatsapp/interactiveMessages.ts",
-      "rank": 0.0009,
-      "layer": "whatsapp",
-      "exports": [
-        "buildPropertyMessage",
-        "buildTimeSlotsMessage",
-        "buildQuickReplyMessage",
-        "sendInteractiveButtons",
-        "sendPropertyRecommendations",
-        "sendSchedulingSlots",
-        "getPropertyUrl",
-        "PropertyCard",
-        "TimeSlot"
-      ],
-      "imports": [
-        "src/lib/whatsapp.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 153,
-      "description": "Exports: buildPropertyMessage, buildTimeSlotsMessage, buildQuickReplyMessage"
+      "type": "component",
+      "linesOfCode": 259,
+      "description": "React Component | Exports: CommandPalette"
     },
     {
       "path": "src/components/corretores/BrokerOnboarding.tsx",
@@ -1493,6 +1222,32 @@
       "description": "React Component | Exports: default"
     },
     {
+      "path": "src/components/layout/NotificationBell.tsx",
+      "rank": 0.0008,
+      "layer": "components",
+      "exports": [
+        "NotificationBell"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 158,
+      "description": "React Component | Exports: NotificationBell"
+    },
+    {
+      "path": "src/components/layout/WhatsAppHealthBanner.tsx",
+      "rank": 0.0008,
+      "layer": "components",
+      "exports": [
+        "WhatsAppHealthBanner"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 143,
+      "description": "React Component | Exports: WhatsAppHealthBanner"
+    },
+    {
       "path": "src/lib/engine/agenticEngine.ts",
       "rank": 0.0008,
       "layer": "engine",
@@ -1516,29 +1271,6 @@
       "description": "Usa LLM | Exports: AgenticResult, AgenticEngine"
     },
     {
-      "path": "src/lib/engine/agenticTools.ts",
-      "rank": 0.0008,
-      "layer": "engine",
-      "exports": [
-        "ToolDefinition",
-        "ToolExecutionContext",
-        "AgenticTools"
-      ],
-      "imports": [
-        "src/lib/supabase.ts",
-        "src/lib/mockDb.ts",
-        "src/lib/database.types.ts",
-        "src/lib/engine/recommendImoveis.ts",
-        "src/lib/whatsapp/interactiveMessages.ts",
-        "src/lib/knowledge/realEstateGraph.ts",
-        "src/lib/engine/hitlManager.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 529,
-      "description": "Exports: ToolDefinition, ToolExecutionContext, AgenticTools"
-    },
-    {
       "path": "src/lib/engine/aiExtractor.ts",
       "rank": 0.0008,
       "layer": "engine",
@@ -1556,24 +1288,6 @@
       "type": "module",
       "linesOfCode": 134,
       "description": "Extrai perfil estruturado de mensagens WhatsApp com feedback loop da tabela ai_feedback"
-    },
-    {
-      "path": "src/lib/engine/contextEngine.ts",
-      "rank": 0.0008,
-      "layer": "engine",
-      "exports": [
-        "ContextBuildOptions",
-        "BuiltContext",
-        "ContextEngine"
-      ],
-      "imports": [
-        "src/lib/countryConfig.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 159,
-      "description": "Exports: ContextBuildOptions, BuiltContext, ContextEngine"
     },
     {
       "path": "src/lib/engine/leadMemoryCompressor.ts",
@@ -1713,6 +1427,268 @@
       "description": "Exports: JITRetrievalResult, JITRetriever"
     },
     {
+      "path": "src/lib/repositories/MockCaptacaoRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockCaptacaoRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 284,
+      "description": "Exports: MockCaptacaoRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockContratoRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockContratoRepository"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/repositories/types.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 72,
+      "description": "Exports: MockContratoRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockCorretorRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockCorretorRepository"
+      ],
+      "imports": [
+        "src/lib/mockDb.ts",
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 32,
+      "description": "Exports: MockCorretorRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockImovelRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockImovelRepository"
+      ],
+      "imports": [
+        "src/lib/mockDb.ts",
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 54,
+      "description": "Exports: MockImovelRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockLeadRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockLeadRepository"
+      ],
+      "imports": [
+        "src/lib/mockDb.ts",
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 79,
+      "description": "Exports: MockLeadRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockOportunidadeRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockOportunidadeRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 100,
+      "description": "Exports: MockOportunidadeRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockParceiroRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockParceiroRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 86,
+      "description": "Exports: MockParceiroRepository"
+    },
+    {
+      "path": "src/lib/repositories/MockVendaRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "MockVendaRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 28,
+      "description": "Exports: MockVendaRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseCaptacaoRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseCaptacaoRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 102,
+      "description": "Exports: SupabaseCaptacaoRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseContratoRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseContratoRepository"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/repositories/types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 114,
+      "description": "Exports: SupabaseContratoRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseCorretorRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseCorretorRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 65,
+      "description": "Exports: SupabaseCorretorRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseImovelRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseImovelRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 90,
+      "description": "Exports: SupabaseImovelRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseLeadRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseLeadRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 100,
+      "description": "Exports: SupabaseLeadRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseOportunidadeRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseOportunidadeRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 93,
+      "description": "Exports: SupabaseOportunidadeRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseParceiroRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseParceiroRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 99,
+      "description": "Exports: SupabaseParceiroRepository"
+    },
+    {
+      "path": "src/lib/repositories/SupabaseVendaRepository.ts",
+      "rank": 0.0008,
+      "layer": "repositories",
+      "exports": [
+        "SupabaseVendaRepository"
+      ],
+      "imports": [
+        "src/lib/repositories/types.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 43,
+      "description": "Exports: SupabaseVendaRepository"
+    },
+    {
       "path": "src/lib/utils/documentGenerator.ts",
       "rank": 0.0008,
       "layer": "utils",
@@ -1742,6 +1718,29 @@
       "type": "module",
       "linesOfCode": 40,
       "description": "Exports: formatCurrency, parseCurrency, maskCurrency"
+    },
+    {
+      "path": "src/lib/whatsapp/interactiveMessages.ts",
+      "rank": 0.0008,
+      "layer": "whatsapp",
+      "exports": [
+        "buildPropertyMessage",
+        "buildTimeSlotsMessage",
+        "buildQuickReplyMessage",
+        "sendInteractiveButtons",
+        "sendPropertyRecommendations",
+        "sendSchedulingSlots",
+        "getPropertyUrl",
+        "PropertyCard",
+        "TimeSlot"
+      ],
+      "imports": [
+        "src/lib/whatsapp.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 153,
+      "description": "Exports: buildPropertyMessage, buildTimeSlotsMessage, buildQuickReplyMessage"
     },
     {
       "path": "src/app/admin/corretores/page.tsx",
@@ -1808,67 +1807,6 @@
       "description": "Exports: detectPortal, parseEmailBody, PortalType"
     },
     {
-      "path": "src/proxy.ts",
-      "rank": 0.0007,
-      "layer": "other",
-      "exports": [
-        "proxy",
-        "config"
-      ],
-      "imports": [
-        "src/lib/auth.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 77,
-      "description": "Exports: proxy, config"
-    },
-    {
-      "path": "src/app/layout.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default",
-        "metadata"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 24,
-      "description": "React Component | Exports: default, metadata"
-    },
-    {
-      "path": "src/app/page.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 143,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/lib/api-utils.ts",
-      "rank": 0.0007,
-      "layer": "infrastructure",
-      "exports": [
-        "getSessionOrThrow",
-        "applyRoleFilter"
-      ],
-      "imports": [
-        "src/lib/auth.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 38,
-      "description": "Exports: getSessionOrThrow, applyRoleFilter"
-    },
-    {
       "path": "src/lib/rateLimit.ts",
       "rank": 0.0007,
       "layer": "infrastructure",
@@ -1880,94 +1818,6 @@
       "type": "module",
       "linesOfCode": 38,
       "description": "Exports: checkRateLimit"
-    },
-    {
-      "path": "src/app/admin/layout.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/components/CommandPalette.tsx",
-        "src/components/layout/NotificationBell.tsx"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 306,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/app/admin/page.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/components/corretores/BrokerOnboarding.tsx",
-        "src/components/LoadingSkeleton.tsx",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 383,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/app/formulario/page.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 620,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/app/login/page.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 113,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/app/registro/page.tsx",
-      "rank": 0.0007,
-      "layer": "pages",
-      "exports": [
-        "default"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 382,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/components/imoveis/MapImplementation.tsx",
-      "rank": 0.0007,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 114,
-      "description": "React Component | Exports: default"
     },
     {
       "path": "src/components/leads/AgendaModal.tsx",
@@ -2033,19 +1883,27 @@
       "description": "React Component | Exports: TableView"
     },
     {
-      "path": "src/lib/engine/aiScheduler.ts",
+      "path": "src/lib/engine/agenticTools.ts",
       "rank": 0.0007,
       "layer": "engine",
       "exports": [
-        "processFollowUpIntelligence"
+        "ToolDefinition",
+        "ToolExecutionContext",
+        "AgenticTools"
       ],
       "imports": [
-        "src/lib/engine/aiUtils.ts"
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts",
+        "src/lib/database.types.ts",
+        "src/lib/engine/recommendImoveis.ts",
+        "src/lib/whatsapp/interactiveMessages.ts",
+        "src/lib/knowledge/realEstateGraph.ts",
+        "src/lib/engine/hitlManager.ts"
       ],
-      "usesAI": true,
+      "usesAI": false,
       "type": "module",
-      "linesOfCode": 112,
-      "description": "Análise de intenção de visita e sugestão de 3 janelas livres na agenda do corretor"
+      "linesOfCode": 529,
+      "description": "Exports: ToolDefinition, ToolExecutionContext, AgenticTools"
     },
     {
       "path": "src/lib/engine/audioTranscriber.ts",
@@ -2063,30 +1921,6 @@
       "description": "Transcreve áudios WhatsApp via Groq Whisper com fallback OpenAI Whisper"
     },
     {
-      "path": "src/lib/engine/captacaoEngine.ts",
-      "rank": 0.0007,
-      "layer": "engine",
-      "exports": [
-        "extractCaptacaoDataWithAI",
-        "processCaptacao",
-        "CaptacaoExtractedData",
-        "ProcessCaptacaoParams",
-        "ProcessCaptacaoResult"
-      ],
-      "imports": [
-        "src/lib/engine/aiUtils.ts",
-        "src/lib/supabase.ts",
-        "src/lib/repositories/factory.ts",
-        "src/lib/engine/reverseMatching.ts",
-        "src/lib/countryConfig.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": true,
-      "type": "module",
-      "linesOfCode": 387,
-      "description": "Usa LLM | Exports: extractCaptacaoDataWithAI, processCaptacao, CaptacaoExtractedData"
-    },
-    {
       "path": "src/lib/engine/checkCarteira.ts",
       "rank": 0.0007,
       "layer": "engine",
@@ -2101,6 +1935,24 @@
       "type": "module",
       "linesOfCode": 52,
       "description": "Verifica se telefone já existe na carteira de algum corretor (cliente recorrente)"
+    },
+    {
+      "path": "src/lib/engine/contextEngine.ts",
+      "rank": 0.0007,
+      "layer": "engine",
+      "exports": [
+        "ContextBuildOptions",
+        "BuiltContext",
+        "ContextEngine"
+      ],
+      "imports": [
+        "src/lib/countryConfig.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 159,
+      "description": "Exports: ContextBuildOptions, BuiltContext, ContextEngine"
     },
     {
       "path": "src/lib/engine/conversationEngine.ts",
@@ -2129,22 +1981,6 @@
       "description": "FSM com 7 estados: greeting → qualifying → recommending → feedback → scheduling → visit_confirmed → human_handoff"
     },
     {
-      "path": "src/lib/engine/extractLeadFromText.ts",
-      "rank": 0.0007,
-      "layer": "engine",
-      "exports": [
-        "extractLeadFromText",
-        "ExtractedLeadProfile"
-      ],
-      "imports": [
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 81,
-      "description": "Exports: extractLeadFromText, ExtractedLeadProfile"
-    },
-    {
       "path": "src/lib/engine/leadClassifier.ts",
       "rank": 0.0007,
       "layer": "engine",
@@ -2160,24 +1996,6 @@
       "type": "module",
       "linesOfCode": 70,
       "description": "Classifica contato: comprador|vendedor|locatario|investidor|corretor_parceiro|proprietario|curioso"
-    },
-    {
-      "path": "src/lib/engine/onboardingEngine.ts",
-      "rank": 0.0007,
-      "layer": "engine",
-      "exports": [
-        "generateOnboardingResponse"
-      ],
-      "imports": [
-        "src/lib/engine/aiUtils.ts",
-        "src/lib/supabase.ts",
-        "src/lib/database.types.ts",
-        "src/lib/engine/recommendImoveis.ts"
-      ],
-      "usesAI": true,
-      "type": "module",
-      "linesOfCode": 172,
-      "description": "Usa LLM | Exports: generateOnboardingResponse"
     },
     {
       "path": "src/lib/engine/processLead.ts",
@@ -2206,8 +2024,267 @@
       "description": "Pipeline central: Regionalização → Carteira → Plantão → IA → Matching → Briefing WhatsApp"
     },
     {
-      "path": "src/lib/engine/processLeadMock.ts",
+      "path": "src/lib/engine/sendAutoReply.ts",
       "rank": 0.0007,
+      "layer": "engine",
+      "exports": [
+        "buildAutoReplyMessage",
+        "sendAutoReplyToLead"
+      ],
+      "imports": [
+        "src/lib/whatsapp.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 79,
+      "description": "Resposta humanizada com delay configurável para simular digitação natural"
+    },
+    {
+      "path": "src/lib/imoveis/autorizacaoCaptacao.ts",
+      "rank": 0.0007,
+      "layer": "imoveis-utils",
+      "exports": [
+        "montarDadosAutorizacao",
+        "gerarHTMLAutorizacao",
+        "QualificacaoParte",
+        "DadosAutorizacaoCaptacao"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 743,
+      "description": "Exports: montarDadosAutorizacao, gerarHTMLAutorizacao, QualificacaoParte"
+    },
+    {
+      "path": "src/proxy.ts",
+      "rank": 0.0006,
+      "layer": "other",
+      "exports": [
+        "proxy",
+        "config"
+      ],
+      "imports": [
+        "src/lib/auth.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 77,
+      "description": "Exports: proxy, config"
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default",
+        "metadata"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 24,
+      "description": "React Component | Exports: default, metadata"
+    },
+    {
+      "path": "src/app/page.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 143,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/lib/api-utils.ts",
+      "rank": 0.0006,
+      "layer": "infrastructure",
+      "exports": [
+        "getSessionOrThrow",
+        "applyRoleFilter"
+      ],
+      "imports": [
+        "src/lib/auth.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 38,
+      "description": "Exports: getSessionOrThrow, applyRoleFilter"
+    },
+    {
+      "path": "src/app/admin/layout.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/components/CommandPalette.tsx",
+        "src/components/layout/NotificationBell.tsx",
+        "src/components/layout/WhatsAppHealthBanner.tsx"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 310,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/app/admin/page.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/components/corretores/BrokerOnboarding.tsx",
+        "src/components/LoadingSkeleton.tsx",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 383,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/app/formulario/page.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 620,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/app/login/page.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 113,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/app/registro/page.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 382,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/components/imoveis/MapImplementation.tsx",
+      "rank": 0.0006,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 114,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/lib/engine/aiScheduler.ts",
+      "rank": 0.0006,
+      "layer": "engine",
+      "exports": [
+        "processFollowUpIntelligence"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 112,
+      "description": "Análise de intenção de visita e sugestão de 3 janelas livres na agenda do corretor"
+    },
+    {
+      "path": "src/lib/engine/captacaoEngine.ts",
+      "rank": 0.0006,
+      "layer": "engine",
+      "exports": [
+        "extractCaptacaoDataWithAI",
+        "processCaptacao",
+        "CaptacaoExtractedData",
+        "ProcessCaptacaoParams",
+        "ProcessCaptacaoResult"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts",
+        "src/lib/supabase.ts",
+        "src/lib/repositories/factory.ts",
+        "src/lib/engine/reverseMatching.ts",
+        "src/lib/countryConfig.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 418,
+      "description": "Usa LLM | Exports: extractCaptacaoDataWithAI, processCaptacao, CaptacaoExtractedData"
+    },
+    {
+      "path": "src/lib/engine/extractLeadFromText.ts",
+      "rank": 0.0006,
+      "layer": "engine",
+      "exports": [
+        "extractLeadFromText",
+        "ExtractedLeadProfile"
+      ],
+      "imports": [
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 81,
+      "description": "Exports: extractLeadFromText, ExtractedLeadProfile"
+    },
+    {
+      "path": "src/lib/engine/onboardingEngine.ts",
+      "rank": 0.0006,
+      "layer": "engine",
+      "exports": [
+        "generateOnboardingResponse"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts",
+        "src/lib/supabase.ts",
+        "src/lib/database.types.ts",
+        "src/lib/engine/recommendImoveis.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 172,
+      "description": "Usa LLM | Exports: generateOnboardingResponse"
+    },
+    {
+      "path": "src/lib/engine/processLeadMock.ts",
+      "rank": 0.0006,
       "layer": "engine",
       "exports": [
         "processLeadMockMode",
@@ -2226,25 +2303,8 @@
       "description": "Exports: processLeadMockMode, ProcessResult"
     },
     {
-      "path": "src/lib/engine/sendAutoReply.ts",
-      "rank": 0.0007,
-      "layer": "engine",
-      "exports": [
-        "buildAutoReplyMessage",
-        "sendAutoReplyToLead"
-      ],
-      "imports": [
-        "src/lib/whatsapp.ts",
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 79,
-      "description": "Resposta humanizada com delay configurável para simular digitação natural"
-    },
-    {
       "path": "src/lib/whatsapp/messageDebouncer.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "whatsapp",
       "exports": [
         "BufferedMessage",
@@ -2259,7 +2319,7 @@
     },
     {
       "path": "src/lib/whatsapp/voiceGenerator.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "whatsapp",
       "exports": [
         "VoiceGenerator"
@@ -2272,7 +2332,7 @@
     },
     {
       "path": "src/app/admin/agenda/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2289,7 +2349,7 @@
     },
     {
       "path": "src/app/admin/captacoes/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2300,12 +2360,12 @@
       ],
       "usesAI": false,
       "type": "component",
-      "linesOfCode": 1064,
+      "linesOfCode": 1098,
       "description": "React Component | Exports: default"
     },
     {
       "path": "src/app/admin/carteira/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2321,7 +2381,7 @@
     },
     {
       "path": "src/app/admin/config/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2336,7 +2396,7 @@
     },
     {
       "path": "src/app/admin/contratos/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2353,7 +2413,7 @@
     },
     {
       "path": "src/app/admin/crm/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2371,7 +2431,7 @@
     },
     {
       "path": "src/app/admin/equipe/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2388,7 +2448,7 @@
     },
     {
       "path": "src/app/admin/imoveis/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2405,7 +2465,7 @@
     },
     {
       "path": "src/app/admin/leads/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2426,7 +2486,7 @@
     },
     {
       "path": "src/app/admin/master/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2439,7 +2499,7 @@
     },
     {
       "path": "src/app/admin/oportunidades/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2455,7 +2515,7 @@
     },
     {
       "path": "src/app/admin/parceiros/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2471,7 +2531,7 @@
     },
     {
       "path": "src/app/admin/perfil/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2486,7 +2546,7 @@
     },
     {
       "path": "src/app/admin/simulador/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2499,7 +2559,7 @@
     },
     {
       "path": "src/app/admin/webhook-logs/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2514,11 +2574,13 @@
     },
     {
       "path": "src/app/api/captacoes/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
-        "POST"
+        "POST",
+        "maxDuration",
+        "dynamic"
       ],
       "imports": [
         "src/lib/supabase.ts",
@@ -2527,12 +2589,12 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 103,
-      "description": "API Route | Exports: GET, POST"
+      "linesOfCode": 106,
+      "description": "API Route | Exports: GET, POST, maxDuration"
     },
     {
       "path": "src/app/api/clientes/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -2549,7 +2611,7 @@
     },
     {
       "path": "src/app/api/contratos/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2567,7 +2629,7 @@
     },
     {
       "path": "src/app/api/corretores/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2585,7 +2647,7 @@
     },
     {
       "path": "src/app/api/escala/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2604,7 +2666,7 @@
     },
     {
       "path": "src/app/api/eventos/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2623,7 +2685,7 @@
     },
     {
       "path": "src/app/api/imobiliaria/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2641,7 +2703,7 @@
     },
     {
       "path": "src/app/api/imoveis/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2661,7 +2723,7 @@
     },
     {
       "path": "src/app/api/leads/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2683,7 +2745,7 @@
     },
     {
       "path": "src/app/api/notificacoes/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2700,7 +2762,7 @@
     },
     {
       "path": "src/app/api/oportunidades/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2718,7 +2780,7 @@
     },
     {
       "path": "src/app/api/parceiros/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -2736,7 +2798,7 @@
     },
     {
       "path": "src/app/api/stats/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -2753,7 +2815,7 @@
     },
     {
       "path": "src/app/api/vendas/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST",
@@ -2771,7 +2833,7 @@
     },
     {
       "path": "src/app/auth/confirm/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2786,7 +2848,7 @@
     },
     {
       "path": "src/app/imoveis/[id]/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2803,7 +2865,7 @@
     },
     {
       "path": "src/app/admin/alugueis/propostas/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2822,7 +2884,7 @@
     },
     {
       "path": "src/app/admin/config/plano/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2837,7 +2899,7 @@
     },
     {
       "path": "src/app/admin/contratos/[id]/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2853,7 +2915,7 @@
     },
     {
       "path": "src/app/admin/contratos/novo/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2869,7 +2931,7 @@
     },
     {
       "path": "src/app/admin/financeiro/alugueis/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2885,7 +2947,7 @@
     },
     {
       "path": "src/app/admin/financeiro/mensal/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2902,7 +2964,7 @@
     },
     {
       "path": "src/app/admin/imoveis/[id]/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2920,7 +2982,7 @@
     },
     {
       "path": "src/app/admin/imoveis/novo/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2936,7 +2998,7 @@
     },
     {
       "path": "src/app/admin/master/config/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2951,7 +3013,7 @@
     },
     {
       "path": "src/app/admin/master/financeiro/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2966,7 +3028,7 @@
     },
     {
       "path": "src/app/admin/master/imobiliarias/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2981,7 +3043,7 @@
     },
     {
       "path": "src/app/admin/master/integrations/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -2994,7 +3056,7 @@
     },
     {
       "path": "src/app/admin/master/planos/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -3009,7 +3071,7 @@
     },
     {
       "path": "src/app/admin/master/status/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -3022,7 +3084,7 @@
     },
     {
       "path": "src/app/api/admin/billing/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3039,7 +3101,7 @@
     },
     {
       "path": "src/app/api/admin/integrations/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3055,7 +3117,7 @@
     },
     {
       "path": "src/app/api/admin/propostas/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3071,7 +3133,7 @@
     },
     {
       "path": "src/app/api/admin/purge/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3088,7 +3150,7 @@
     },
     {
       "path": "src/app/api/admin/simulador/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3109,7 +3171,7 @@
     },
     {
       "path": "src/app/api/admin/slack-test/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3125,7 +3187,7 @@
     },
     {
       "path": "src/app/api/admin/users/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3144,7 +3206,7 @@
     },
     {
       "path": "src/app/api/admin/webhook-logs/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3160,11 +3222,13 @@
     },
     {
       "path": "src/app/api/ai/copilot-reply/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST",
-        "CopilotActionType"
+        "CopilotActionType",
+        "maxDuration",
+        "dynamic"
       ],
       "imports": [
         "src/lib/supabase.ts",
@@ -3174,12 +3238,12 @@
       ],
       "usesAI": true,
       "type": "api-route",
-      "linesOfCode": 247,
-      "description": "Usa LLM | API Route | Exports: POST, CopilotActionType"
+      "linesOfCode": 250,
+      "description": "Usa LLM | API Route | Exports: POST, CopilotActionType, maxDuration"
     },
     {
       "path": "src/app/api/auth/login/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3195,7 +3259,7 @@
     },
     {
       "path": "src/app/api/auth/logout/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3208,7 +3272,7 @@
     },
     {
       "path": "src/app/api/auth/me/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3223,7 +3287,7 @@
     },
     {
       "path": "src/app/api/auth/profile/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3241,7 +3305,7 @@
     },
     {
       "path": "src/app/api/auth/register/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3257,7 +3321,7 @@
     },
     {
       "path": "src/app/api/calendar/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3275,7 +3339,7 @@
     },
     {
       "path": "src/app/api/calendar/google/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "formatGoogleCalendarDate",
@@ -3294,7 +3358,7 @@
     },
     {
       "path": "src/app/api/calendar/ical/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3313,12 +3377,14 @@
     },
     {
       "path": "src/app/api/captacoes/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
         "PATCH",
-        "DELETE"
+        "DELETE",
+        "maxDuration",
+        "dynamic"
       ],
       "imports": [
         "src/lib/supabase.ts",
@@ -3330,12 +3396,12 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 185,
+      "linesOfCode": 188,
       "description": "API Route | Exports: GET, PATCH, DELETE"
     },
     {
       "path": "src/app/api/clientes/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3353,7 +3419,7 @@
     },
     {
       "path": "src/app/api/contratos/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3371,7 +3437,7 @@
     },
     {
       "path": "src/app/api/corretores/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3392,11 +3458,12 @@
     },
     {
       "path": "src/app/api/crm/reativacao/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
         "POST",
+        "maxDuration",
         "dynamic"
       ],
       "imports": [
@@ -3409,12 +3476,12 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 124,
-      "description": "API Route | Exports: GET, POST, dynamic"
+      "linesOfCode": 125,
+      "description": "API Route | Exports: GET, POST, maxDuration"
     },
     {
       "path": "src/app/api/cron/daily-briefing/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3429,7 +3496,7 @@
     },
     {
       "path": "src/app/api/cron/health/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3448,7 +3515,7 @@
     },
     {
       "path": "src/app/api/cron/process-queue/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3465,7 +3532,7 @@
     },
     {
       "path": "src/app/api/cron/reminders/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3485,7 +3552,7 @@
     },
     {
       "path": "src/app/api/eventos/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3505,7 +3572,7 @@
     },
     {
       "path": "src/app/api/imoveis/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3524,7 +3591,7 @@
     },
     {
       "path": "src/app/api/imoveis/fotos/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3537,7 +3604,7 @@
     },
     {
       "path": "src/app/api/ingest/email/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3556,7 +3623,7 @@
     },
     {
       "path": "src/app/api/ingest/grupozap/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3571,7 +3638,7 @@
     },
     {
       "path": "src/app/api/ingest/whatsapp/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3586,7 +3653,7 @@
     },
     {
       "path": "src/app/api/leads/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3606,7 +3673,7 @@
     },
     {
       "path": "src/app/api/leads/debug-wa/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3619,7 +3686,7 @@
     },
     {
       "path": "src/app/api/leads/grupos/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3636,7 +3703,7 @@
     },
     {
       "path": "src/app/api/master/config/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3653,7 +3720,7 @@
     },
     {
       "path": "src/app/api/master/health/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3669,7 +3736,7 @@
     },
     {
       "path": "src/app/api/master/imobiliarias/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3686,7 +3753,7 @@
     },
     {
       "path": "src/app/api/master/planos/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3703,7 +3770,7 @@
     },
     {
       "path": "src/app/api/master/stats/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3719,7 +3786,7 @@
     },
     {
       "path": "src/app/api/oportunidades/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3738,7 +3805,7 @@
     },
     {
       "path": "src/app/api/parceiros/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3757,7 +3824,7 @@
     },
     {
       "path": "src/app/api/proxy/image/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3770,7 +3837,7 @@
     },
     {
       "path": "src/app/api/public/config/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3786,7 +3853,7 @@
     },
     {
       "path": "src/app/api/public/propostas/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3801,7 +3868,7 @@
     },
     {
       "path": "src/app/api/webhooks/billing/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST",
@@ -3817,7 +3884,7 @@
     },
     {
       "path": "src/app/api/webhooks/grupozap/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3834,11 +3901,13 @@
     },
     {
       "path": "src/app/api/webhooks/whatsapp/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST",
-        "GET"
+        "GET",
+        "maxDuration",
+        "dynamic"
       ],
       "imports": [
         "src/lib/supabase.ts",
@@ -3855,12 +3924,12 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 911,
-      "description": "API Route | Exports: POST, GET"
+      "linesOfCode": 952,
+      "description": "API Route | Exports: POST, GET, maxDuration"
     },
     {
       "path": "src/app/api/whatsapp/instance/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -3875,7 +3944,7 @@
     },
     {
       "path": "src/app/api/whatsapp/sync/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3892,7 +3961,7 @@
     },
     {
       "path": "src/app/proposta/[id]/documentos/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -3907,8 +3976,23 @@
       "description": "React Component | Exports: default"
     },
     {
+      "path": "src/app/admin/captacoes/[id]/editar-express/page.tsx",
+      "rank": 0.0006,
+      "layer": "pages",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 872,
+      "description": "React Component | Exports: default"
+    },
+    {
       "path": "src/app/admin/imoveis/[id]/editar/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -3924,7 +4008,7 @@
     },
     {
       "path": "src/app/admin/imoveis/[id]/laudo/page.tsx",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "pages",
       "exports": [
         "default"
@@ -3935,12 +4019,12 @@
       ],
       "usesAI": false,
       "type": "component",
-      "linesOfCode": 802,
+      "linesOfCode": 908,
       "description": "React Component | Exports: default"
     },
     {
       "path": "src/app/api/admin/financeiro/cobrancas/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -3955,7 +4039,7 @@
     },
     {
       "path": "src/app/api/admin/propostas/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "PATCH"
@@ -3971,7 +4055,7 @@
     },
     {
       "path": "src/app/api/admin/users/invite/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -3987,8 +4071,29 @@
       "description": "API Route | Exports: POST"
     },
     {
+      "path": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "rank": 0.0006,
+      "layer": "api",
+      "exports": [
+        "GET",
+        "dynamic"
+      ],
+      "imports": [
+        "src/lib/supabase.ts",
+        "src/lib/auth.ts",
+        "src/lib/repositories/factory.ts",
+        "src/lib/mockDb.ts",
+        "src/lib/imoveis/autorizacaoCaptacao.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "api-route",
+      "linesOfCode": 146,
+      "description": "API Route | Exports: GET, dynamic"
+    },
+    {
       "path": "src/app/api/contratos/[id]/gerar/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -4006,10 +4111,13 @@
     },
     {
       "path": "src/app/api/corretores/me/preferences/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
-        "PATCH"
+        "GET",
+        "PATCH",
+        "maxDuration",
+        "dynamic"
       ],
       "imports": [
         "src/lib/auth.ts",
@@ -4018,12 +4126,12 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 41,
-      "description": "API Route | Exports: PATCH"
+      "linesOfCode": 125,
+      "description": "API Route | Exports: GET, PATCH, maxDuration"
     },
     {
       "path": "src/app/api/crm/reativacao/enviar/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST",
@@ -4044,7 +4152,7 @@
     },
     {
       "path": "src/app/api/financeiro/repasses/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -4060,10 +4168,11 @@
     },
     {
       "path": "src/app/api/imoveis/[id]/laudo-avaliacao/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
+        "maxDuration",
         "dynamic"
       ],
       "imports": [
@@ -4076,12 +4185,12 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 110,
-      "description": "API Route | Exports: GET, dynamic"
+      "linesOfCode": 149,
+      "description": "API Route | Exports: GET, maxDuration, dynamic"
     },
     {
       "path": "src/app/api/leads/[id]/feedback/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -4096,7 +4205,7 @@
     },
     {
       "path": "src/app/api/leads/[id]/handoff/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET",
@@ -4113,7 +4222,7 @@
     },
     {
       "path": "src/app/api/leads/[id]/message/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -4130,7 +4239,7 @@
     },
     {
       "path": "src/app/api/leads/[id]/messages/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -4146,7 +4255,7 @@
     },
     {
       "path": "src/app/api/leads/[id]/recommendations/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -4164,7 +4273,7 @@
     },
     {
       "path": "src/app/api/master/config/test/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -4180,7 +4289,7 @@
     },
     {
       "path": "src/app/api/master/integrations/sync/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST",
@@ -4196,7 +4305,7 @@
     },
     {
       "path": "src/app/api/public/config/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -4212,7 +4321,7 @@
     },
     {
       "path": "src/app/api/public/propostas/[id]/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -4227,7 +4336,7 @@
     },
     {
       "path": "src/app/api/public/xml/portais/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "GET"
@@ -4245,7 +4354,7 @@
     },
     {
       "path": "src/app/api/admin/propostas/[id]/analise/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "PATCH"
@@ -4261,7 +4370,7 @@
     },
     {
       "path": "src/app/api/admin/propostas/[id]/converter/route.ts",
-      "rank": 0.0007,
+      "rank": 0.0006,
       "layer": "api",
       "exports": [
         "POST"
@@ -4274,6 +4383,28 @@
       "type": "api-route",
       "linesOfCode": 53,
       "description": "API Route | Exports: POST"
+    },
+    {
+      "path": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "rank": 0.0006,
+      "layer": "api",
+      "exports": [
+        "GET",
+        "dynamic"
+      ],
+      "imports": [
+        "src/lib/supabase.ts",
+        "src/lib/auth.ts",
+        "src/lib/repositories/factory.ts",
+        "src/lib/mockDb.ts",
+        "src/lib/imoveis/cmaEngine.ts",
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "api-route",
+      "linesOfCode": 1391,
+      "description": "API Route | Exports: GET, dynamic"
     }
   ],
   "edges": [
@@ -4345,6 +4476,11 @@
     {
       "from": "src/app/admin/layout.tsx",
       "to": "src/components/layout/NotificationBell.tsx",
+      "type": "import"
+    },
+    {
+      "from": "src/app/admin/layout.tsx",
+      "to": "src/components/layout/WhatsAppHealthBanner.tsx",
       "type": "import"
     },
     {
@@ -5073,6 +5209,16 @@
       "type": "import"
     },
     {
+      "from": "src/lib/imoveis/autorizacaoCaptacao.ts",
+      "to": "src/lib/database.types.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/imoveis/autorizacaoCaptacao.ts",
+      "to": "src/lib/countryConfig.ts",
+      "type": "import"
+    },
+    {
       "from": "src/lib/imoveis/cmaEngine.ts",
       "to": "src/lib/database.types.ts",
       "type": "import"
@@ -5084,7 +5230,22 @@
     },
     {
       "from": "src/lib/imoveis/cmaEngine.ts",
+      "to": "src/lib/imoveis/mercadoCache.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/imoveis/cmaEngine.ts",
       "to": "src/lib/engine/aiUtils.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/imoveis/mercado.ts",
+      "to": "src/lib/imoveis/mercadoCache.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/imoveis/mercadoCache.ts",
+      "to": "src/lib/imoveis/mercado.ts",
       "type": "import"
     },
     {
@@ -6748,6 +6909,11 @@
       "type": "import"
     },
     {
+      "from": "src/app/admin/captacoes/[id]/editar-express/page.tsx",
+      "to": "src/lib/database.types.ts",
+      "type": "type-import"
+    },
+    {
       "from": "src/app/admin/imoveis/[id]/editar/page.tsx",
       "to": "src/components/imoveis/ImovelForm.tsx",
       "type": "import"
@@ -6795,6 +6961,36 @@
     {
       "from": "src/app/api/admin/users/invite/route.ts",
       "to": "src/lib/mockDb.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "to": "src/lib/auth.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "to": "src/lib/repositories/factory.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "to": "src/lib/mockDb.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "to": "src/lib/imoveis/autorizacaoCaptacao.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/captacoes/[id]/autorizacao/route.ts",
+      "to": "src/lib/database.types.ts",
       "type": "import"
     },
     {
@@ -7030,6 +7226,41 @@
     {
       "from": "src/app/api/admin/propostas/[id]/converter/route.ts",
       "to": "src/lib/auth.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/auth.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/repositories/factory.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/mockDb.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/imoveis/cmaEngine.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/database.types.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/imoveis/[id]/laudo-avaliacao/pdf/route.ts",
+      "to": "src/lib/countryConfig.ts",
       "type": "import"
     }
   ],
