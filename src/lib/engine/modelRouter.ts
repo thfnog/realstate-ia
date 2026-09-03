@@ -33,16 +33,16 @@ export class ModelRouter {
       case 'classification':
       case 'junk_filter':
         return {
-          primaryModel: 'llama-3.1-8b-instant',
-          fallbackModel: 'gemini-2.5-flash',
+          primaryModel: 'gemini-2.5-flash',
+          fallbackModel: 'llama-3.3-70b-versatile',
           temperature: 0.1,
           maxTokens: 250
         };
 
       case 'extraction':
         return {
-          primaryModel: 'llama-3.1-8b-instant',
-          fallbackModel: 'gemini-2.5-flash',
+          primaryModel: 'gemini-2.5-flash',
+          fallbackModel: 'llama-3.3-70b-versatile',
           temperature: 0.1,
           maxTokens: 500
         };

@@ -7,9 +7,20 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
+import * as mock from '@/lib/mockDb';
 import type { Corretor } from '@/lib/database.types';
 
 export async function assignCorretor(imobiliaria_id?: string): Promise<Corretor | null> {
+  if (mock.isMockMode()) {
+    const list = imobiliaria_id ? mock.getCorretoresByImobiliaria(imobiliaria_id) : mock.getCorretores();
+    const active = list.filter(c => c.ativo);
+    if (active.length > 0) {
+      console.log(`✅ [Mock] Corretor atribuído: ${active[0].nome}`);
+      return active[0];
+    }
+    return null;
+  }
+
   // Use Brasilia Timezone (GMT-3) for duty schedule
   const now = new Date();
   const brTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));

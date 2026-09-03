@@ -6,12 +6,25 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
+import * as mock from '@/lib/mockDb';
 
 export async function checkCarteira(telefone: string, imobiliariaId: string): Promise<{
   isExisting: boolean;
   corretorId: string | null;
   leadAnterior: { nome: string; corretor_id: string | null } | null;
 }> {
+  if (mock.isMockMode()) {
+    const existing = mock.leads.find(l => l.telefone === telefone && l.imobiliaria_id === imobiliariaId);
+    if (existing) {
+      return {
+        isExisting: true,
+        corretorId: existing.corretor_id,
+        leadAnterior: { nome: existing.nome, corretor_id: existing.corretor_id }
+      };
+    }
+    return { isExisting: false, corretorId: null, leadAnterior: null };
+  }
+
   const { data: existingLeads, error } = await supabaseAdmin
     .from('leads')
     .select('id, nome, corretor_id')

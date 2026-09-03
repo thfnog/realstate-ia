@@ -272,6 +272,7 @@ export function parsePortalEmail(
 
   // Sanitização do nome
   nome = nome
+    .replace(/^(?:Nome|Lead|Cliente|Interessado|De)[:\-\s]+/i, '')
     .replace(/^[:\-\s]+/, '')
     .replace(/<[^>]+>/g, '')
     .trim();

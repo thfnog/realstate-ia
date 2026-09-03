@@ -22,6 +22,8 @@ import { callAIWithFallback, parseSafeJSON } from './aiUtils';
 import { ModelRouter } from './modelRouter';
 import { supabaseAdmin } from '@/lib/supabase';
 
+import * as mock from '@/lib/mockDb';
+
 export async function extractLeadWithAI(
   text: string, 
   imobiliaria_id?: string, 
@@ -29,10 +31,9 @@ export async function extractLeadWithAI(
 ): Promise<AILeadProfile> {
   console.log(`🤖 Consultando Groq para extração de dados (${context === 'group' ? 'GRUPO' : 'PRIVADO'})...`);
 
-  // ... (feedback fetch logic same as before)
   let feedbackExamples = '';
   try {
-    if (imobiliaria_id) {
+    if (imobiliaria_id && !mock.isMockMode()) {
       const { data: examples } = await supabaseAdmin
         .from('ai_feedback')
         .select('text, is_lead_actual')

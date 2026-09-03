@@ -4,6 +4,7 @@
  * finds leads that might be interested in a newly registered property.
  */
 import { supabaseAdmin } from '@/lib/supabase';
+import { isMockMode, getLeads, getCorretorById, DEFAULT_IMOBILIARIA_ID } from '@/lib/mockDb';
 import type { Imovel, Lead } from '@/lib/database.types';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
 
@@ -12,13 +13,23 @@ export async function matchLeadsForProperty(property: Imovel) {
 
   try {
     // 1. Buscamos leads ativos (novo ou em_atendimento) da mesma imobiliária
-    const { data: leads, error } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('imobiliaria_id', property.imobiliaria_id)
-      .in('status', ['novo', 'em_atendimento']);
+    let leads: Lead[] = [];
+    if (isMockMode()) {
+      leads = getLeads().filter(l => 
+        (l.imobiliaria_id === property.imobiliaria_id || property.imobiliaria_id === DEFAULT_IMOBILIARIA_ID || !property.imobiliaria_id) &&
+        ['novo', 'em_atendimento', 'visita_agendada'].includes(l.status)
+      );
+    } else {
+      const { data, error } = await supabaseAdmin
+        .from('leads')
+        .select('*')
+        .eq('imobiliaria_id', property.imobiliaria_id)
+        .in('status', ['novo', 'em_atendimento']);
 
-    if (error) throw error;
+      if (error) throw error;
+      leads = data || [];
+    }
+
     if (!leads || leads.length === 0) return [];
 
     const matches: Lead[] = [];
@@ -37,8 +48,8 @@ export async function matchLeadsForProperty(property: Imovel) {
 
       // Critério 3: Localização (Bairro match)
       if (lead.bairros_interesse && lead.bairros_interesse.length > 0) {
-        const bairroNorm = property.freguesia.toLowerCase().trim();
-        const hasBairro = lead.bairros_interesse.some((b: string) => b.toLowerCase().trim() === bairroNorm);
+        const bairroNorm = (property.freguesia || '').toLowerCase().trim();
+        const hasBairro = lead.bairros_interesse.some((b: string) => b.toLowerCase().trim() === bairroNorm || bairroNorm.includes(b.toLowerCase().trim()));
         if (hasBairro) score += 3;
       }
 
@@ -49,16 +60,22 @@ export async function matchLeadsForProperty(property: Imovel) {
         
         // Opcional: Notificar o corretor atrelado ao lead sobre o novo imóvel
         if (lead.corretor_id) {
-           const { data: corretor } = await supabaseAdmin
-             .from('corretores')
-             .select('nome, whatsapp_instance')
-             .eq('id', lead.corretor_id)
-             .single();
-           
-           if (corretor && (corretor as any).whatsapp_instance) {
-             const message = `🚀 *Novo Imóvel Compatível!*\n\nAcabamos de cadastrar o imóvel *${property.referencia}* (${property.titulo}) e ele é um excelente match para o seu lead *${lead.nome}*.\n\nPreço: ${property.valor}\nLocal: ${property.freguesia}\n\nQue tal enviar para ele agora?`;
-             await sendWhatsAppMessage((corretor as any).whatsapp_instance, message, (corretor as any).whatsapp_instance);
-           }
+          let corretor: any = null;
+          if (isMockMode()) {
+            corretor = getCorretorById(lead.corretor_id);
+          } else {
+            const { data } = await supabaseAdmin
+              .from('corretores')
+              .select('nome, whatsapp_instance')
+              .eq('id', lead.corretor_id)
+              .single();
+            corretor = data;
+          }
+          
+          if (corretor && corretor.whatsapp_instance) {
+            const message = `🚀 *Novo Imóvel Compatível!*\n\nAcabamos de cadastrar o imóvel *${property.referencia}* (${property.titulo}) e ele é um excelente match para o seu lead *${lead.nome}*.\n\nPreço: ${property.valor}\nLocal: ${property.freguesia}\n\nQue tal enviar para ele agora?`;
+            await sendWhatsAppMessage(corretor.whatsapp_instance, message, corretor.whatsapp_instance);
+          }
         }
       }
     }

@@ -15,6 +15,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
+import { isMockMode, getImoveis } from '@/lib/mockDb';
 import { formatCurrency, getConfig } from '@/lib/countryConfig';
 import type { Imovel, Lead } from '@/lib/database.types';
 
@@ -30,15 +31,25 @@ export type ScoredImovel = Imovel & {
 
 export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: number = 5): Promise<ScoredImovel[]> {
   const config = configIn || getConfig();
-  // Fetch all available properties
-  const { data: imoveis, error } = await supabaseAdmin
-    .from('imoveis')
-    .select('*')
-    .eq('status', 'disponivel');
+  let imoveis: Imovel[] = [];
 
-  if (error) {
-    console.error('Erro ao buscar imóveis:', error);
-    return [];
+  if (isMockMode()) {
+    imoveis = getImoveis({ status: 'disponivel' });
+    if (lead.moeda) {
+      imoveis = imoveis.filter((i) => i.moeda === lead.moeda);
+    }
+  } else {
+    // Fetch all available properties
+    const { data, error } = await supabaseAdmin
+      .from('imoveis')
+      .select('*')
+      .eq('status', 'disponivel');
+
+    if (error) {
+      console.error('Erro ao buscar imóveis:', error);
+      return [];
+    }
+    imoveis = data || [];
   }
 
   if (!imoveis || imoveis.length === 0) {

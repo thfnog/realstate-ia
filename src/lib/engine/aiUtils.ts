@@ -27,12 +27,23 @@ export function parseSafeJSON(str: string): any {
   } catch (e) {
     const match = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (match) {
-      return JSON.parse(match[1]);
+      try {
+        return JSON.parse(match[1].trim());
+      } catch {}
     }
     const firstBrace = str.indexOf('{');
     const lastBrace = str.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1) {
-       return JSON.parse(str.substring(firstBrace, lastBrace + 1));
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        return JSON.parse(str.substring(firstBrace, lastBrace + 1));
+      } catch {}
+    }
+    const firstBracket = str.indexOf('[');
+    const lastBracket = str.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      try {
+        return JSON.parse(str.substring(firstBracket, lastBracket + 1));
+      } catch {}
     }
     throw e;
   }

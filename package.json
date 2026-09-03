@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "graph": "npx tsx scripts/generate-code-graph.ts",
-    "graph:watch": "npx tsx --watch scripts/generate-code-graph.ts"
+    "graph:watch": "npx tsx --watch scripts/generate-code-graph.ts",
+    "sim:modulos-1-2": "tsx scripts/simulations/sim-modulos-1-2.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
