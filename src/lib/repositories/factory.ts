@@ -24,65 +24,65 @@ import { SupabaseCaptacaoRepository } from './SupabaseCaptacaoRepository';
  * Repository Factory
  * Decides whether to use Mock or Supabase implementation based on the environment.
  */
-export function getLeadRepository(client: SupabaseClient): ILeadRepository {
+export function getLeadRepository(client?: SupabaseClient | null): ILeadRepository {
   if (isMockMode()) {
     return new MockLeadRepository();
   }
-  return new SupabaseLeadRepository(client);
+  return new SupabaseLeadRepository(client!);
 }
 
-export function getImovelRepository(client: SupabaseClient): IImovelRepository {
+export function getImovelRepository(client?: SupabaseClient | null): IImovelRepository {
   if (isMockMode()) {
     return new MockImovelRepository();
   }
-  return new SupabaseImovelRepository(client);
+  return new SupabaseImovelRepository(client!);
 }
 
-export function getCorretorRepository(client: SupabaseClient): ICorretorRepository {
+export function getCorretorRepository(client?: SupabaseClient | null): ICorretorRepository {
   if (isMockMode()) {
     return new MockCorretorRepository();
   }
-  return new SupabaseCorretorRepository(client);
+  return new SupabaseCorretorRepository(client!);
 }
 
-export function getEventoRepository(client: SupabaseClient): IEventoRepository {
+export function getEventoRepository(client?: SupabaseClient | null): IEventoRepository {
   if (isMockMode()) {
     return new MockEventoRepository();
   }
-  return new SupabaseEventoRepository(client);
+  return new SupabaseEventoRepository(client!);
 }
 
-export function getVendaRepository(client: SupabaseClient): IVendaRepository {
+export function getVendaRepository(client?: SupabaseClient | null): IVendaRepository {
   if (isMockMode()) {
     return new MockVendaRepository();
   }
-  return new SupabaseVendaRepository(client);
+  return new SupabaseVendaRepository(client!);
 }
 
-export function getContratoRepository(client: SupabaseClient): IContratoRepository {
+export function getContratoRepository(client?: SupabaseClient | null): IContratoRepository {
   if (isMockMode()) {
     return new MockContratoRepository();
   }
-  return new SupabaseContratoRepository(client);
+  return new SupabaseContratoRepository(client!);
 }
 
-export function getParceiroRepository(client: SupabaseClient): IParceiroRepository {
+export function getParceiroRepository(client?: SupabaseClient | null): IParceiroRepository {
   if (isMockMode()) {
     return new MockParceiroRepository();
   }
-  return new SupabaseParceiroRepository(client);
+  return new SupabaseParceiroRepository(client!);
 }
 
-export function getOportunidadeRepository(client: SupabaseClient): IOportunidadeRepository {
+export function getOportunidadeRepository(client?: SupabaseClient | null): IOportunidadeRepository {
   if (isMockMode()) {
     return new MockOportunidadeRepository();
   }
-  return new SupabaseOportunidadeRepository(client);
+  return new SupabaseOportunidadeRepository(client!);
 }
 
-export function getCaptacaoRepository(client: SupabaseClient): ICaptacaoRepository {
+export function getCaptacaoRepository(client?: SupabaseClient | null): ICaptacaoRepository {
   if (isMockMode()) {
     return new MockCaptacaoRepository();
   }
-  return new SupabaseCaptacaoRepository(client);
+  return new SupabaseCaptacaoRepository(client!);
 }
