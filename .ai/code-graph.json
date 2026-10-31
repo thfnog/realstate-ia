@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31T20:35:19.074Z",
+  "generated": "2026-10-31T20:44:39.415Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
     "totalFiles": 238,
