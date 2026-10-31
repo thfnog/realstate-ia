@@ -14,13 +14,29 @@ const JUNK_URL_PATTERNS = [
 // Greetings are NOT filtered — they are valid first-contact messages.
 // The bot should respond to "Oi", "Bom dia", etc. as new leads.
 
+export interface MessageFilterOptions {
+  /**
+   * Contato já é lead ativo (conversa em andamento). Nesse caso respostas curtas
+   * como "1", "sim", "ok", "fechado" SÃO significativas (escolha de imóvel/horário,
+   * confirmação) e nunca devem ser descartadas.
+   */
+  knownContact?: boolean;
+}
+
 /**
  * Returns true if the message should be ignored by the bot.
  */
-export function shouldIgnoreMessage(text: string): boolean {
+export function shouldIgnoreMessage(text: string, opts: MessageFilterOptions = {}): boolean {
   if (!text) return true;
 
   const normalized = text.trim().toLowerCase();
+  if (!normalized) return true;
+
+  // Seleções numéricas ("1", "2", "3") são respostas a menus de imóveis/horários.
+  if (/^\d{1,2}$/.test(normalized)) return false;
+
+  // Em conversa ativa, só descartamos links de reunião / URL pura.
+  const knownContact = opts.knownContact === true;
 
   // 1. Check for meeting links (usually spam/wrong number if it's JUST the link)
   const containsMeetingLink = JUNK_URL_PATTERNS.some(pattern => normalized.includes(pattern));
@@ -41,6 +57,8 @@ export function shouldIgnoreMessage(text: string): boolean {
      console.log(`[Filter] Ignorando mensagem que é apenas uma URL: "${normalized}"`);
      return true;
   }
+
+  if (knownContact) return false;
 
   // 3. Very short random words — but allow greetings (oi, olá, etc.)
   const greetings = ['oi', 'olá', 'ola', 'opa', 'hey', 'hi', 'hello', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'tudo bom', 'td bem', 'blz', 'e aí', 'eai'];

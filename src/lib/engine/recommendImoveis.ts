@@ -35,15 +35,24 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
 
   if (isMockMode()) {
     imoveis = getImoveis({ status: 'disponivel' });
+    if (lead.imobiliaria_id) {
+      imoveis = imoveis.filter((i) => i.imobiliaria_id === lead.imobiliaria_id);
+    }
     if (lead.moeda) {
       imoveis = imoveis.filter((i) => i.moeda === lead.moeda);
     }
   } else {
-    // Fetch all available properties
-    const { data, error } = await supabaseAdmin
+    // Fetch available properties strictly for this tenant
+    let query = supabaseAdmin
       .from('imoveis')
       .select('*')
       .eq('status', 'disponivel');
+
+    if (lead.imobiliaria_id) {
+      query = query.eq('imobiliaria_id', lead.imobiliaria_id);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Erro ao buscar imóveis:', error);
@@ -120,17 +129,33 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
       }
     }
 
-    // 3. Valor within ±15% of budget (+4) or ±25% (+2)
-    if (lead.orcamento && imovel.valor) {
-      const diff = Math.abs(imovel.valor - lead.orcamento) / lead.orcamento;
-      if (diff <= 0.15) {
+    // 3. Valor within budget constraints
+    const propertyPrice = (lead.finalidade === 'alugar' && imovel.valor_locacao)
+      ? imovel.valor_locacao
+      : imovel.valor;
+
+    if (lead.orcamento && propertyPrice) {
+      // Disqualify if over 30% above budget
+      if (propertyPrice > lead.orcamento * 1.30) {
+        return null;
+      }
+
+      const diff = (propertyPrice - lead.orcamento) / lead.orcamento;
+      if (Math.abs(diff) <= 0.15) {
         score += 4;
-        breakdown.push(`Valor ${formatCurrency(imovel.valor, config)} (±15%): +4`);
-        reasons.push(`Preço dentro do orçamento (${formatCurrency(imovel.valor, config)})`);
-      } else if (diff <= 0.25) {
+        breakdown.push(`Valor ${formatCurrency(propertyPrice, config)} (±15%): +4`);
+        reasons.push(`Preço dentro do orçamento (${formatCurrency(propertyPrice, config)})`);
+      } else if (diff > 0.15 && diff <= 0.30) {
         score += 2;
-        breakdown.push(`Valor ${formatCurrency(imovel.valor, config)} (±25%): +2`);
-        reasons.push(`Preço de ${formatCurrency(imovel.valor, config)} está ligeiramente fora da estimativa`);
+        breakdown.push(`Valor ${formatCurrency(propertyPrice, config)} (até +30%): +2`);
+        reasons.push(`Preço ligeiramente acima do orçamento`);
+      } else if (diff < -0.15 && diff >= -0.50) {
+        score += 3;
+        breakdown.push(`Valor ${formatCurrency(propertyPrice, config)} (abaixo do teto): +3`);
+        reasons.push(`Preço vantajoso, abaixo do seu orçamento máximo`);
+      } else {
+        score += 1;
+        breakdown.push(`Valor ${formatCurrency(propertyPrice, config)}: +1`);
       }
     }
 
@@ -148,7 +173,7 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
     // 5. Bairro match (+3) — fuzzy matching
     if (lead.bairros_interesse && lead.bairros_interesse.length > 0) {
       const { findBestMatch } = require('string-similarity');
-      const bairroNorm = (imovel.freguesia || '').toLowerCase().trim();
+      const bairroNorm = (imovel.freguesia || (imovel as any).bairro || '').toLowerCase().trim();
       const interests = lead.bairros_interesse.map(b => b.toLowerCase().trim());
       
       if (bairroNorm) {
@@ -158,8 +183,9 @@ export async function recommendImoveis(lead: Lead, configIn?: any, maxResults: n
         if (isPartial || bestMatch.rating > 0.6) {
           score += 3;
           const ratingPercent = (bestMatch.rating * 100).toFixed(0);
-          breakdown.push(`Bairro ${imovel.freguesia} (${isPartial ? '100' : ratingPercent}% match): +3`);
-          reasons.push(`Excelente localização no bairro/freguesia ${imovel.freguesia}`);
+          const bairroLabel = imovel.freguesia || (imovel as any).bairro;
+          breakdown.push(`Bairro ${bairroLabel} (${isPartial ? '100' : ratingPercent}% match): +3`);
+          reasons.push(`Excelente localização no bairro ${bairroLabel}`);
         }
       }
     }

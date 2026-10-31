@@ -15,8 +15,8 @@ import { waitUntil } from '@vercel/functions';
 const maskPhone = (p: string) => p ? p.replace(/^(\d{4})\d+(\d{4})$/, "$1****$2") : '***';
 const maskName = (n: string) => {
   if (!n) return '***';
-  const parts = n.split(' ');
-  return `${parts[0]} ${parts[1][0]}.`;
+  const parts = n.trim().split(/\s+/);
+  return parts.length > 1 && parts[1] ? `${parts[0]} ${parts[1][0]}.` : parts[0];
 };
 
 export const maxDuration = 60;
@@ -113,10 +113,24 @@ export async function POST(request: Request) {
           }
         }
 
-        // --- IMOBILIARIA RESOLUTION ---
-        if (!mock.isMockMode() && !instanceMatch) {
-           const { data: imobs } = await supabaseAdmin.from('imobiliarias').select('id').limit(1);
-           if (imobs && imobs.length > 0) imobiliaria_id = imobs[0].id;
+        // --- IMOBILIARIA RESOLUTION (multi-tenant) ---
+        // Nunca "chutar" a imobiliária: a instância precisa estar vinculada a um corretor.
+        if (!mock.isMockMode() && !broker && instanceName) {
+          const { data } = await supabaseAdmin
+            .from('corretores')
+            .select('id, imobiliaria_id, whatsapp_number, nome, telefone')
+            .eq('whatsapp_instance', instanceName)
+            .maybeSingle();
+          if (data) {
+            broker = data;
+            imobiliaria_id = data.imobiliaria_id;
+            fallback_corretor_id = data.id;
+          }
+        }
+
+        if (!mock.isMockMode() && !broker) {
+          console.warn(`🚫 [Tenant] Instância "${instanceName}" não vinculada a nenhum corretor. Mensagem descartada.`);
+          return;
         }
 
         let config_pais: 'PT' | 'BR' = 'BR';
@@ -196,7 +210,7 @@ export async function POST(request: Request) {
           if (mock.isMockMode()) {
             lead = mock.getLeadByTelefone(phone);
           } else {
-            const { data } = await supabaseAdmin.from('leads').select('*').eq('telefone', phone).single();
+            const { data } = await supabaseAdmin.from('leads').select('*').eq('telefone', phone).eq('imobiliaria_id', imobiliaria_id).maybeSingle();
             lead = data;
           }
 
@@ -333,8 +347,29 @@ export async function POST(request: Request) {
 
       console.log(`📩 Nova mensagem de ${maskName(name)} (${maskPhone(sender)}): "${text.slice(0, 30)}..."`);
 
+      // --- LEAD EXISTENTE (escopo do tenant) ---
+      // Resolvido ANTES dos filtros: respostas curtas de quem já está em conversa
+      // ("1", "sim", "pode ser sábado") não podem ser descartadas.
+      const senderDigits = sender.replace(/\D/g, '');
+      let existingLead: any = null;
+      if (senderDigits) {
+        if (mock.isMockMode()) {
+          existingLead = mock.getLeadByTelefone(senderDigits) || null;
+        } else {
+          const { data } = await supabaseAdmin
+            .from('leads')
+            .select('*')
+            .eq('telefone', senderDigits)
+            .eq('imobiliaria_id', imobiliaria_id)
+            .maybeSingle();
+          existingLead = data;
+        }
+      }
+      const INACTIVE_STATUSES = ['vendido', 'descartado', 'finalizado'];
+      const isActiveLead = !!existingLead && !INACTIVE_STATUSES.includes(existingLead.status);
+
       const { shouldIgnoreMessage } = await import('@/lib/messageFilter');
-      if (shouldIgnoreMessage(text) && !isTestMode) {
+      if (shouldIgnoreMessage(text, { knownContact: isActiveLead && !isGroup }) && !isTestMode) {
         console.log(`♻️ Filtro Manual: Lixo detectado e descartado antes da IA.`);
         return;
       }
@@ -592,11 +627,15 @@ export async function POST(request: Request) {
         });
         console.log(`🤝 Oportunidade de parceria criada: ${oport.id}`);
 
-        const msgAgradecimento = config_pais === 'BR'
-          ? `Olá! Agradecemos a sua mensagem de parceria. Registramos o seu contato no nosso sistema de parcerias e um corretor da nossa equipe entrará em contato em breve para alinharmos.`
-          : `Olá! Agradecemos a sua mensagem de parceria. Registámos o seu contacto no nosso sistema de parcerias e um consultor da nossa equipa entrará em contacto em breve para alinharmos.`;
+        if (!isGroup) {
+          const msgAgradecimento = config_pais === 'BR'
+            ? `Olá! Agradecemos a sua mensagem de parceria. Registramos o seu contato no nosso sistema de parcerias e um corretor da nossa equipe entrará em contato em breve para alinharmos.`
+            : `Olá! Agradecemos a sua mensagem de parceria. Registámos o seu contacto no nosso sistema de parcerias e um consultor da nossa equipa entrará em contacto em breve para alinharmos.`;
 
-        await sendWhatsAppMessage(phoneClean, msgAgradecimento, instanceName, config_pais);
+          await sendWhatsAppMessage(phoneClean, msgAgradecimento, instanceName, config_pais);
+        } else {
+          console.log(`👥 [Grupo] Oportunidade de parceria #${oport.id} registrada silenciosamente sem disparo de DM (prevenção de ban).`);
+        }
 
         // Se houver um lead ativo para esse telefone, marca como descartado
         if (!mock.isMockMode()) {
@@ -637,21 +676,17 @@ export async function POST(request: Request) {
       }
 
       // --- REGULAR LEAD FLOW ---
-      const extracted = await extractLeadWithAI(text, imobiliaria_id, isGroup ? 'group' : 'private');
-
-      if (extracted.is_lead === false && !isTestMode) {
-        console.log(`♻️ Ruído detectado e descartado: "${text.slice(0, 15)}..." (${extracted.resumo_ia || 'Sem interesse'})`);
-        return;
-      }
-
       const moeda = config_pais === 'BR' ? 'BRL' : 'EUR';
-      let lead;
+      let lead = existingLead;
 
-      if (mock.isMockMode()) {
-         lead = mock.getLeadByTelefone(phoneClean);
-      } else {
-         const { data } = await supabaseAdmin.from('leads').select('*').eq('telefone', phoneClean).maybeSingle();
-         lead = data;
+      // Se não é lead existente no banco, avalia se a mensagem tem intenção imobiliária
+      let extracted: any = null;
+      if (!lead) {
+        extracted = await extractLeadWithAI(text, imobiliaria_id, isGroup ? 'group' : 'private');
+        if (extracted.is_lead === false && !isTestMode) {
+          console.log(`♻️ Ruído detectado e descartado para novo contato: "${text.slice(0, 20)}..." (${extracted.resumo_ia || 'Sem interesse'})`);
+          return;
+        }
       }
 
       // Se for grupo, achar o corretor de plantão
@@ -688,17 +723,12 @@ export async function POST(request: Request) {
            duracao_segundos
          });
 
-          let skipAutoReply: boolean = isGroup;
-          if (!skipAutoReply && instanceName && remoteJid) {
-            const { hasPriorInteraction } = await import('@/lib/whatsapp');
-            console.log(`[Webhook] Verificando interação prévia (Lead Existente) para ${remoteJid}...`);
-            const hasHistory = isTestMode ? false : await hasPriorInteraction(instanceName, remoteJid);
-            if (hasHistory) {
-              console.log(`🕵️ Chat antigo detectado (Lead Existente) para ${sender}. Bot permanecerá em silêncio.`);
-              skipAutoReply = true;
-            } else {
-              console.log(`✅ Chat novo confirmado (Lead Existente) para ${sender}. Procedendo com resposta do bot.`);
-            }
+          // Lead existente: bot só fica quieto se for em grupo ou se foi transferido para corretor humano
+          let skipAutoReply: boolean = isGroup || lead.status === 'em_atendimento' || lead.status === 'descartado' || lead.status === 'vendido';
+          if (skipAutoReply && isGroup) {
+            console.log(`👥 Mensagem em grupo do lead ${lead.nome || lead.telefone}. Bot não responderá no grupo.`);
+          } else if (skipAutoReply) {
+            console.log(`👨‍💼 Lead ${lead.nome || lead.telefone} está com status "${lead.status}". Bot em silêncio para atendimento humano.`);
           }
 
           const { data: history } = await supabaseAdmin

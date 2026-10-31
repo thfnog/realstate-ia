@@ -205,6 +205,8 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
   const openrouterKey = process.env.OPENROUTER_API_KEY || '';
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 
+  const hasTools = !!(options.tools && options.tools.length > 0);
+
   // 1. Google Gemini Native (Prioridade se configurado)
   if (geminiKey && (baseModel.includes('gemini') || !openrouterKey)) {
     attempts.push({
@@ -225,7 +227,17 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
      });
   }
 
-  // 3. Groq (Rápido, fallback leve para Llama 70B / 8B)
+  // Se tiver chamadas de ferramentas (agentic tool calling), priorizamos OpenAI sobre modelos pequenos
+  if (hasTools && openaiKey) {
+     attempts.push({ 
+       model: 'gpt-4o-mini', 
+       provider: 'openai', 
+       url: OPENAI_URL, 
+       key: openaiKey 
+     });
+  }
+
+  // 3. Groq (Rápido, Llama 70B)
   if (groqKey) {
      const groqModel = baseModel.includes('8b') ? 'llama-3.1-8b-instant' : 'llama-3.3-70b-versatile';
      attempts.push({ 
@@ -234,7 +246,8 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
        url: GROQ_URL, 
        key: groqKey 
      });
-     if (groqModel !== 'llama-3.1-8b-instant') {
+     // NUNCA usar 8B para tool calling (evita alucinações graves)
+     if (!hasTools && groqModel !== 'llama-3.1-8b-instant') {
         attempts.push({ 
           model: 'llama-3.1-8b-instant', 
           provider: 'groq', 
@@ -245,7 +258,7 @@ export async function callAIWithFallback(options: AICallOptions): Promise<any> {
   }
 
   // 4. OpenAI (O Estepe Infalível de Produção)
-  if (openaiKey) {
+  if (!hasTools && openaiKey) {
      attempts.push({ 
        model: 'gpt-4o-mini', 
        provider: 'openai', 

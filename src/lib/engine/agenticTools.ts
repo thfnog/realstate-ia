@@ -12,6 +12,7 @@ import { recommendImoveis } from './recommendImoveis';
 import { buildPropertyMessage, buildTimeSlotsMessage, PropertyCard, TimeSlot } from '@/lib/whatsapp/interactiveMessages';
 import { RealEstateGraph } from '@/lib/knowledge/realEstateGraph';
 import { HITLManager } from './hitlManager';
+import { tzForCountry, addLocalDays, zonedDate, formatSlotLabel, hourKey, getZonedParts } from '@/lib/utils/timezone';
 
 export interface ToolDefinition {
   type: 'function';
@@ -280,6 +281,7 @@ export class AgenticTools {
             return { success: true, result: { message: 'Corretor não atribuído. Horários flexíveis disponíveis de segunda a sábado em horário comercial.' } };
           }
 
+          const tz = tzForCountry(ctx.lead.moeda === 'EUR' ? 'PT' : 'BR');
           const now = new Date();
           const nextWeek = new Date();
           nextWeek.setDate(now.getDate() + 7);
@@ -295,7 +297,7 @@ export class AgenticTools {
               .neq('status', 'cancelado');
 
             if (eventos) {
-              eventos.forEach(e => busyTimes.add(new Date(e.data_hora).toISOString().substring(0, 13)));
+              eventos.forEach(e => busyTimes.add(hourKey(new Date(e.data_hora))));
             }
           }
 
@@ -305,19 +307,17 @@ export class AgenticTools {
                         args.preferencia_periodo === 'tarde' ? [14, 15, 16] : [10, 14, 16];
 
           for (const d of daysToCheck) {
-            const slotDate = new Date();
-            slotDate.setDate(now.getDate() + d);
-            if (slotDate.getDay() === 0) continue; // Domingo fechado
+            const localDay = addLocalDays(now, d, tz);
+            if (localDay.weekday === 0) continue; // Domingo fechado
 
             for (const h of hours) {
-              slotDate.setHours(h, 0, 0, 0);
-              const isoKey = slotDate.toISOString().substring(0, 13);
-              if (!busyTimes.has(isoKey)) {
-                const dateStr = slotDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+              const slotDate = zonedDate(localDay.year, localDay.month, localDay.day, h, 0, tz);
+              const isoK = hourKey(slotDate);
+              if (!busyTimes.has(isoK)) {
                 slots.push({
                   slotId: `slot-${d}-${h}`,
                   isoDateTime: slotDate.toISOString(),
-                  label: `${dateStr} às ${h}:00`
+                  label: formatSlotLabel(slotDate, tz)
                 });
                 if (slots.length >= 4) break;
               }
@@ -338,9 +338,11 @@ export class AgenticTools {
           const isoDate = args.data_hora_iso;
           const ref = args.referencia_imovel;
 
+          const tz = tzForCountry(ctx.lead.moeda === 'EUR' ? 'PT' : 'BR');
           const visitDate = new Date(isoDate);
-          const dayOfWeek = visitDate.getDay(); // 0 = Domingo
-          const hour = visitDate.getHours();
+          const parts = getZonedParts(visitDate, tz);
+          const dayOfWeek = parts.weekday; // 0 = Domingo
+          const hour = parts.hour;
           const isOutOfHours = (dayOfWeek === 0) || (hour < 8 || hour >= 19);
 
           let targetImovel: any = null;
@@ -364,25 +366,42 @@ export class AgenticTools {
 
           // Checagem de Horário Especial (Domingos ou fora do horário padrão) -> Governança HITL
           if (isOutOfHours) {
-            const hitlReq = await HITLManager.requestApproval({
-              imobiliaria_id: ctx.imobiliariaId,
-              broker_id: ctx.brokerId || ctx.lead.corretor_id || 'corretor-default',
-              broker_phone: '11988887777',
-              lead_id: ctx.lead.id,
-              lead_phone: ctx.lead.telefone,
-              type: 'visit_special_time',
-              title: `Visita Fora de Horário (${visitDate.toLocaleDateString('pt-BR')} às ${hour}h)`,
-              description: `Cliente ${ctx.lead.nome || ctx.lead.telefone} solicitou visita em horário especial para o imóvel ${ref || 'em pauta'}.`
-            });
-
-            return {
-              success: true,
-              result: {
-                status: 'pending_broker_approval',
-                hitl_request_id: hitlReq.id,
-                mensagem: `O horário solicitado (${visitDate.toLocaleDateString('pt-BR')} às ${hour}h) é fora do nosso horário comercial padrão. Acabei de solicitar autorização especial diretamente ao corretor responsável (Ref: #${hitlReq.id}) e te confirmo assim que ele responder!`
+            const brokerId = ctx.brokerId || ctx.lead.corretor_id || 'corretor-default';
+            let brokerPhone = '';
+            if (brokerId && brokerId !== 'corretor-default') {
+              if (mock.isMockMode()) {
+                brokerPhone = mock.getCorretorById(brokerId)?.telefone || '';
+              } else {
+                const { data: bData } = await supabaseAdmin
+                  .from('corretores')
+                  .select('telefone, whatsapp_number')
+                  .eq('id', brokerId)
+                  .maybeSingle();
+                brokerPhone = bData?.whatsapp_number || bData?.telefone || '';
               }
-            };
+            }
+
+            if (brokerPhone) {
+              const hitlReq = await HITLManager.requestApproval({
+                imobiliaria_id: ctx.imobiliariaId,
+                broker_id: brokerId,
+                broker_phone: brokerPhone,
+                lead_id: ctx.lead.id,
+                lead_phone: ctx.lead.telefone,
+                type: 'visit_special_time',
+                title: `Visita Fora de Horário (${formatSlotLabel(visitDate, tz)})`,
+                description: `Cliente ${ctx.lead.nome || ctx.lead.telefone} solicitou visita em horário especial para o imóvel ${ref || 'em pauta'}.`
+              });
+
+              return {
+                success: true,
+                result: {
+                  status: 'pending_broker_approval',
+                  hitl_request_id: hitlReq.id,
+                  mensagem: `O horário solicitado (${formatSlotLabel(visitDate, tz)}) é fora do nosso horário comercial padrão. Acabei de solicitar autorização especial diretamente ao corretor responsável e te confirmo assim que ele responder!`
+                }
+              };
+            }
           }
 
           if (!mock.isMockMode()) {

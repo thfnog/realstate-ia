@@ -350,45 +350,37 @@ export async function hasPriorInteraction(instanceName: string, remoteJid: strin
       }
     }
 
-    // Se falhamos em obter qualquer mensagem do histórico, assumimos por segurança que PODE ser antigo
+    // Se não há mensagens anteriores na Evolution, é um chat novo (limpo).
     if (allMessages.length === 0) {
-      console.log(`🕵️ [${phone}] Sem resposta clara da Evolution. Bloqueando bot por precaução.`);
-      return true; 
+      console.log(`✅ [${phone}] Chat totalmente novo/limpo na Evolution. Seguro para o bot atuar.`);
+      return false; 
     }
 
-    const now = Date.now();
-    const safetyBuffer = now - (2 * 60 * 1000); // 2 minutos atrás
-
-    let hasHistory = false;
-    let foundMe = false;
-    let foundOld = false;
+    let hasManualHistory = false;
 
     for (const m of allMessages) {
-      // 1. Verificação de Interação Manual (Qualquer coisa que não seja o bot)
+      // Verificação de Interação Manual do Corretor (Qualquer mensagem enviada manualmente pelo corretor)
       if (m.key?.fromMe === true) {
         const text = (m.message?.conversation || m.message?.extendedTextMessage?.text || '').toLowerCase();
-        const isBot = text.includes('recebi seu interesse') || text.includes('recebi o seu contacto');
+        // Mensagens que parecem automáticas do bot não contam como conversa manual
+        const isBot = text.includes('recebi seu interesse') || 
+                      text.includes('recebi o seu contacto') ||
+                      text.includes('separadas para você') ||
+                      text.includes('imóveis que encontrei') ||
+                      text.includes('visita está confirmada');
+
         if (!isBot) {
-          foundMe = true;
-          hasHistory = true;
+          hasManualHistory = true;
+          break;
         }
       }
-
-      // 2. Verificação de Idade (Qualquer mensagem de mais de 2 minutos atrás)
-      const ts = (m.messageTimestamp || m.timestamp || 0) * 1000;
-      if (ts > 0 && ts < safetyBuffer) {
-        foundOld = true;
-        hasHistory = true;
-      }
-
-      if (hasHistory) break;
     }
 
-    console.log(`🕵️ [${phone}] Resultado: ${hasHistory ? 'HISTÓRICO ENCONTRADO' : 'CHAT LIMPO'} (Manual: ${foundMe}, Antigo: ${foundOld})`);
-    return hasHistory;
+    console.log(`🕵️ [${phone}] Resultado: ${hasManualHistory ? 'HISTÓRICO MANUAL DETECTADO (corretor já atendeu antes)' : 'CHAT SEM ATENDIMENTO MANUAL PRÉVIO'}`);
+    return hasManualHistory;
 
   } catch (err) {
-    console.error(`❌ Erro crítico no histórico de ${phone}. Bloqueando resposta por segurança.`, err);
-    return true; // Em caso de erro, NÃO RESPONDE (Definitivo)
+    console.error(`⚠️ Erro ao consultar histórico de ${phone} na Evolution:`, err);
+    return false; // Em caso de erro na consulta, não trava o atendimento
   }
 }

@@ -70,29 +70,29 @@ export class RealEstateGraph {
       {
         id: 'garantias_locacao',
         categoria: 'locacao',
-        titulo: 'Garantias Aceitas para Aluguel',
-        conteudo: 'Aceitamos Seguro Fiança (aprovação digital em até 1h), Título de Capitalização ou Caução de 3 meses. Não exigimos fiador caso utilize seguro fiança.',
+        titulo: 'Garantias Comumente Praticadas para Locação',
+        conteudo: 'As garantias mais comuns incluem Seguro Fiança, Título de Capitalização ou Caução, sujeitas a análise de crédito cadastral e aos critérios específicos de cada proprietário/imobiliária.',
         palavras_chave: ['fiador', 'caucao', 'caução', 'seguro fianca', 'seguro fiança', 'garantia', 'garantias', 'deposito']
       },
       {
         id: 'documentos_locacao',
         categoria: 'documentos',
-        titulo: 'Documentação para Locação',
-        conteudo: 'Documento com foto (RG/CNH ou CC/Passaporte), comprovante de residência e comprovante de rendimentos (3x o valor do aluguel). Análise 100% digital em até 24h.',
+        titulo: 'Documentação Típica para Locação',
+        conteudo: 'Geralmente são solicitados: documento de identificação (RG/CNH), comprovante de endereço recente e comprovante de rendimentos (habitualmente 3x o valor do aluguel).',
         palavras_chave: ['documento', 'documentos', 'documentacao', 'documentação', 'renda', 'comprovante', 'holerite', 'irs', 'recibo']
       },
       {
         id: 'politica_visitas',
         categoria: 'visitas',
         titulo: 'Horários e Procedimento de Visitas',
-        conteudo: 'Visitas acompanhadas pelo corretor de Segunda a Sábado das 09h às 18h. Chaves disponíveis na imobiliária ou na portaria com autorização prévia.',
+        conteudo: 'Visitas acompanhadas com corretor previamente agendadas de segunda a sábado em horário comercial. Chaves organizadas com autorização prévia.',
         palavras_chave: ['visita', 'visitas', 'horario', 'horário', 'agendamento', 'acompanhar', 'chaves', 'portaria']
       },
       {
         id: 'politica_animais',
         categoria: 'locacao',
         titulo: 'Política de Animais de Estimação (Pets)',
-        conteudo: 'A maioria dos imóveis residenciais permite animais domésticos de pequeno/médio porte. Imóveis com restrição são informados expressamente.',
+        conteudo: 'A aceitação de animais depende da convenção do condomínio e da autorização expressa do proprietário de cada imóvel. Imóveis com restrição são informados.',
         palavras_chave: ['pet', 'pets', 'cachorro', 'gato', 'animal', 'animais', 'porte']
       }
     ];

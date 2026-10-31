@@ -1,10 +1,10 @@
 {
-  "generated": "2026-09-04T22:35:31.964Z",
+  "generated": "2026-10-31T20:16:01.346Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
-    "totalFiles": 233,
-    "totalEdges": 571,
-    "totalExports": 536,
+    "totalFiles": 234,
+    "totalEdges": 572,
+    "totalExports": 546,
     "aiModules": 16,
     "layers": 11
   },
@@ -104,17 +104,17 @@
         "src/lib/engine/dailyBriefing.ts",
         "src/lib/engine/sync/index.ts",
         "src/lib/engine/sync/providers/widesys.ts",
-        "src/lib/engine/hitlManager.ts",
         "src/lib/engine/recommendImovelsMock.ts",
         "src/lib/engine/webhookProcessor.ts",
         "src/lib/engine/agenticEngine.ts",
-        "src/lib/engine/aiExtractor.ts",
+        "src/lib/engine/hitlManager.ts",
         "src/lib/engine/leadMemoryCompressor.ts",
         "src/lib/engine/leadReactivationEngine.ts",
         "src/lib/engine/portalEmailParser.ts",
         "src/lib/engine/reverseMatching.ts",
         "src/lib/engine/sendBriefing.ts",
         "src/lib/engine/agenticTools.ts",
+        "src/lib/engine/aiExtractor.ts",
         "src/lib/engine/audioTranscriber.ts",
         "src/lib/engine/checkCarteira.ts",
         "src/lib/engine/contextEngine.ts",
@@ -140,7 +140,8 @@
       "description": "Utilidades gerais (formatação, documentos)",
       "files": [
         "src/lib/utils/documentGenerator.ts",
-        "src/lib/utils/format.ts"
+        "src/lib/utils/format.ts",
+        "src/lib/utils/timezone.ts"
       ]
     },
     "whatsapp": {
@@ -301,7 +302,7 @@
   "nodes": [
     {
       "path": "src/lib/database.types.ts",
-      "rank": 0.0561,
+      "rank": 0.0558,
       "layer": "infrastructure",
       "exports": [
         "Imobiliaria",
@@ -355,7 +356,7 @@
     },
     {
       "path": "src/lib/mockDb.ts",
-      "rank": 0.0451,
+      "rank": 0.0448,
       "layer": "infrastructure",
       "exports": [
         "isMockMode",
@@ -433,7 +434,7 @@
     },
     {
       "path": "src/lib/supabase.ts",
-      "rank": 0.0266,
+      "rank": 0.0264,
       "layer": "infrastructure",
       "exports": [
         "getUserSupabaseClient",
@@ -450,7 +451,7 @@
     },
     {
       "path": "src/lib/countryConfig.ts",
-      "rank": 0.0238,
+      "rank": 0.0237,
       "layer": "infrastructure",
       "exports": [
         "getConfig",
@@ -469,7 +470,7 @@
     },
     {
       "path": "src/lib/imoveis/referencia.ts",
-      "rank": 0.0134,
+      "rank": 0.0133,
       "layer": "imoveis-utils",
       "exports": [
         "gerarReferencia"
@@ -484,7 +485,7 @@
     },
     {
       "path": "src/lib/auth.ts",
-      "rank": 0.0119,
+      "rank": 0.0118,
       "layer": "infrastructure",
       "exports": [
         "signIn",
@@ -520,7 +521,7 @@
     },
     {
       "path": "src/lib/imoveis/mercadoCache.ts",
-      "rank": 0.0071,
+      "rank": 0.007,
       "layer": "imoveis-utils",
       "exports": [
         "buildMedianoCacheKey",
@@ -551,7 +552,7 @@
     },
     {
       "path": "src/lib/repositories/types.ts",
-      "rank": 0.0067,
+      "rank": 0.0066,
       "layer": "repositories",
       "exports": [
         "PaginationParams",
@@ -622,7 +623,7 @@
     },
     {
       "path": "src/lib/engine/aiUtils.ts",
-      "rank": 0.0039,
+      "rank": 0.0038,
       "layer": "engine",
       "exports": [
         "parseSafeJSON",
@@ -634,12 +635,12 @@
       ],
       "usesAI": true,
       "type": "module",
-      "linesOfCode": 366,
+      "linesOfCode": 379,
       "description": "Multi-provider: OpenRouter(Llama 70B) → Groq(Llama 70B) → OpenAI(GPT-4o-mini) com logging de tokens"
     },
     {
       "path": "src/lib/whatsapp.ts",
-      "rank": 0.0035,
+      "rank": 0.0034,
       "layer": "infrastructure",
       "exports": [
         "fetchInstanceStatus",
@@ -656,12 +657,12 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 395,
+      "linesOfCode": 387,
       "description": "Cliente Evolution API/Twilio para envio de mensagens e download de mídia"
     },
     {
       "path": "src/components/PlanGuard.tsx",
-      "rank": 0.0028,
+      "rank": 0.0027,
       "layer": "components",
       "exports": [
         "PlanGuard"
@@ -687,7 +688,7 @@
     },
     {
       "path": "src/lib/engine/recommendImoveis.ts",
-      "rank": 0.0017,
+      "rank": 0.0016,
       "layer": "engine",
       "exports": [
         "recommendImoveis",
@@ -701,7 +702,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 199,
+      "linesOfCode": 225,
       "description": "Scoring ponderado: tipo(+5) quartos(+4) orçamento±15%(+4) bairro(+3) área(+2) vagas(+1)"
     },
     {
@@ -975,12 +976,13 @@
       "rank": 0.0009,
       "layer": "infrastructure",
       "exports": [
-        "shouldIgnoreMessage"
+        "shouldIgnoreMessage",
+        "MessageFilterOptions"
       ],
       "imports": [],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 69,
+      "linesOfCode": 87,
       "description": "Filtro anti-ruído via regex para ignorar mensagens sociais no WhatsApp"
     },
     {
@@ -1026,24 +1028,6 @@
       "type": "component",
       "linesOfCode": 268,
       "description": "React Component | Exports: ImoveisMatchPanel"
-    },
-    {
-      "path": "src/lib/engine/hitlManager.ts",
-      "rank": 0.0009,
-      "layer": "engine",
-      "exports": [
-        "ApprovalRequest",
-        "HITLManager"
-      ],
-      "imports": [
-        "src/lib/supabase.ts",
-        "src/lib/mockDb.ts",
-        "src/lib/whatsapp.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 137,
-      "description": "Exports: ApprovalRequest, HITLManager"
     },
     {
       "path": "src/lib/engine/recommendImovelsMock.ts",
@@ -1271,23 +1255,22 @@
       "description": "Usa LLM | Exports: AgenticResult, AgenticEngine"
     },
     {
-      "path": "src/lib/engine/aiExtractor.ts",
+      "path": "src/lib/engine/hitlManager.ts",
       "rank": 0.0008,
       "layer": "engine",
       "exports": [
-        "extractLeadWithAI",
-        "AILeadProfile"
+        "ApprovalRequest",
+        "HITLManager"
       ],
       "imports": [
-        "src/lib/engine/aiUtils.ts",
-        "src/lib/engine/modelRouter.ts",
         "src/lib/supabase.ts",
-        "src/lib/mockDb.ts"
+        "src/lib/mockDb.ts",
+        "src/lib/whatsapp.ts"
       ],
-      "usesAI": true,
+      "usesAI": false,
       "type": "module",
-      "linesOfCode": 134,
-      "description": "Extrai perfil estruturado de mensagens WhatsApp com feedback loop da tabela ai_feedback"
+      "linesOfCode": 137,
+      "description": "Exports: ApprovalRequest, HITLManager"
     },
     {
       "path": "src/lib/engine/leadMemoryCompressor.ts",
@@ -1898,12 +1881,32 @@
         "src/lib/engine/recommendImoveis.ts",
         "src/lib/whatsapp/interactiveMessages.ts",
         "src/lib/knowledge/realEstateGraph.ts",
-        "src/lib/engine/hitlManager.ts"
+        "src/lib/engine/hitlManager.ts",
+        "src/lib/utils/timezone.ts"
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 529,
+      "linesOfCode": 548,
       "description": "Exports: ToolDefinition, ToolExecutionContext, AgenticTools"
+    },
+    {
+      "path": "src/lib/engine/aiExtractor.ts",
+      "rank": 0.0007,
+      "layer": "engine",
+      "exports": [
+        "extractLeadWithAI",
+        "AILeadProfile"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts",
+        "src/lib/engine/modelRouter.ts",
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 134,
+      "description": "Extrai perfil estruturado de mensagens WhatsApp com feedback loop da tabela ai_feedback"
     },
     {
       "path": "src/lib/engine/audioTranscriber.ts",
@@ -1951,7 +1954,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 159,
+      "linesOfCode": 161,
       "description": "Exports: ContextBuildOptions, BuiltContext, ContextEngine"
     },
     {
@@ -2058,6 +2061,27 @@
       "type": "module",
       "linesOfCode": 743,
       "description": "Exports: montarDadosAutorizacao, gerarHTMLAutorizacao, QualificacaoParte"
+    },
+    {
+      "path": "src/lib/utils/timezone.ts",
+      "rank": 0.0007,
+      "layer": "utils",
+      "exports": [
+        "tzForCountry",
+        "getZonedParts",
+        "getTzOffsetMinutes",
+        "zonedDate",
+        "addLocalDays",
+        "formatSlotLabel",
+        "hourKey",
+        "DEFAULT_TZ",
+        "ZonedParts"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 77,
+      "description": "Exports: tzForCountry, getZonedParts, getTzOffsetMinutes"
     },
     {
       "path": "src/proxy.ts",
@@ -3924,7 +3948,7 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 952,
+      "linesOfCode": 982,
       "description": "API Route | Exports: POST, GET, maxDuration"
     },
     {
@@ -4761,6 +4785,11 @@
     {
       "from": "src/lib/engine/agenticTools.ts",
       "to": "src/lib/engine/hitlManager.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/agenticTools.ts",
+      "to": "src/lib/utils/timezone.ts",
       "type": "import"
     },
     {
