@@ -38,9 +38,12 @@ export async function GET(request: Request) {
   let activeModules = subscription?.planos?.modulos;
 
   if (!activeModules) {
-    if (data.plano === 'premium') activeModules = ['crm', 'dashboard', 'inventario', 'operacao', 'locacao', 'sistema'];
-    else if (data.plano === 'pro') activeModules = ['crm', 'dashboard', 'inventario', 'operacao'];
-    else activeModules = ['crm', 'dashboard', 'sistema'];
+    if (data.plano === 'enterprise' || data.plano === 'premium') {
+      activeModules = ['crm', 'dashboard', 'inventario', 'operacao', 'locacao', 'sistema'];
+    } else {
+      // Foco Corretor Autônomo: libera CRM, Inventário (Captação por Áudio) e Operação (Agenda), mantendo Locação congelada
+      activeModules = ['crm', 'dashboard', 'inventario', 'operacao', 'sistema'];
+    }
   }
 
   // Flatten plan data for easier frontend consumption

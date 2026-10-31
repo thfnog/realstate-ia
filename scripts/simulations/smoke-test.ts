@@ -1,4 +1,4 @@
-﻿import * as fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 
 try {
@@ -34,6 +34,9 @@ import { buscarImoveisComparaveis, calcularEstatisticasCMA } from '../../src/lib
 import { mercadoCache } from '../../src/lib/imoveis/mercadoCache';
 import { montarDadosAutorizacao, gerarHTMLAutorizacao } from '../../src/lib/imoveis/autorizacaoCaptacao';
 import { generateGoogleCalendarUrl } from '../../src/app/api/calendar/google/route';
+import { checkAndRegisterGroup, saveBotSettings, getBotSettings } from '../../src/lib/botSettings';
+import { processGroupRadarMessage } from '../../src/lib/engine/groupRadarEngine';
+import { shouldIgnoreMessage } from '../../src/lib/messageFilter';
 
 interface SmokeTestResult {
   module: string;
@@ -314,6 +317,100 @@ async function runSmokeTest() {
       name: 'Geração de Link Direto Google Agenda & Sincronização iCal',
       status: 'FAIL',
       latencyMs: Date.now() - t7Start,
+      details: `Erro: ${err.message}`
+    });
+  }
+
+  // 8. Radar de Grupos (Allowlist + Oferta vs Demanda)
+  console.log('🔹 [8/9] Testando Allowlist de Grupos & Radar Oferta vs. Demanda...');
+  const t8Start = Date.now();
+  try {
+    const imobId = mockDb.DEFAULT_IMOBILIARIA_ID;
+    await saveBotSettings(imobId, {
+      group_filter_mode: 'allowlist',
+      monitored_groups: [{ jid: 'grupo-parceiros@g.us', name: 'Parceiros SP', enabled: true }],
+      custom_rules: 'Atendo apenas Zona Sul de SP, aceito permuta até 30%.'
+    });
+
+    const blockedCheck = await checkAndRegisterGroup({
+      imobiliariaId: imobId,
+      groupJid: 'grupo-familia@g.us',
+      groupName: 'Família Nogueira'
+    });
+    const allowedCheck = await checkAndRegisterGroup({
+      imobiliariaId: imobId,
+      groupJid: 'grupo-parceiros@g.us',
+      groupName: 'Parceiros SP'
+    });
+
+    const radarOffer = await processGroupRadarMessage({
+      imobiliariaId: imobId,
+      groupJid: 'grupo-parceiros@g.us',
+      groupName: 'Parceiros SP',
+      senderName: 'Corretor Roberto',
+      senderPhone: '5511977776666',
+      text: 'Vendo apartamento reformado em Moema, 3 quartos, R$ 950.000, direto com proprietário, parceria 50/50',
+      extracted: {
+        is_lead: false,
+        tipo_mensagem_grupo: 'oferta_imovel',
+        classificacao: 'corretor_parceiro',
+        tipo_interesse: 'apartamento',
+        freguesia: 'Moema',
+        quartos: 3,
+        orcamento: 950000,
+        finalidade: 'comprar'
+      }
+    });
+
+    const isRadarValid =
+      blockedCheck.allowed === false &&
+      allowedCheck.allowed === true &&
+      radarOffer.handled === true &&
+      radarOffer.action === 'created_offer_opportunity';
+
+    results.push({
+      module: '8. Radar de Grupos WhatsApp',
+      name: 'Allowlist Anti-Ruído & Separação Oferta vs. Demanda',
+      status: isRadarValid ? 'PASS' : 'FAIL',
+      latencyMs: Date.now() - t8Start,
+      details: `Grupo família bloqueado (${!blockedCheck.allowed}), Parceiros liberado (${allowedCheck.allowed}), Oferta registrada em Oportunidades (#${radarOffer.oportunidadeId})`
+    });
+  } catch (err: any) {
+    results.push({
+      module: '8. Radar de Grupos WhatsApp',
+      name: 'Allowlist Anti-Ruído & Separação Oferta vs. Demanda',
+      status: 'FAIL',
+      latencyMs: Date.now() - t8Start,
+      details: `Erro: ${err.message}`
+    });
+  }
+
+  // 9. Filtro Inteligente de Respostas Curtas & Regras Personalizadas do Corretor
+  console.log('🔹 [9/9] Testando Filtro de Respostas Curtas ("1", "ok") & Regras IA...');
+  const t9Start = Date.now();
+  try {
+    const numericIgnored = shouldIgnoreMessage('1');
+    const knownContactOkIgnored = shouldIgnoreMessage('fechado', { knownContact: true });
+    const botSettings = await getBotSettings(mockDb.DEFAULT_IMOBILIARIA_ID);
+
+    const isFilterValid =
+      numericIgnored === false &&
+      knownContactOkIgnored === false &&
+      botSettings.custom_rules.includes('permuta');
+
+    results.push({
+      module: '9. Motor Bot v3 & Regras',
+      name: 'Seleção Numérica ("1"), Contexto de Lead Ativo & Regras do Corretor',
+      status: isFilterValid ? 'PASS' : 'FAIL',
+      latencyMs: Date.now() - t9Start,
+      details: `Resposta "1" liberada, confirmação "fechado" liberada para lead ativo, regras customizadas carregadas.`
+    });
+  } catch (err: any) {
+    results.push({
+      module: '9. Motor Bot v3 & Regras',
+      name: 'Seleção Numérica ("1"), Contexto de Lead Ativo & Regras do Corretor',
+      status: 'FAIL',
+      latencyMs: Date.now() - t9Start,
       details: `Erro: ${err.message}`
     });
   }

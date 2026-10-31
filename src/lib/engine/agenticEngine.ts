@@ -12,6 +12,7 @@ import { AgenticTools, ToolExecutionContext } from './agenticTools';
 import { ModelRouter } from './modelRouter';
 import { JITRetriever } from '@/lib/knowledge/jitRetriever';
 import { LeadMemoryCompressor } from './leadMemoryCompressor';
+import { getBotSettings } from '@/lib/botSettings';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Lead } from '@/lib/database.types';
 
@@ -51,33 +52,41 @@ export class AgenticEngine {
       console.log(`🧠 [AgenticEngine] JIT Entidades detectadas:`, jitResult.entitiesDetected.join(', '));
     }
 
-    // 1. Continuous Long-term Lead Memory
-    let leadMemory = '';
-    if (history.length >= 4) {
-      leadMemory = await LeadMemoryCompressor.compressLeadMemory(lead.id, history);
-    }
+    // 1. Continuous Long-term Lead Memory & Custom Broker Rules
+    const [leadMemory, botSettings] = await Promise.all([
+      history.length >= 4 ? LeadMemoryCompressor.compressLeadMemory(lead.id, history) : Promise.resolve(''),
+      getBotSettings(imobiliariaId)
+    ]);
 
-    // 2. Build prioritized context with JIT snippet and Memory Hook
+    // 2. Build prioritized context with JIT snippet, Memory Hook and Custom Broker Rules
     const builtContext = ContextEngine.buildContext({
       lead,
       brokerName: brokerName || 'Corretor',
       history,
       jitSnippet: jitResult.retrievedSnippet,
       leadMemory,
+      customRules: botSettings.custom_rules,
       maxHistoryTurns: 6
     });
 
     console.log(`📊 [AgenticEngine] Tokens estimados no contexto: ~${builtContext.totalTokensEstimated}`);
 
-    // 2. Assemble ReAct messages
+    // 3. Assemble ReAct messages (deduplicating current user message if already saved in history)
     const messages: any[] = [
       { role: 'system', content: builtContext.systemPrompt }
     ];
 
-    // Append recent history
     const sortedHistory = [...history]
       .sort((a, b) => new Date(a.criado_em || 0).getTime() - new Date(b.criado_em || 0).getTime())
       .slice(-6);
+
+    if (
+      sortedHistory.length > 0 &&
+      sortedHistory[sortedHistory.length - 1].direction === 'inbound' &&
+      (sortedHistory[sortedHistory.length - 1].message_text || '').trim() === userText.trim()
+    ) {
+      sortedHistory.pop();
+    }
 
     for (const h of sortedHistory) {
       messages.push({

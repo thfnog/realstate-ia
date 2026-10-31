@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-31T20:16:47.640Z",
+  "generated": "2026-10-31T20:35:09.980Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
-    "totalFiles": 234,
-    "totalEdges": 572,
-    "totalExports": 546,
-    "aiModules": 16,
+    "totalFiles": 238,
+    "totalEdges": 585,
+    "totalExports": 559,
+    "aiModules": 15,
     "layers": 11
   },
   "layers": {
@@ -22,6 +22,7 @@
         "src/lib/slack.ts",
         "src/lib/messageFilter.ts",
         "src/lib/knowledge/realEstateGraph.ts",
+        "src/lib/botSettings.ts",
         "src/lib/knowledge/jitRetriever.ts",
         "src/lib/rateLimit.ts",
         "src/lib/api-utils.ts"
@@ -43,29 +44,30 @@
         "src/components/LoadingSkeleton.tsx",
         "src/components/PlanGuard.tsx",
         "src/components/corretores/WhatsAppConnector.tsx",
-        "src/components/config/PreferencesCard.tsx",
         "src/components/imoveis/ImovelForm.tsx",
         "src/components/leads/KanbanBoard.tsx",
         "src/components/crm/LiveChatInbox.tsx",
+        "src/components/config/BotGroupSettingsCard.tsx",
+        "src/components/config/PreferencesCard.tsx",
         "src/components/imoveis/ImovelDetalhesView.tsx",
         "src/components/imoveis/MapPicker.tsx",
         "src/components/imoveis/MercadoIndicador.tsx",
-        "src/components/leads/ImoveisMatchPanel.tsx",
         "src/components/CommandPalette.tsx",
         "src/components/corretores/BrokerOnboarding.tsx",
         "src/components/crm/ClienteDetailDrawer.tsx",
-        "src/components/imoveis/ImovelGaleria.tsx",
         "src/components/imoveis/ImovelMatchingLeads.tsx",
         "src/components/imoveis/PhotoUploadZone.tsx",
-        "src/components/imoveis/PropostaModal.tsx",
-        "src/components/imoveis/SaleModal.tsx",
         "src/components/layout/NotificationBell.tsx",
         "src/components/layout/WhatsAppHealthBanner.tsx",
-        "src/components/admin/alugueis/PropostaDetalhesModal.tsx",
+        "src/components/leads/ImoveisMatchPanel.tsx",
+        "src/components/imoveis/ImovelGaleria.tsx",
+        "src/components/imoveis/PropostaModal.tsx",
+        "src/components/imoveis/SaleModal.tsx",
         "src/components/leads/AgendaModal.tsx",
         "src/components/leads/LeadsHeader.tsx",
         "src/components/leads/ManualLeadModal.tsx",
         "src/components/leads/TableView.tsx",
+        "src/components/admin/alugueis/PropostaDetalhesModal.tsx",
         "src/components/imoveis/MapImplementation.tsx"
       ]
     },
@@ -99,41 +101,35 @@
       "files": [
         "src/lib/engine/aiUtils.ts",
         "src/lib/engine/recommendImoveis.ts",
-        "src/lib/engine/modelRouter.ts",
         "src/lib/engine/assignCorretor.ts",
+        "src/lib/engine/modelRouter.ts",
         "src/lib/engine/dailyBriefing.ts",
         "src/lib/engine/sync/index.ts",
         "src/lib/engine/sync/providers/widesys.ts",
+        "src/lib/engine/agenticEngine.ts",
         "src/lib/engine/recommendImovelsMock.ts",
         "src/lib/engine/webhookProcessor.ts",
-        "src/lib/engine/agenticEngine.ts",
+        "src/lib/engine/aiExtractor.ts",
         "src/lib/engine/hitlManager.ts",
         "src/lib/engine/leadMemoryCompressor.ts",
         "src/lib/engine/leadReactivationEngine.ts",
-        "src/lib/engine/portalEmailParser.ts",
         "src/lib/engine/reverseMatching.ts",
         "src/lib/engine/sendBriefing.ts",
         "src/lib/engine/agenticTools.ts",
-        "src/lib/engine/aiExtractor.ts",
         "src/lib/engine/audioTranscriber.ts",
         "src/lib/engine/checkCarteira.ts",
         "src/lib/engine/contextEngine.ts",
         "src/lib/engine/conversationEngine.ts",
-        "src/lib/engine/leadClassifier.ts",
+        "src/lib/engine/portalEmailParser.ts",
         "src/lib/engine/processLead.ts",
         "src/lib/engine/sendAutoReply.ts",
         "src/lib/engine/aiScheduler.ts",
         "src/lib/engine/captacaoEngine.ts",
         "src/lib/engine/extractLeadFromText.ts",
+        "src/lib/engine/groupRadarEngine.ts",
+        "src/lib/engine/leadClassifier.ts",
         "src/lib/engine/onboardingEngine.ts",
         "src/lib/engine/processLeadMock.ts"
-      ]
-    },
-    "ingest": {
-      "description": "Ingestão de leads via e-mail e portais",
-      "files": [
-        "src/lib/ingest/emailParser.ts",
-        "src/lib/ingest/email/parser.ts"
       ]
     },
     "utils": {
@@ -142,14 +138,6 @@
         "src/lib/utils/documentGenerator.ts",
         "src/lib/utils/format.ts",
         "src/lib/utils/timezone.ts"
-      ]
-    },
-    "whatsapp": {
-      "description": "Formatação de mensagens interativas WhatsApp",
-      "files": [
-        "src/lib/whatsapp/interactiveMessages.ts",
-        "src/lib/whatsapp/messageDebouncer.ts",
-        "src/lib/whatsapp/voiceGenerator.ts"
       ]
     },
     "pages": {
@@ -201,6 +189,21 @@
         "src/app/admin/imoveis/[id]/laudo/page.tsx"
       ]
     },
+    "ingest": {
+      "description": "Ingestão de leads via e-mail e portais",
+      "files": [
+        "src/lib/ingest/emailParser.ts",
+        "src/lib/ingest/email/parser.ts"
+      ]
+    },
+    "whatsapp": {
+      "description": "Formatação de mensagens interativas WhatsApp",
+      "files": [
+        "src/lib/whatsapp/interactiveMessages.ts",
+        "src/lib/whatsapp/messageDebouncer.ts",
+        "src/lib/whatsapp/voiceGenerator.ts"
+      ]
+    },
     "other": {
       "description": "Outros arquivos",
       "files": [
@@ -225,6 +228,7 @@
         "src/app/api/stats/route.ts",
         "src/app/api/vendas/route.ts",
         "src/app/api/admin/billing/route.ts",
+        "src/app/api/admin/bot-settings/route.ts",
         "src/app/api/admin/integrations/route.ts",
         "src/app/api/admin/propostas/route.ts",
         "src/app/api/admin/purge/route.ts",
@@ -302,7 +306,7 @@
   "nodes": [
     {
       "path": "src/lib/database.types.ts",
-      "rank": 0.0558,
+      "rank": 0.0557,
       "layer": "infrastructure",
       "exports": [
         "Imobiliaria",
@@ -356,7 +360,7 @@
     },
     {
       "path": "src/lib/mockDb.ts",
-      "rank": 0.0448,
+      "rank": 0.0454,
       "layer": "infrastructure",
       "exports": [
         "isMockMode",
@@ -434,7 +438,7 @@
     },
     {
       "path": "src/lib/supabase.ts",
-      "rank": 0.0264,
+      "rank": 0.0265,
       "layer": "infrastructure",
       "exports": [
         "getUserSupabaseClient",
@@ -470,7 +474,7 @@
     },
     {
       "path": "src/lib/imoveis/referencia.ts",
-      "rank": 0.0133,
+      "rank": 0.0135,
       "layer": "imoveis-utils",
       "exports": [
         "gerarReferencia"
@@ -503,7 +507,7 @@
     },
     {
       "path": "src/lib/imoveis/mercado.ts",
-      "rank": 0.0072,
+      "rank": 0.0071,
       "layer": "imoveis-utils",
       "exports": [
         "getMedianoRegiao",
@@ -521,7 +525,7 @@
     },
     {
       "path": "src/lib/imoveis/mercadoCache.ts",
-      "rank": 0.007,
+      "rank": 0.0069,
       "layer": "imoveis-utils",
       "exports": [
         "buildMedianoCacheKey",
@@ -538,7 +542,7 @@
     },
     {
       "path": "src/components/LoadingSkeleton.tsx",
-      "rank": 0.0068,
+      "rank": 0.0067,
       "layer": "components",
       "exports": [
         "LoadingSkeleton",
@@ -552,7 +556,7 @@
     },
     {
       "path": "src/lib/repositories/types.ts",
-      "rank": 0.0066,
+      "rank": 0.0065,
       "layer": "repositories",
       "exports": [
         "PaginationParams",
@@ -623,7 +627,7 @@
     },
     {
       "path": "src/lib/engine/aiUtils.ts",
-      "rank": 0.0038,
+      "rank": 0.0037,
       "layer": "engine",
       "exports": [
         "parseSafeJSON",
@@ -640,10 +644,11 @@
     },
     {
       "path": "src/lib/whatsapp.ts",
-      "rank": 0.0034,
+      "rank": 0.0035,
       "layer": "infrastructure",
       "exports": [
         "fetchInstanceStatus",
+        "fetchInstanceGroups",
         "sendWhatsAppMessage",
         "fetchInstanceOwner",
         "saveMessageToHistory",
@@ -657,7 +662,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 387,
+      "linesOfCode": 418,
       "description": "Cliente Evolution API/Twilio para envio de mensagens e download de mídia"
     },
     {
@@ -706,23 +711,6 @@
       "description": "Scoring ponderado: tipo(+5) quartos(+4) orçamento±15%(+4) bairro(+3) área(+2) vagas(+1)"
     },
     {
-      "path": "src/lib/engine/modelRouter.ts",
-      "rank": 0.0014,
-      "layer": "engine",
-      "exports": [
-        "TaskType",
-        "RouteConfig",
-        "ModelRouter"
-      ],
-      "imports": [
-        "src/lib/engine/aiUtils.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 112,
-      "description": "Exports: TaskType, RouteConfig, ModelRouter"
-    },
-    {
       "path": "src/lib/engine/assignCorretor.ts",
       "rank": 0.0013,
       "layer": "engine",
@@ -738,6 +726,23 @@
       "type": "module",
       "linesOfCode": 80,
       "description": "Atribuição de corretor via escala de plantão ou round-robin fallback"
+    },
+    {
+      "path": "src/lib/engine/modelRouter.ts",
+      "rank": 0.0013,
+      "layer": "engine",
+      "exports": [
+        "TaskType",
+        "RouteConfig",
+        "ModelRouter"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 112,
+      "description": "Exports: TaskType, RouteConfig, ModelRouter"
     },
     {
       "path": "src/lib/billing.ts",
@@ -769,19 +774,6 @@
       "type": "module",
       "linesOfCode": 76,
       "description": "Exports: sendSlackNotification, SlackNotificationType"
-    },
-    {
-      "path": "src/components/config/PreferencesCard.tsx",
-      "rank": 0.0012,
-      "layer": "components",
-      "exports": [
-        "PreferencesCard"
-      ],
-      "imports": [],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 148,
-      "description": "React Component | Exports: PreferencesCard"
     },
     {
       "path": "src/components/imoveis/ImovelForm.tsx",
@@ -935,27 +927,6 @@
       "description": "React Component | Exports: LiveChatInbox, ChatMessage, LiveChatInboxProps"
     },
     {
-      "path": "src/components/imoveis/ImovelDetalhesView.tsx",
-      "rank": 0.001,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/countryConfig.ts",
-        "src/components/imoveis/MercadoIndicador.tsx",
-        "src/components/imoveis/MapPicker.tsx",
-        "src/components/imoveis/ImovelGaleria.tsx",
-        "src/components/imoveis/SaleModal.tsx",
-        "src/components/imoveis/PropostaModal.tsx"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 396,
-      "description": "React Component | Exports: default"
-    },
-    {
       "path": "src/lib/engine/sync/providers/widesys.ts",
       "rank": 0.001,
       "layer": "engine",
@@ -984,6 +955,53 @@
       "type": "module",
       "linesOfCode": 87,
       "description": "Filtro anti-ruído via regex para ignorar mensagens sociais no WhatsApp"
+    },
+    {
+      "path": "src/components/config/BotGroupSettingsCard.tsx",
+      "rank": 0.0009,
+      "layer": "components",
+      "exports": [
+        "BotGroupSettingsCard"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 337,
+      "description": "React Component | Exports: BotGroupSettingsCard"
+    },
+    {
+      "path": "src/components/config/PreferencesCard.tsx",
+      "rank": 0.0009,
+      "layer": "components",
+      "exports": [
+        "PreferencesCard"
+      ],
+      "imports": [],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 148,
+      "description": "React Component | Exports: PreferencesCard"
+    },
+    {
+      "path": "src/components/imoveis/ImovelDetalhesView.tsx",
+      "rank": 0.0009,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts",
+        "src/components/imoveis/MercadoIndicador.tsx",
+        "src/components/imoveis/MapPicker.tsx",
+        "src/components/imoveis/ImovelGaleria.tsx",
+        "src/components/imoveis/SaleModal.tsx",
+        "src/components/imoveis/PropostaModal.tsx"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 396,
+      "description": "React Component | Exports: default"
     },
     {
       "path": "src/components/imoveis/MapPicker.tsx",
@@ -1015,19 +1033,28 @@
       "description": "React Component | Exports: default"
     },
     {
-      "path": "src/components/leads/ImoveisMatchPanel.tsx",
+      "path": "src/lib/engine/agenticEngine.ts",
       "rank": 0.0009,
-      "layer": "components",
+      "layer": "engine",
       "exports": [
-        "ImoveisMatchPanel"
+        "AgenticResult",
+        "AgenticEngine"
       ],
       "imports": [
+        "src/lib/engine/aiUtils.ts",
+        "src/lib/engine/contextEngine.ts",
+        "src/lib/engine/agenticTools.ts",
+        "src/lib/engine/modelRouter.ts",
+        "src/lib/knowledge/jitRetriever.ts",
+        "src/lib/engine/leadMemoryCompressor.ts",
+        "src/lib/botSettings.ts",
+        "src/lib/supabase.ts",
         "src/lib/database.types.ts"
       ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 268,
-      "description": "React Component | Exports: ImoveisMatchPanel"
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 228,
+      "description": "Usa LLM | Exports: AgenticResult, AgenticEngine"
     },
     {
       "path": "src/lib/engine/recommendImovelsMock.ts",
@@ -1098,6 +1125,26 @@
       "description": "React Component | Exports: CommandPalette"
     },
     {
+      "path": "src/lib/botSettings.ts",
+      "rank": 0.0008,
+      "layer": "infrastructure",
+      "exports": [
+        "getBotSettings",
+        "saveBotSettings",
+        "checkAndRegisterGroup",
+        "MonitoredGroup",
+        "BotSettings"
+      ],
+      "imports": [
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 182,
+      "description": "Exports: getBotSettings, saveBotSettings, checkAndRegisterGroup"
+    },
+    {
       "path": "src/components/corretores/BrokerOnboarding.tsx",
       "rank": 0.0008,
       "layer": "components",
@@ -1130,21 +1177,6 @@
       "description": "React Component | Exports: ClienteDetailDrawer"
     },
     {
-      "path": "src/components/imoveis/ImovelGaleria.tsx",
-      "rank": 0.0008,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 191,
-      "description": "React Component | Exports: default"
-    },
-    {
       "path": "src/components/imoveis/ImovelMatchingLeads.tsx",
       "rank": 0.0008,
       "layer": "components",
@@ -1175,37 +1207,6 @@
       "description": "React Component | Exports: default"
     },
     {
-      "path": "src/components/imoveis/PropostaModal.tsx",
-      "rank": 0.0008,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 188,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/components/imoveis/SaleModal.tsx",
-      "rank": 0.0008,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 111,
-      "description": "React Component | Exports: default"
-    },
-    {
       "path": "src/components/layout/NotificationBell.tsx",
       "rank": 0.0008,
       "layer": "components",
@@ -1232,27 +1233,38 @@
       "description": "React Component | Exports: WhatsAppHealthBanner"
     },
     {
-      "path": "src/lib/engine/agenticEngine.ts",
+      "path": "src/components/leads/ImoveisMatchPanel.tsx",
+      "rank": 0.0008,
+      "layer": "components",
+      "exports": [
+        "ImoveisMatchPanel"
+      ],
+      "imports": [
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 268,
+      "description": "React Component | Exports: ImoveisMatchPanel"
+    },
+    {
+      "path": "src/lib/engine/aiExtractor.ts",
       "rank": 0.0008,
       "layer": "engine",
       "exports": [
-        "AgenticResult",
-        "AgenticEngine"
+        "extractLeadWithAI",
+        "AILeadProfile"
       ],
       "imports": [
         "src/lib/engine/aiUtils.ts",
-        "src/lib/engine/contextEngine.ts",
-        "src/lib/engine/agenticTools.ts",
         "src/lib/engine/modelRouter.ts",
-        "src/lib/knowledge/jitRetriever.ts",
-        "src/lib/engine/leadMemoryCompressor.ts",
         "src/lib/supabase.ts",
-        "src/lib/database.types.ts"
+        "src/lib/mockDb.ts"
       ],
       "usesAI": true,
       "type": "module",
-      "linesOfCode": 219,
-      "description": "Usa LLM | Exports: AgenticResult, AgenticEngine"
+      "linesOfCode": 139,
+      "description": "Extrai perfil estruturado de mensagens WhatsApp com feedback loop da tabela ai_feedback"
     },
     {
       "path": "src/lib/engine/hitlManager.ts",
@@ -1315,27 +1327,6 @@
       "description": "Usa LLM | Exports: generateReactivationMessage, findReactivationOpportunities, sendReactivationMessage"
     },
     {
-      "path": "src/lib/engine/portalEmailParser.ts",
-      "rank": 0.0008,
-      "layer": "engine",
-      "exports": [
-        "sanitizeBRPhone",
-        "detectBRPortal",
-        "getPortalLabel",
-        "parsePortalEmail",
-        "portalLeadToLeadData",
-        "BRPortalType",
-        "ParsedPortalLead"
-      ],
-      "imports": [
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 329,
-      "description": "Exports: sanitizeBRPhone, detectBRPortal, getPortalLabel"
-    },
-    {
       "path": "src/lib/engine/reverseMatching.ts",
       "rank": 0.0008,
       "layer": "engine",
@@ -1371,24 +1362,6 @@
       "type": "module",
       "linesOfCode": 134,
       "description": "Briefing formatado via WhatsApp para corretor com detalhes do lead e imóveis recomendados"
-    },
-    {
-      "path": "src/lib/ingest/emailParser.ts",
-      "rank": 0.0008,
-      "layer": "ingest",
-      "exports": [
-        "parseIncomingEmails",
-        "emailLeadToCreateData",
-        "ParsedEmailLead",
-        "EmailParseResult"
-      ],
-      "imports": [
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 121,
-      "description": "Exports: parseIncomingEmails, emailLeadToCreateData, ParsedEmailLead"
     },
     {
       "path": "src/lib/knowledge/jitRetriever.ts",
@@ -1703,29 +1676,6 @@
       "description": "Exports: formatCurrency, parseCurrency, maskCurrency"
     },
     {
-      "path": "src/lib/whatsapp/interactiveMessages.ts",
-      "rank": 0.0008,
-      "layer": "whatsapp",
-      "exports": [
-        "buildPropertyMessage",
-        "buildTimeSlotsMessage",
-        "buildQuickReplyMessage",
-        "sendInteractiveButtons",
-        "sendPropertyRecommendations",
-        "sendSchedulingSlots",
-        "getPropertyUrl",
-        "PropertyCard",
-        "TimeSlot"
-      ],
-      "imports": [
-        "src/lib/whatsapp.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 153,
-      "description": "Exports: buildPropertyMessage, buildTimeSlotsMessage, buildQuickReplyMessage"
-    },
-    {
       "path": "src/app/admin/corretores/page.tsx",
       "rank": 0.0008,
       "layer": "pages",
@@ -1756,40 +1706,6 @@
       "description": "React Component | Exports: default"
     },
     {
-      "path": "src/components/admin/alugueis/PropostaDetalhesModal.tsx",
-      "rank": 0.0008,
-      "layer": "components",
-      "exports": [
-        "default"
-      ],
-      "imports": [
-        "src/lib/database.types.ts",
-        "src/lib/countryConfig.ts"
-      ],
-      "usesAI": false,
-      "type": "component",
-      "linesOfCode": 192,
-      "description": "React Component | Exports: default"
-    },
-    {
-      "path": "src/lib/ingest/email/parser.ts",
-      "rank": 0.0008,
-      "layer": "ingest",
-      "exports": [
-        "detectPortal",
-        "parseEmailBody",
-        "PortalType",
-        "ParsedEmailLead"
-      ],
-      "imports": [
-        "src/lib/database.types.ts"
-      ],
-      "usesAI": false,
-      "type": "module",
-      "linesOfCode": 83,
-      "description": "Exports: detectPortal, parseEmailBody, PortalType"
-    },
-    {
       "path": "src/lib/rateLimit.ts",
       "rank": 0.0007,
       "layer": "infrastructure",
@@ -1801,6 +1717,52 @@
       "type": "module",
       "linesOfCode": 38,
       "description": "Exports: checkRateLimit"
+    },
+    {
+      "path": "src/components/imoveis/ImovelGaleria.tsx",
+      "rank": 0.0007,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 191,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/components/imoveis/PropostaModal.tsx",
+      "rank": 0.0007,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 188,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/components/imoveis/SaleModal.tsx",
+      "rank": 0.0007,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 111,
+      "description": "React Component | Exports: default"
     },
     {
       "path": "src/components/leads/AgendaModal.tsx",
@@ -1890,25 +1852,6 @@
       "description": "Exports: ToolDefinition, ToolExecutionContext, AgenticTools"
     },
     {
-      "path": "src/lib/engine/aiExtractor.ts",
-      "rank": 0.0007,
-      "layer": "engine",
-      "exports": [
-        "extractLeadWithAI",
-        "AILeadProfile"
-      ],
-      "imports": [
-        "src/lib/engine/aiUtils.ts",
-        "src/lib/engine/modelRouter.ts",
-        "src/lib/supabase.ts",
-        "src/lib/mockDb.ts"
-      ],
-      "usesAI": true,
-      "type": "module",
-      "linesOfCode": 134,
-      "description": "Extrai perfil estruturado de mensagens WhatsApp com feedback loop da tabela ai_feedback"
-    },
-    {
       "path": "src/lib/engine/audioTranscriber.ts",
       "rank": 0.0007,
       "layer": "engine",
@@ -1954,7 +1897,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 161,
+      "linesOfCode": 167,
       "description": "Exports: ContextBuildOptions, BuiltContext, ContextEngine"
     },
     {
@@ -1971,34 +1914,36 @@
         "EngineAction"
       ],
       "imports": [
-        "src/lib/engine/aiUtils.ts",
         "src/lib/supabase.ts",
-        "src/lib/engine/recommendImoveis.ts",
-        "src/lib/whatsapp/interactiveMessages.ts",
-        "src/lib/database.types.ts",
-        "src/lib/engine/agenticEngine.ts"
+        "src/lib/mockDb.ts",
+        "src/lib/engine/agenticEngine.ts",
+        "src/lib/database.types.ts"
       ],
-      "usesAI": true,
+      "usesAI": false,
       "type": "module",
-      "linesOfCode": 578,
+      "linesOfCode": 216,
       "description": "FSM com 7 estados: greeting → qualifying → recommending → feedback → scheduling → visit_confirmed → human_handoff"
     },
     {
-      "path": "src/lib/engine/leadClassifier.ts",
+      "path": "src/lib/engine/portalEmailParser.ts",
       "rank": 0.0007,
       "layer": "engine",
       "exports": [
-        "classifyLead",
-        "ClassificationResult"
+        "sanitizeBRPhone",
+        "detectBRPortal",
+        "getPortalLabel",
+        "parsePortalEmail",
+        "portalLeadToLeadData",
+        "BRPortalType",
+        "ParsedPortalLead"
       ],
       "imports": [
-        "src/lib/engine/aiUtils.ts",
-        "src/lib/engine/modelRouter.ts"
+        "src/lib/database.types.ts"
       ],
-      "usesAI": true,
+      "usesAI": false,
       "type": "module",
-      "linesOfCode": 70,
-      "description": "Classifica contato: comprador|vendedor|locatario|investidor|corretor_parceiro|proprietario|curioso"
+      "linesOfCode": 329,
+      "description": "Exports: sanitizeBRPhone, detectBRPortal, getPortalLabel"
     },
     {
       "path": "src/lib/engine/processLead.ts",
@@ -2063,6 +2008,24 @@
       "description": "Exports: montarDadosAutorizacao, gerarHTMLAutorizacao, QualificacaoParte"
     },
     {
+      "path": "src/lib/ingest/emailParser.ts",
+      "rank": 0.0007,
+      "layer": "ingest",
+      "exports": [
+        "parseIncomingEmails",
+        "emailLeadToCreateData",
+        "ParsedEmailLead",
+        "EmailParseResult"
+      ],
+      "imports": [
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 121,
+      "description": "Exports: parseIncomingEmails, emailLeadToCreateData, ParsedEmailLead"
+    },
+    {
       "path": "src/lib/utils/timezone.ts",
       "rank": 0.0007,
       "layer": "utils",
@@ -2082,6 +2045,63 @@
       "type": "module",
       "linesOfCode": 77,
       "description": "Exports: tzForCountry, getZonedParts, getTzOffsetMinutes"
+    },
+    {
+      "path": "src/lib/whatsapp/interactiveMessages.ts",
+      "rank": 0.0007,
+      "layer": "whatsapp",
+      "exports": [
+        "buildPropertyMessage",
+        "buildTimeSlotsMessage",
+        "buildQuickReplyMessage",
+        "sendInteractiveButtons",
+        "sendPropertyRecommendations",
+        "sendSchedulingSlots",
+        "getPropertyUrl",
+        "PropertyCard",
+        "TimeSlot"
+      ],
+      "imports": [
+        "src/lib/whatsapp.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 153,
+      "description": "Exports: buildPropertyMessage, buildTimeSlotsMessage, buildQuickReplyMessage"
+    },
+    {
+      "path": "src/components/admin/alugueis/PropostaDetalhesModal.tsx",
+      "rank": 0.0007,
+      "layer": "components",
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "src/lib/database.types.ts",
+        "src/lib/countryConfig.ts"
+      ],
+      "usesAI": false,
+      "type": "component",
+      "linesOfCode": 192,
+      "description": "React Component | Exports: default"
+    },
+    {
+      "path": "src/lib/ingest/email/parser.ts",
+      "rank": 0.0007,
+      "layer": "ingest",
+      "exports": [
+        "detectPortal",
+        "parseEmailBody",
+        "PortalType",
+        "ParsedEmailLead"
+      ],
+      "imports": [
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 83,
+      "description": "Exports: detectPortal, parseEmailBody, PortalType"
     },
     {
       "path": "src/proxy.ts",
@@ -2158,7 +2178,7 @@
       ],
       "usesAI": false,
       "type": "component",
-      "linesOfCode": 310,
+      "linesOfCode": 313,
       "description": "React Component | Exports: default"
     },
     {
@@ -2289,6 +2309,46 @@
       "description": "Exports: extractLeadFromText, ExtractedLeadProfile"
     },
     {
+      "path": "src/lib/engine/groupRadarEngine.ts",
+      "rank": 0.0006,
+      "layer": "engine",
+      "exports": [
+        "processGroupRadarMessage",
+        "GroupRadarInput",
+        "GroupRadarResult"
+      ],
+      "imports": [
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts",
+        "src/lib/repositories/factory.ts",
+        "src/lib/engine/recommendImoveis.ts",
+        "src/lib/whatsapp.ts",
+        "src/lib/engine/aiExtractor.ts",
+        "src/lib/database.types.ts"
+      ],
+      "usesAI": false,
+      "type": "module",
+      "linesOfCode": 301,
+      "description": "Exports: processGroupRadarMessage, GroupRadarInput, GroupRadarResult"
+    },
+    {
+      "path": "src/lib/engine/leadClassifier.ts",
+      "rank": 0.0006,
+      "layer": "engine",
+      "exports": [
+        "classifyLead",
+        "ClassificationResult"
+      ],
+      "imports": [
+        "src/lib/engine/aiUtils.ts",
+        "src/lib/engine/modelRouter.ts"
+      ],
+      "usesAI": true,
+      "type": "module",
+      "linesOfCode": 70,
+      "description": "Classifica contato: comprador|vendedor|locatario|investidor|corretor_parceiro|proprietario|curioso"
+    },
+    {
       "path": "src/lib/engine/onboardingEngine.ts",
       "rank": 0.0006,
       "layer": "engine",
@@ -2411,11 +2471,12 @@
         "default"
       ],
       "imports": [
-        "src/components/config/PreferencesCard.tsx"
+        "src/components/config/PreferencesCard.tsx",
+        "src/components/config/BotGroupSettingsCard.tsx"
       ],
       "usesAI": false,
       "type": "component",
-      "linesOfCode": 635,
+      "linesOfCode": 636,
       "description": "React Component | Exports: default"
     },
     {
@@ -2722,7 +2783,7 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 81,
+      "linesOfCode": 84,
       "description": "API Route | Exports: GET, PATCH"
     },
     {
@@ -3122,6 +3183,27 @@
       "type": "api-route",
       "linesOfCode": 123,
       "description": "API Route | Exports: GET, POST"
+    },
+    {
+      "path": "src/app/api/admin/bot-settings/route.ts",
+      "rank": 0.0006,
+      "layer": "api",
+      "exports": [
+        "GET",
+        "PATCH",
+        "dynamic"
+      ],
+      "imports": [
+        "src/lib/auth.ts",
+        "src/lib/botSettings.ts",
+        "src/lib/whatsapp.ts",
+        "src/lib/supabase.ts",
+        "src/lib/mockDb.ts"
+      ],
+      "usesAI": false,
+      "type": "api-route",
+      "linesOfCode": 129,
+      "description": "API Route | Exports: GET, PATCH, dynamic"
     },
     {
       "path": "src/app/api/admin/integrations/route.ts",
@@ -3940,7 +4022,6 @@
         "src/lib/engine/conversationEngine.ts",
         "src/lib/whatsapp.ts",
         "src/lib/engine/audioTranscriber.ts",
-        "src/lib/engine/leadClassifier.ts",
         "src/lib/repositories/factory.ts",
         "src/lib/engine/assignCorretor.ts",
         "src/lib/engine/hitlManager.ts",
@@ -3948,7 +4029,7 @@
       ],
       "usesAI": false,
       "type": "api-route",
-      "linesOfCode": 982,
+      "linesOfCode": 946,
       "description": "API Route | Exports: POST, GET, maxDuration"
     },
     {
@@ -4458,6 +4539,16 @@
       "type": "import"
     },
     {
+      "from": "src/lib/botSettings.ts",
+      "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/botSettings.ts",
+      "to": "src/lib/mockDb.ts",
+      "type": "import"
+    },
+    {
       "from": "src/lib/mockDb.ts",
       "to": "src/lib/database.types.ts",
       "type": "type-import"
@@ -4744,6 +4835,11 @@
     },
     {
       "from": "src/lib/engine/agenticEngine.ts",
+      "to": "src/lib/botSettings.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/agenticEngine.ts",
       "to": "src/lib/supabase.ts",
       "type": "import"
     },
@@ -4894,33 +4990,23 @@
     },
     {
       "from": "src/lib/engine/conversationEngine.ts",
-      "to": "src/lib/engine/aiUtils.ts",
-      "type": "import"
-    },
-    {
-      "from": "src/lib/engine/conversationEngine.ts",
       "to": "src/lib/supabase.ts",
       "type": "import"
     },
     {
       "from": "src/lib/engine/conversationEngine.ts",
-      "to": "src/lib/engine/recommendImoveis.ts",
+      "to": "src/lib/mockDb.ts",
       "type": "import"
     },
     {
       "from": "src/lib/engine/conversationEngine.ts",
-      "to": "src/lib/whatsapp/interactiveMessages.ts",
+      "to": "src/lib/engine/agenticEngine.ts",
       "type": "import"
     },
     {
       "from": "src/lib/engine/conversationEngine.ts",
       "to": "src/lib/database.types.ts",
       "type": "type-import"
-    },
-    {
-      "from": "src/lib/engine/conversationEngine.ts",
-      "to": "src/lib/engine/agenticEngine.ts",
-      "type": "import"
     },
     {
       "from": "src/lib/engine/dailyBriefing.ts",
@@ -4946,6 +5032,41 @@
       "from": "src/lib/engine/extractLeadFromText.ts",
       "to": "src/lib/database.types.ts",
       "type": "import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/mockDb.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/repositories/factory.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/engine/recommendImoveis.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/whatsapp.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/engine/aiExtractor.ts",
+      "type": "type-import"
+    },
+    {
+      "from": "src/lib/engine/groupRadarEngine.ts",
+      "to": "src/lib/database.types.ts",
+      "type": "type-import"
     },
     {
       "from": "src/lib/engine/hitlManager.ts",
@@ -5693,6 +5814,11 @@
       "type": "import"
     },
     {
+      "from": "src/app/admin/config/page.tsx",
+      "to": "src/components/config/BotGroupSettingsCard.tsx",
+      "type": "import"
+    },
+    {
       "from": "src/app/admin/contratos/page.tsx",
       "to": "src/components/LoadingSkeleton.tsx",
       "type": "import"
@@ -6255,6 +6381,31 @@
     {
       "from": "src/app/api/admin/billing/route.ts",
       "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/admin/bot-settings/route.ts",
+      "to": "src/lib/auth.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/admin/bot-settings/route.ts",
+      "to": "src/lib/botSettings.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/admin/bot-settings/route.ts",
+      "to": "src/lib/whatsapp.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/admin/bot-settings/route.ts",
+      "to": "src/lib/supabase.ts",
+      "type": "import"
+    },
+    {
+      "from": "src/app/api/admin/bot-settings/route.ts",
+      "to": "src/lib/mockDb.ts",
       "type": "import"
     },
     {
@@ -6879,11 +7030,6 @@
     },
     {
       "from": "src/app/api/webhooks/whatsapp/route.ts",
-      "to": "src/lib/engine/leadClassifier.ts",
-      "type": "import"
-    },
-    {
-      "from": "src/app/api/webhooks/whatsapp/route.ts",
       "to": "src/lib/repositories/factory.ts",
       "type": "import"
     },
@@ -7341,7 +7487,6 @@
       "description": "FSM que mantém diálogo multi-turno via WhatsApp com recomendação e agendamento",
       "chain": [
         "src/lib/engine/conversationEngine.ts",
-        "src/lib/engine/aiUtils.ts",
         "src/lib/supabase.ts",
         "src/lib/mockDb.ts",
         "src/lib/database.types.ts"

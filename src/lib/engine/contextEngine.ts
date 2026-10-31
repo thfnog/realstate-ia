@@ -21,6 +21,7 @@ export interface ContextBuildOptions {
   recommendedProperties?: Imovel[];
   jitSnippet?: string;
   leadMemory?: string;
+  customRules?: string;
   maxHistoryTurns?: number;
 }
 
@@ -54,6 +55,7 @@ export class ContextEngine {
       recommendedProperties = [],
       jitSnippet = '',
       leadMemory = '',
+      customRules = '',
       maxHistoryTurns = 8
     } = options;
 
@@ -62,6 +64,10 @@ export class ContextEngine {
     const todayISO = today.toISOString().split('T')[0];
     const weekdays = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
     const todayWeekday = weekdays[today.getDay()];
+
+    const customRulesSection = customRules?.trim()
+      ? `\nDIRETRIZES E REGRAS PERSONALIZADAS DO CORRETOR:\n${customRules.trim()}\n`
+      : '';
 
     // --- Layer 1: Persona & Regionalization Rules ---
     const layer1 = `
@@ -81,7 +87,7 @@ REGRAS DE OURO DE ATENDIMENTO E GROUNDING (ANTI-ALUCINAÇÃO):
 - Se o cliente perguntar detalhes de um imóvel (ex: condomínio, aceita pet, vaga, andar), use a ferramenta 'get_property_details' para responder com precisão.
 - Se o cliente tiver dúvidas de financiamento ou parcelas, use 'simulate_financing'.
 - Se o cliente demonstrar interesse em visitar ou escolher um horário, consulte a agenda com 'check_available_slots' e confirme com 'book_visit'.
-- Ao confirmar visita, sempre mencione o endereço retornado pelo sistema.
+- Ao confirmar visita, sempre mencione o endereço retornado pelo sistema.${customRulesSection}
 `;
 
     // --- Layer 2: Lead Criteria & Requirements ---

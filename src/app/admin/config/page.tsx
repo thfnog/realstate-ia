@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PreferencesCard } from '@/components/config/PreferencesCard';
+import { BotGroupSettingsCard } from '@/components/config/BotGroupSettingsCard';
 import { 
   IoBusinessOutline, 
   IoChatbubbleEllipsesOutline, 
@@ -26,7 +27,7 @@ interface ChannelConfig {
 type TabType = 'agencia' | 'atendimento' | 'canais' | 'integracoes' | 'avancado';
 
 export default function ConfigPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('agencia');
+  const [activeTab, setActiveTab] = useState<TabType>('atendimento');
   const [user, setUser] = useState<{ app_role: string; corretor_id: string | null } | null>(null);
   const [countryMode, setCountryMode] = useState<'PT' | 'BR'>('PT');
   const [imobId, setImobId] = useState<string>('');
@@ -123,9 +124,9 @@ export default function ConfigPage() {
   }
 
   const menuItems = [
-    { id: 'agencia', label: 'Agência', icon: IoBusinessOutline, desc: 'Identidade e perfil' },
-    { id: 'atendimento', label: 'Atendimento', icon: IoTimeOutline, desc: 'Horários e Automação' },
-    { id: 'canais', label: 'Canais', icon: IoLayersOutline, desc: 'Entrada de leads' },
+    { id: 'atendimento', label: 'Bot IA & Grupos', icon: IoChatbubbleEllipsesOutline, desc: 'Regras, Grupos e Horários' },
+    { id: 'agencia', label: 'Meu Perfil / Agência', icon: IoBusinessOutline, desc: 'Identidade e notificações' },
+    { id: 'canais', label: 'Canais de Entrada', icon: IoLayersOutline, desc: 'Portais e Formulário' },
     { id: 'integracoes', label: 'Integrações', icon: IoLinkOutline, desc: 'Widesys e Diagnóstico' },
     { id: 'avancado', label: 'Avançado', icon: IoShieldOutline, desc: 'Sistema e Segurança' },
   ];
@@ -235,8 +236,9 @@ export default function ConfigPage() {
           {/* 🤖 ATENDIMENTO TAB */}
           {activeTab === 'atendimento' && (
             <div className="space-y-8">
-               {activeModules.includes('bot') && (
-                 <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
+               <BotGroupSettingsCard />
+
+               <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
                    <div className="flex items-center justify-between mb-10">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100">
@@ -301,8 +303,7 @@ export default function ConfigPage() {
                          <strong>Nota:</strong> O bot usará estas janelas para procurar espaços vazios na agenda dos corretores e sugerir opções aos leads. Fora deste horário, o bot informará que o atendimento humano retornará no próximo período.
                       </p>
                    </div>
-                 </div>
-               )}
+               </div>
 
                <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-xl shadow-slate-200/40">
                   <div className="flex items-center justify-between mb-10">

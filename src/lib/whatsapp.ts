@@ -75,6 +75,37 @@ export async function fetchInstanceStatus(instanceName: string): Promise<'open' 
 }
 
 /**
+ * Fetches all WhatsApp groups the instance participates in via Evolution API
+ */
+export async function fetchInstanceGroups(instanceName: string): Promise<Array<{ jid: string; name: string }>> {
+  if (PROVIDER === 'mock' || !EVOLUTION_URL || !EVOLUTION_API_KEY || !instanceName) {
+    return [];
+  }
+
+  try {
+    const res = await fetch(getUrl(`/group/fetchAllGroups/${instanceName}?getParticipants=false`), {
+      method: 'GET',
+      headers: {
+        'apikey': EVOLUTION_API_KEY
+      }
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    const groups = Array.isArray(data) ? data : (data.groups || []);
+    return groups
+      .filter((g: any) => g && (g.id || g.jid))
+      .map((g: any) => ({
+        jid: String(g.id || g.jid),
+        name: String(g.subject || g.name || g.id || 'Grupo sem nome')
+      }));
+  } catch (err) {
+    console.warn(`⚠️ Falha ao buscar grupos da instância ${instanceName}:`, err);
+    return [];
+  }
+}
+
+/**
  * Envia uma mensagem de WhatsApp usando o provedor configurado com contingência.
  */
 export async function sendWhatsAppMessage(to: string, body: string, instanceOverride?: string, countryCode?: string): Promise<string> {

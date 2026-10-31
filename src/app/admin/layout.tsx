@@ -17,23 +17,23 @@ const navGroups = [
     ]
   },
   {
-    label: 'CRM',
+    label: 'Atendimento & IA',
     module: 'crm',
     items: [
-      { href: '/admin/simulador', label: 'Simulador WhatsApp (IA)', icon: '💬' },
+      { href: '/admin/crm', label: 'Clientes & Chat (CRM)', icon: '💬' },
       { href: '/admin/leads', label: 'Fila de Leads', icon: '📥' },
-      { href: '/admin/crm', label: 'Clientes (CRM)', icon: '👤' },
-      { href: '/admin/oportunidades', label: 'Oportunidades', icon: '🤝' },
-      { href: '/admin/parceiros', label: 'Parceiros', icon: '🏪' },
+      { href: '/admin/oportunidades', label: 'Radar de Grupos & Parcerias', icon: '🎯' },
+      { href: '/admin/parceiros', label: 'Corretores Parceiros', icon: '🤝' },
+      { href: '/admin/simulador', label: 'Simulador do Bot (IA)', icon: '🧪' },
       { href: '/admin/equipe', label: 'Equipe', icon: '👥' },
     ]
   },
   {
-    label: 'Inventário',
+    label: 'Meus Imóveis',
     module: 'inventario',
     items: [
-      { href: '/admin/imoveis', label: 'Imóveis', icon: '🏠' },
-      { href: '/admin/captacoes', label: 'Captações', icon: '🏗️' },
+      { href: '/admin/imoveis', label: 'Meus Imóveis', icon: '🏠' },
+      { href: '/admin/captacoes', label: 'Captação por Áudio', icon: '🎙️' },
     ]
   },
   {
@@ -46,19 +46,20 @@ const navGroups = [
     ]
   },
   {
-    label: 'Operação',
+    label: 'Agenda',
     module: 'operacao',
     items: [
-      { href: '/admin/agenda', label: 'Agenda & Escala', icon: '📆' },
-      { href: '/admin/carteira', label: 'Carteira', icon: '📋' },
+      { href: '/admin/agenda', label: 'Minha Agenda', icon: '📆' },
+      { href: '/admin/carteira', label: 'Carteira da Equipe', icon: '📋' },
     ]
   },
   {
-    label: 'Sistema',
+    label: 'Configurações',
     module: 'sistema',
     items: [
+      { href: '/admin/config', label: 'Bot IA & Grupos', icon: '🤖' },
+      { href: '/admin/perfil', label: 'Meu WhatsApp & Perfil', icon: '📱' },
       { href: '/admin/config/plano', label: 'Assinatura', icon: '💎' },
-      { href: '/admin/config', label: 'Configurações', icon: '⚙️' },
     ]
   }
 ];
@@ -97,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [countryMode, setCountryMode] = useState<string>('PT');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ email: string; app_role: string } | null>(null);
-  const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'sistema']);
+  const [activePlanModules, setActivePlanModules] = useState<string[]>(['dashboard', 'crm', 'inventario', 'operacao', 'sistema']);
   const [activePlan, setActivePlan] = useState<string>('Essencial');
   const [imobiliariaName, setImobiliariaName] = useState<string>('ImobIA');
 
@@ -135,11 +136,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return {
       ...group,
       items: group.items.filter(item => {
-        if (item.href === '/admin/equipe' && ['essencial', 'gratuito', 'free'].includes(activePlan.toLowerCase())) return false;
-        if (item.href === '/admin/webhook-logs' && ['gratuito', 'free'].includes(activePlan.toLowerCase())) return false;
+        const isAutonomousPlan = ['essencial', 'gratuito', 'free'].includes(activePlan.toLowerCase());
+        if ((item.href === '/admin/equipe' || item.href === '/admin/carteira') && isAutonomousPlan) return false;
+        if (item.href === '/admin/webhook-logs' && isAutonomousPlan) return false;
         
         if (user?.app_role === 'admin' || user?.app_role === 'master') return true;
-        const restricted = ['/admin/config', '/admin/carteira', '/admin/webhook-logs', '/admin/usuarios'];
+        // Corretor autônomo precisa acessar /admin/config para configurar Bot IA e Grupos
+        const restricted = ['/admin/carteira', '/admin/webhook-logs', '/admin/usuarios', '/admin/equipe'];
         return !restricted.includes(item.href);
       })
     };
