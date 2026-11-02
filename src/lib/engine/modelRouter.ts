@@ -49,8 +49,8 @@ export class ModelRouter {
 
       case 'deep_reasoning':
         return {
-          primaryModel: 'deepseek-chat',
-          fallbackModel: 'qwen-2.5-72b',
+          primaryModel: 'hermes-3-70b',
+          fallbackModel: 'deepseek-chat',
           temperature: 0.1,
           maxTokens: 1500
         };
@@ -68,9 +68,9 @@ export class ModelRouter {
       case 'agentic_chat':
       default:
         return {
-          primaryModel: 'gemini-2.5-flash',
-          fallbackModel: 'llama-3.3-70b-versatile',
-          temperature: 0.25,
+          primaryModel: 'hermes-3-70b',
+          fallbackModel: 'gemini-2.5-flash',
+          temperature: 0.2,
           maxTokens: 1200
         };
     }
@@ -86,6 +86,9 @@ export class ModelRouter {
     if (model.includes('8b')) {
       inputPricePerMillion = 0.05;
       outputPricePerMillion = 0.08;
+    } else if (model.includes('hermes')) {
+      inputPricePerMillion = 0.40;
+      outputPricePerMillion = 0.40;
     } else if (model.includes('gemini-2.5-flash')) {
       inputPricePerMillion = 0.075;
       outputPricePerMillion = 0.30;

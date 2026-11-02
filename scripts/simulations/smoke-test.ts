@@ -37,6 +37,8 @@ import { generateGoogleCalendarUrl } from '../../src/app/api/calendar/google/rou
 import { checkAndRegisterGroup, saveBotSettings, getBotSettings } from '../../src/lib/botSettings';
 import { processGroupRadarMessage } from '../../src/lib/engine/groupRadarEngine';
 import { shouldIgnoreMessage } from '../../src/lib/messageFilter';
+import { ModelRouter } from '../../src/lib/engine/modelRouter';
+import { stripThoughtTags, resolveOpenRouterModel } from '../../src/lib/engine/aiUtils';
 
 interface SmokeTestResult {
   module: string;
@@ -411,6 +413,51 @@ async function runSmokeTest() {
       name: 'Seleção Numérica ("1"), Contexto de Lead Ativo & Regras do Corretor',
       status: 'FAIL',
       latencyMs: Date.now() - t9Start,
+      details: `Erro: ${err.message}`
+    });
+  }
+
+  // 10. Camada de Decisão Hermes 3 & Higienização de Reasoning (<thought>)
+  console.log('🔹 [10/10] Testando Camada de Decisão Hermes 3, Roteamento & Higienização...');
+  const t10Start = Date.now();
+  try {
+    const route = ModelRouter.getRoute('agentic_chat');
+    const deepRoute = ModelRouter.getRoute('deep_reasoning');
+    const openRouterModel = resolveOpenRouterModel('hermes-3-70b');
+    const cost = ModelRouter.estimateCost('hermes-3-70b', 1000, 500);
+
+    const rawAssistantThought = `
+<thought>
+O cliente está interessado no apartamento de Moema e perguntou de visita.
+Preciso acionar check_available_slots para conferir amanhã à tarde.
+</thought>
+Perfeito! Eu verifiquei aqui e tenho os seguintes horários disponíveis amanhã à tarde: 14h, 15h30 e 17h. Qual fica melhor para você?`;
+
+    const cleanedReply = stripThoughtTags(rawAssistantThought);
+
+    const isHermesValid =
+      route.primaryModel === 'hermes-3-70b' &&
+      route.fallbackModel === 'gemini-2.5-flash' &&
+      deepRoute.primaryModel === 'hermes-3-70b' &&
+      openRouterModel === 'nousresearch/hermes-3-llama-3.1-70b' &&
+      !cleanedReply.includes('<thought>') &&
+      !cleanedReply.includes('check_available_slots') &&
+      cleanedReply.startsWith('Perfeito! Eu verifiquei aqui') &&
+      cost > 0;
+
+    results.push({
+      module: '10. Camada de Decisão Hermes 3',
+      name: 'Roteamento Agentic Chat, OpenRouter Mapping & Higienização <thought>',
+      status: isHermesValid ? 'PASS' : 'FAIL',
+      latencyMs: Date.now() - t10Start,
+      details: `Primário: ${route.primaryModel}, Fallback: ${route.fallbackModel}, OpenRouter: ${openRouterModel}, Sanitização limpa sem vazamento de tags.`
+    });
+  } catch (err: any) {
+    results.push({
+      module: '10. Camada de Decisão Hermes 3',
+      name: 'Roteamento Agentic Chat, OpenRouter Mapping & Higienização <thought>',
+      status: 'FAIL',
+      latencyMs: Date.now() - t10Start,
       details: `Erro: ${err.message}`
     });
   }

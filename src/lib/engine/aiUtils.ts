@@ -9,6 +9,7 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 
 export type AIModel = 
+  | 'hermes-3-70b'
   | 'gemini-2.5-flash'
   | 'gemini-2.5-pro'
   | 'deepseek-chat'
@@ -49,6 +50,18 @@ export function parseSafeJSON(str: string): any {
   }
 }
 
+/**
+ * Sanitizes assistant responses by stripping internal thinking tags emitted by reasoning models (Hermes 3, DeepSeek, etc.)
+ */
+export function stripThoughtTags(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
+    .trim();
+}
+
 interface AICallOptions {
   model?: AIModel;
   messages: any[];
@@ -63,8 +76,9 @@ interface AICallOptions {
 /**
  * Maps logical model names to OpenRouter model ids
  */
-function resolveOpenRouterModel(model: AIModel): string {
+export function resolveOpenRouterModel(model: AIModel): string {
   switch (model) {
+    case 'hermes-3-70b': return 'nousresearch/hermes-3-llama-3.1-70b';
     case 'gemini-2.5-flash': return 'google/gemini-2.5-flash';
     case 'gemini-2.5-pro': return 'google/gemini-2.5-pro';
     case 'deepseek-chat': return 'deepseek/deepseek-chat';

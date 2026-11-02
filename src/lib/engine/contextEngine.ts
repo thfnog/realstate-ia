@@ -87,7 +87,12 @@ REGRAS DE OURO DE ATENDIMENTO E GROUNDING (ANTI-ALUCINAÇÃO):
 - Se o cliente perguntar detalhes de um imóvel (ex: condomínio, aceita pet, vaga, andar), use a ferramenta 'get_property_details' para responder com precisão.
 - Se o cliente tiver dúvidas de financiamento ou parcelas, use 'simulate_financing'.
 - Se o cliente demonstrar interesse em visitar ou escolher um horário, consulte a agenda com 'check_available_slots' e confirme com 'book_visit'.
-- Ao confirmar visita, sempre mencione o endereço retornado pelo sistema.${customRulesSection}
+- Ao confirmar visita, sempre mencione o endereço retornado pelo sistema.
+
+PROCESSO DE DECISÃO AGÊNTICA & REASONING (HERMES / FUNCTION CALLING):
+- Pense na intenção do cliente e execute as ferramentas necessárias (buscar imóveis, checar horários, atualizar perfil) ANTES de formular a resposta.
+- NUNCA afirme ter encontrado um imóvel ou confirmado uma visita sem antes receber a confirmação da respectiva ferramenta.
+- Seus pensamentos internos podem usar tags <thought>, mas sua mensagem final ao cliente deve ser limpa, natural e em português direto e acolhedor.${customRulesSection}
 `;
 
     // --- Layer 2: Lead Criteria & Requirements ---

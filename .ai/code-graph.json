@@ -1,10 +1,10 @@
 {
-  "generated": "2026-10-31T20:44:49.235Z",
+  "generated": "2026-11-02T20:26:32.204Z",
   "generator": "scripts/generate-code-graph.ts (ts-morph + PageRank)",
   "stats": {
     "totalFiles": 238,
     "totalEdges": 585,
-    "totalExports": 559,
+    "totalExports": 561,
     "aiModules": 15,
     "layers": 11
   },
@@ -631,6 +631,8 @@
       "layer": "engine",
       "exports": [
         "parseSafeJSON",
+        "stripThoughtTags",
+        "resolveOpenRouterModel",
         "callAIWithFallback",
         "AIModel"
       ],
@@ -639,7 +641,7 @@
       ],
       "usesAI": true,
       "type": "module",
-      "linesOfCode": 379,
+      "linesOfCode": 393,
       "description": "Multi-provider: OpenRouter(Llama 70B) → Groq(Llama 70B) → OpenAI(GPT-4o-mini) com logging de tokens"
     },
     {
@@ -741,7 +743,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 112,
+      "linesOfCode": 115,
       "description": "Exports: TaskType, RouteConfig, ModelRouter"
     },
     {
@@ -1897,7 +1899,7 @@
       ],
       "usesAI": false,
       "type": "module",
-      "linesOfCode": 167,
+      "linesOfCode": 172,
       "description": "Exports: ContextBuildOptions, BuiltContext, ContextEngine"
     },
     {

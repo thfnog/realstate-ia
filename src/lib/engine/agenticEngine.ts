@@ -6,7 +6,7 @@
  * and adaptive conversation flows.
  */
 
-import { callAIWithFallback } from './aiUtils';
+import { callAIWithFallback, stripThoughtTags } from './aiUtils';
 import { ContextEngine } from './contextEngine';
 import { AgenticTools, ToolExecutionContext } from './agenticTools';
 import { ModelRouter } from './modelRouter';
@@ -149,7 +149,7 @@ export class AgenticEngine {
 
       if (!toolCalls || toolCalls.length === 0) {
         // No more tools called -> final answer reached
-        finalAnswer = assistantMessage.content || '';
+        finalAnswer = stripThoughtTags(assistantMessage.content || '');
         break;
       }
 
@@ -197,7 +197,7 @@ export class AgenticEngine {
     }
 
     // Combine final spoken text with any formatted tool output (cards/slots)
-    let combinedReply = finalAnswer.trim();
+    let combinedReply = stripThoughtTags(finalAnswer);
     if (extraMessages.length > 0) {
       combinedReply = combinedReply
         ? `${combinedReply}\n\n${extraMessages.join('\n\n')}`
